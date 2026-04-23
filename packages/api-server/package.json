@@ -1,0 +1,36 @@
+{
+  "name": "@eduator/api-server",
+  "version": "2.1.0",
+  "private": true,
+  "main": "./src/server.ts",
+  "types": "./src/server.ts",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "node scripts/build.js",
+    "build:tsc": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@eduator/ai": "*",
+    "@eduator/auth": "*",
+    "@eduator/config": "*",
+    "@eduator/core": "*",
+    "@eduator/db": "*",
+    "@fastify/compress": "^7.0.0",
+    "@fastify/cors": "^9.0.1",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/multipart": "^8.3.0",
+    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/swagger": "^8.14.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.6.1",
+    "fastify": "^4.26.0",
+    "pino-pretty": "^10.3.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.0"
+  }
+}

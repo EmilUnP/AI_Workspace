@@ -1,0 +1,21 @@
+# Reduce deployment payload and avoid timeouts during "Deploying outputs"
+# See: https://vercel.com/docs/build-step#ignoring-files
+
+# Docs and tooling (not needed at runtime)
+docs
+.husky
+coverage
+.turbo
+*.log
+.DS_Store
+.env.local
+.env*.local
+!.env.example
+
+# Build caches (Vercel builds fresh)
+**/.eslintcache
+**/tsconfig.tsbuildinfo
+
+# When building erp-app, ignore non-target app build output
+# Uncomment if you deploy from repo root and want to trim payload:
+# apps/erp-app/.next

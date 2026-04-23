@@ -1,0 +1,413 @@
+/**
+ * Backend-only: load Supabase env for the API server (validates API keys, accesses data).
+ * Third-party apps never see or need DB/Supabase — they only use Base URL + API key.
+ */
+
+// Suppress Fastify 5 deprecation FSTDEP017 in logs (our code uses routeOptions.url; plugins may still trigger it)
+process.on('warning', (w: Error & { name?: string; code?: string }) => {
+  if (w?.code === 'FSTDEP017') return
+  console.warn(w.name ?? 'Warning', w.message)
+})
+
+import { resolve } from 'path'
+import { config as loadEnv } from 'dotenv'
+const cwd = process.cwd()
+;[resolve(cwd, '../../.env.local'), resolve(cwd, '../../.env'), resolve(cwd, '.env.local'), resolve(cwd, '.env')].forEach((p) => loadEnv({ path: p }))
+
+import Fastify from 'fastify'
+import cors from '@fastify/cors'
+import helmet from '@fastify/helmet'
+import multipart from '@fastify/multipart'
+import rateLimit from '@fastify/rate-limit'
+import swagger from '@fastify/swagger'
+import { isDevelopment, RATE_LIMITS } from '@eduator/config'
+import { API_VERSION } from './version'
+import { registerRoutes } from './routes'
+import { authMiddleware } from './middleware/auth'
+import { errorHandler } from './middleware/error'
+import { teacherApiKeyRepository } from '@eduator/db'
+
+const PORT = parseInt(process.env.API_PORT || '4000', 10)
+const HOST = process.env.API_HOST || '0.0.0.0'
+
+async function buildServer() {
+  const fastify = Fastify({
+    logger: {
+      level: process.env.LOG_LEVEL || 'info',
+      transport: isDevelopment()
+        ? {
+            target: 'pino-pretty',
+            options: {
+              translateTime: 'HH:MM:ss Z',
+              ignore: 'pid,hostname',
+            },
+          }
+        : undefined,
+    },
+  })
+
+  // Register plugins — CORS: localhost + env CORS_ORIGINS (comma-separated) for deployed ERP/ERP URLs
+  const localhostOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:4000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:3002',
+    'http://127.0.0.1:4000',
+  ]
+  const envOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  const allowedOrigins = [...localhostOrigins, ...envOrigins]
+  await fastify.register(cors, {
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true)
+      if (allowedOrigins.includes(origin)) return cb(null, true)
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true)
+      if (isDevelopment()) return cb(null, true)
+      return cb(null, false)
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+
+  await fastify.register(helmet, {
+    contentSecurityPolicy: false, // Disable for API
+  })
+
+  // Optional: compress responses (skip if @fastify/compress not installed)
+  try {
+    const compress = (await import('@fastify/compress')).default
+    await fastify.register(compress, { encodings: ['gzip', 'deflate'] })
+  } catch {
+    // Module not installed; responses are not compressed
+  }
+
+  await fastify.register(multipart, {
+    limits: { fileSize: 15 * 1024 * 1024 }, // 15MB for document uploads
+  })
+
+  await fastify.register(rateLimit, {
+    max: RATE_LIMITS.DEFAULT.max,
+    timeWindow: RATE_LIMITS.DEFAULT.windowMs,
+  })
+
+  // Swagger documentation
+  await fastify.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Eduator AI API',
+        description: `AI-Powered Educational Platform API v${API_VERSION}
+
+## Overview
+This API provides comprehensive endpoints for managing educational institutions, users, classes, exams, lessons, documents, courses, and AI-powered features including exam generation, lesson creation, course creation (5-step wizard), and AI tutoring.
+
+## Authentication
+All protected endpoints require a JWT token in the Authorization header:
+\`\`\`
+Authorization: Bearer <your-jwt-token>
+\`\`\`
+
+Tokens are obtained from Supabase Auth. See authentication endpoints in your frontend app for login/signup flows.
+
+## User Roles
+- **Platform Owner**: Full platform access, manages all organizations and users across the platform
+- **School Admin**: Manages organization users, classes, and settings within their organization
+- **Teacher**: Creates exams, lessons, courses (5-step wizard), manages classes, uses Smart Calendar Hub, AI Teaching Assistant (EduBot)
+- **Student**: Takes exams, uses AI tutor (EduBot), tracks progress, joins classes
+
+## Current Version (${API_VERSION})
+This version includes:
+
+### ✅ Platform Owner Endpoints
+- Organization management (CRUD operations, status updates)
+- User management (list, approve, reject, suspend, delete)
+- Reports and analytics (platform-wide statistics, usage metrics)
+
+### ✅ School Admin Endpoints
+- Dashboard with organization overview
+- User management (list, approve, reject within organization)
+- Class management (list all classes in organization)
+- Reports and analytics (organization-level statistics)
+
+### ✅ Teacher Endpoints
+- Dashboard with classes, exams, lessons, courses, and student overview
+- **Exam Management** (CRUD operations, publish/unpublish)
+- **AI-Powered Exam Generation** (5-step wizard: Generate → Translate → Edit → Assign → Publish)
+- **Course Creation** (5-step wizard: Documents → Blueprint → Options → Generation → Summary)
+- **Lesson Management** (CRUD, AI generation with images/audio, regenerate audio)
+- **Document Management** (upload, CRUD, assign to classes)
+- **Smart Calendar Hub** (schedule lessons and exams, drag-and-drop, class filtering)
+- Class management (list, create, view students, share content)
+- **AI Teaching Assistant (EduBot)** (chat, document-based RAG)
+- Analytics and reporting
+
+### ✅ Student Endpoints
+- Dashboard with enrolled classes and available exams
+- Class management (list, join by code)
+- Exam taking (view, start, submit)
+- **AI Tutor (EduBot)** (interactive learning assistant)
+- Progress tracking
+
+### ✅ Profile Management
+- Get current user profile
+- Update profile information
+
+### ✅ Health & Info
+- Health check endpoints
+- API information and version
+
+## Base URL
+All API endpoints are prefixed with \`/api/v1\`
+
+## Response Format
+All responses follow this structure:
+\`\`\`json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Optional message"
+}
+\`\`\`
+
+Error responses:
+\`\`\`json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error message",
+    "details": []
+  }
+}
+\`\`\`
+`,
+        version: API_VERSION,
+        contact: {
+          name: 'Eduator AI Support',
+          email: 'support@eduator.ai',
+        },
+        license: {
+          name: 'MIT',
+        },
+      },
+      servers: [
+        {
+          url: `http://localhost:${PORT}`,
+          description: 'Development server',
+        },
+        {
+          url: 'https://api.eduator.ai',
+          description: 'Production server',
+        },
+      ],
+      tags: [
+        {
+          name: 'Health',
+          description: 'Health check and API information endpoints',
+        },
+        {
+          name: 'Profile',
+          description: 'User profile management endpoints',
+        },
+        {
+          name: 'Platform Owner',
+          description: 'Platform owner exclusive endpoints for managing organizations and users',
+        },
+        {
+          name: 'School Admin',
+          description: 'School administrator endpoints for managing organization users and classes',
+        },
+        {
+          name: 'Teacher',
+          description: 'Teacher endpoints for exam creation, AI generation, class management, and analytics',
+        },
+        {
+          name: 'Student',
+          description: 'Student endpoints for taking exams, using AI tutor chatbot, and progress tracking',
+        },
+        {
+          name: 'Organizations',
+          description: 'Organization management endpoints',
+        },
+        {
+          name: 'Users',
+          description: 'User management endpoints',
+        },
+        {
+          name: 'Classes',
+          description: 'Class management endpoints',
+        },
+        {
+          name: 'Exams',
+          description: 'Exam management endpoints',
+        },
+        {
+          name: 'Reports',
+          description: 'Analytics and reporting endpoints',
+        },
+        {
+          name: 'Chatbot',
+          description: 'AI teaching assistant endpoints',
+        },
+        {
+          name: 'AI',
+          description: 'AI-powered features (exam generation, etc.)',
+        },
+        {
+          name: 'Analytics',
+          description: 'Analytics and progress tracking endpoints',
+        },
+        {
+          name: 'Progress',
+          description: 'Student progress tracking endpoints',
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: 'JWT token obtained from Supabase Auth. Include in Authorization header as: Bearer <token>',
+          },
+        },
+        schemas: {
+          Error: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: false },
+              error: {
+                type: 'object',
+                properties: {
+                  code: { type: 'string', example: 'NOT_FOUND' },
+                  message: { type: 'string', example: 'Resource not found' },
+                  details: { type: 'array', items: { type: 'object' } },
+                },
+                required: ['code', 'message'],
+              },
+            },
+            required: ['success', 'error'],
+          },
+          Success: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              data: { type: 'object' },
+              message: { type: 'string' },
+            },
+            required: ['success'],
+          },
+        },
+      },
+      security: [{ bearerAuth: [] }],
+    },
+  })
+
+  // Docs UI: serve from CDN so static assets work on Vercel (plugin static files are not in the serverless bundle)
+  const swaggerUiCdn = 'https://unpkg.com/swagger-ui-dist@5.9.0'
+  fastify.get('/docs/json', async (_request, reply) => {
+    const spec = await fastify.swagger()
+    return reply.type('application/json').send(spec)
+  })
+  const docsHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Eduator AI API – Swagger UI</title>
+  <link rel="stylesheet" href="${swaggerUiCdn}/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="${swaggerUiCdn}/swagger-ui-bundle.js" crossorigin></script>
+  <script src="${swaggerUiCdn}/swagger-ui-standalone-preset.js" crossorigin></script>
+  <script>
+    window.onload = function () {
+      window.ui = SwaggerUIBundle({
+        url: '/docs/json',
+        dom_id: '#swagger-ui',
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: 'StandaloneLayout',
+        docExpansion: 'list',
+        deepLinking: false
+      })
+    }
+  </script>
+</body>
+</html>`
+  fastify.get('/docs', async (_request, reply) => {
+    return reply.type('text/html').send(docsHtml)
+  })
+  fastify.get('/docs/', async (_request, reply) => {
+    return reply.type('text/html').send(docsHtml)
+  })
+
+  // Global error handler
+  fastify.setErrorHandler(errorHandler)
+
+  // Auth middleware
+  fastify.decorate('authenticate', authMiddleware)
+
+  // Register routes
+  await registerRoutes(fastify)
+
+  // Log API key usage for analytics (success/error per endpoint).
+  // Long-running routes (exams/generate, lessons/generate) record usage in-handler so serverless doesn't miss it; skip here to avoid double-recording.
+  fastify.addHook('onResponse', async (request, reply) => {
+    const apiKeyId = (request as { apiKeyId?: string }).apiKeyId
+    if (!apiKeyId) return
+    const endpoint = (request as { routeOptions?: { url?: string } }).routeOptions?.url ?? request.url?.split('?')[0] ?? ''
+    if (endpoint.endsWith('/exams/generate') || endpoint.endsWith('/lessons/generate')) return
+    const method = request.method
+    const statusCode = reply.statusCode
+    const status = statusCode >= 200 && statusCode < 400 ? 'success' : 'error'
+    await teacherApiKeyRepository.recordUsage({ apiKeyId, method, endpoint, status, statusCode }).catch((err) => {
+      fastify.log.warn({ err, apiKeyId, endpoint }, 'Failed to record API key usage')
+    })
+  })
+
+  return fastify
+}
+
+async function start() {
+  try {
+    const server = await buildServer()
+
+    await server.listen({ port: PORT, host: HOST })
+
+    console.log(`
+🚀 Eduator AI API Server running!
+   
+   📚 API Docs:  http://localhost:${PORT}/docs
+   🔗 API URL:   http://localhost:${PORT}/api/v1
+   📋 Version:   ${API_VERSION}
+   
+   Environment: ${process.env.NODE_ENV || 'development'}
+    `)
+  } catch (err) {
+    console.error('Failed to start server:', err)
+    process.exit(1)
+  }
+}
+
+// Vercel serverless: export handler so api/[[...path]].js can use the bundle
+let appPromise: ReturnType<typeof buildServer> | null = null
+export default async function vercelHandler(
+  req: import('http').IncomingMessage,
+  res: import('http').ServerResponse
+) {
+  const app = await (appPromise ??= buildServer())
+  await app.ready()
+  app.server.emit('request', req, res)
+}
+
+if (process.env.VERCEL !== '1') {
+  start()
+}

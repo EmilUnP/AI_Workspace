@@ -1,0 +1,36 @@
+{
+  "name": "erp-app",
+  "version": "2.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@eduator/agent": "*",
+    "@eduator/ai": "*",
+    "@eduator/api-client": "*",
+    "@eduator/auth": "*",
+    "@eduator/config": "*",
+    "@eduator/core": "*",
+    "@eduator/db": "*",
+    "@eduator/ui": "*",
+    "@tanstack/react-query": "^5.17.0",
+    "lucide-react": "^0.468.0",
+    "next": "^15.0.0",
+    "next-intl": "^4.8.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.7.0"
+  }
+}

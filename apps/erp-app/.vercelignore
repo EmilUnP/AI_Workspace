@@ -1,0 +1,10 @@
+# Keep deployment payload small; avoid internal errors during "Deploying outputs"
+.env.local
+.env*.local
+!.env.example
+*.log
+.DS_Store
+coverage
+.turbo
+.eslintcache
+tsconfig.tsbuildinfo

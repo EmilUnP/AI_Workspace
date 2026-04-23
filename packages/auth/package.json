@@ -1,0 +1,38 @@
+{
+  "name": "@eduator/auth",
+  "version": "2.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./supabase/client": "./src/supabase/client.ts",
+    "./supabase/server": "./src/supabase/server.ts",
+    "./supabase/admin": "./src/supabase/admin.ts",
+    "./supabase/middleware": "./src/supabase/middleware.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "supabase/client": [
+        "./src/supabase/client.ts"
+      ],
+      "supabase/server": [
+        "./src/supabase/server.ts"
+      ],
+      "supabase/admin": [
+        "./src/supabase/admin.ts"
+      ],
+      "supabase/middleware": [
+        "./src/supabase/middleware.ts"
+      ]
+    }
+  },
+  "dependencies": {
+    "@eduator/config": "*",
+    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/ssr": "^0.6.1"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0"
+  }
+}

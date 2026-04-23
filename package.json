@@ -1,0 +1,72 @@
+{
+  "name": "eduator-ai-v2",
+  "version": "2.1.0",
+  "private": true,
+  "description": "AI-Powered Educational Platform - Transforming learning through intelligent automation",
+  "author": "Eduator Team",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @eduator/api-server",
+    "dev:erp": "npm run dev -w erp-app",
+    "dev:marketing": "npm run dev -w marketing-site",
+    "dev:all": "concurrently \"npm run dev:api\" \"npm run dev:erp\" \"npm run dev:marketing\"",
+    "build": "npm run build:packages && npm run build:apps",
+    "build:packages": "npm run build -w @eduator/config && npm run build -w @eduator/db",
+    "build:api": "npm run build:packages && npm run build -w @eduator/api-server",
+    "build:erp": "npm run build:packages && npm run build -w erp-app",
+    "build:marketing": "npm run build -w marketing-site",
+    "build:apps": "npm run build -w erp-app && npm run build -w marketing-site",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf apps/*/node_modules && rm -rf packages/*/dist && rm -rf apps/*/.next",
+    "debug:vercel:erp": "node scripts/debug-vercel-build.mjs erp",
+    "prepare": "node -e \"if (!process.env.CI && !process.env.VERCEL) { require('child_process').execSync('npx husky install', {stdio:'inherit'}) }\""
+  },
+  "overrides": {
+    "rimraf": "^5.0.0",
+    "glob": "^10.0.0",
+    "@humanwhocodes/config-array": "npm:@eslint/config-array@^0.19.0",
+    "@humanwhocodes/object-schema": "npm:@eslint/object-schema@^1.0.0",
+    "cookie": "^0.7.0"
+  },
+  "dependencies": {
+    "word-extractor": "^1.0.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^20.10.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.15.0",
+    "eslint-config-next": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.12.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "prettier-plugin-tailwindcss": "^0.5.9",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.15.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

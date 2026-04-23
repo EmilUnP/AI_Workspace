@@ -1,0 +1,48 @@
+{
+  "name": "@eduator/db",
+  "version": "2.1.0",
+  "private": true,
+  "main": "./dist/db/src/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/db/src/index.js",
+      "require": "./dist/db/src/index.js",
+      "default": "./dist/db/src/index.js"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./dist/db/src/client.js"
+    },
+    "./repositories": {
+      "types": "./src/repositories/index.ts",
+      "default": "./dist/db/src/repositories/index.js"
+    },
+    "./repositories/tokens": {
+      "types": "./src/repositories/tokens.ts",
+      "default": "./src/repositories/tokens.ts"
+    },
+    "./repositories/*": {
+      "types": "./src/repositories/*.ts",
+      "default": "./dist/db/src/repositories/*.js"
+    },
+    "./repositories/payments": {
+      "types": "./src/repositories/payments.ts",
+      "default": "./src/repositories/payments.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "dependencies": {
+    "@eduator/config": "*",
+    "@eduator/core": "*",
+    "@eduator/auth": "*",
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}

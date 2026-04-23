@@ -1,0 +1,28 @@
+{
+  "name": "@eduator/ai",
+  "version": "2.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./gemini": "./src/gemini.ts",
+    "./services/*": "./src/services/*.ts",
+    "./prompts/*": "./src/prompts/*.ts",
+    "./tts-generator": "./src/tts-generator.ts",
+    "./stt-generator": "./src/stt-generator.ts",
+    "./image-generator": "./src/image-generator.ts"
+  },
+  "dependencies": {
+    "@eduator/config": "*",
+    "@eduator/core": "*",
+    "@eduator/auth": "*",
+    "@google/generative-ai": "^0.21.0",
+    "@cedrugs/pdf-parse": "^1.0.0",
+    "mammoth": "^1.8.0",
+    "word-extractor": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/word-extractor": "^1.0.6"
+  }
+}
