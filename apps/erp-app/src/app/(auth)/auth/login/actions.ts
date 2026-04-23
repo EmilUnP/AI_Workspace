@@ -72,7 +72,7 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
       redirect('/school-admin')
       break
     case 'teacher':
-      redirect('/teacher')
+      redirect('/school-admin')
       break
     case 'student':
       redirect('/auth/access-denied')

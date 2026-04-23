@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
           if (profile.profile_type === 'school_superadmin') {
             return NextResponse.redirect(`${origin}/school-admin`)
           }
-          if (profile.profile_type === 'teacher') return NextResponse.redirect(`${origin}/teacher`)
+          if (profile.profile_type === 'teacher') return NextResponse.redirect(`${origin}/school-admin`)
           if (profile.profile_type === 'student') return NextResponse.redirect(`${origin}/auth/access-denied`)
         }
       }

@@ -24,12 +24,11 @@ const baseMiddleware = createAuthMiddleware({
   protected: [
     '/platform-owner',
     '/school-admin',
-    '/teacher',
   ],
   roleRoutes: {
     platform_owner: ['/platform-owner'],
     school_superadmin: ['/school-admin'],
-    teacher: ['/teacher'],
+    teacher: ['/school-admin'],
   },
 })
 
@@ -39,7 +38,7 @@ export async function middleware(request: NextRequest) {
   const response = await baseMiddleware(request)
   if (response.status >= 300 && response.status < 400) return response
 
-  if (pathname.startsWith('/teacher')) {
+  if (pathname.startsWith('/school-admin')) {
     const { user, supabase } = await updateSession(request)
 
     if (user && supabase) {
@@ -58,7 +57,7 @@ export async function middleware(request: NextRequest) {
       )
 
       if (!isPathEnabled('erp', role, pathname, enabledMap)) {
-        return NextResponse.redirect(new URL('/teacher', request.url))
+        return NextResponse.redirect(new URL('/school-admin', request.url))
       }
     }
   }

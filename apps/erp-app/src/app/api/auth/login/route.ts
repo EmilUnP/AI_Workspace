@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     case 'school_superadmin':
       return redirectTo(new URL('/school-admin', origin))
     case 'teacher':
-      return redirectTo(new URL(safeRedirect || '/teacher', origin))
+      return redirectTo(new URL(safeRedirect || '/school-admin', origin))
     case 'student':
       return redirectTo(new URL('/auth/access-denied', origin))
     default:

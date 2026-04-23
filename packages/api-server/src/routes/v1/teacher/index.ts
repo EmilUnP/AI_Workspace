@@ -27,11 +27,13 @@ function universalizeExamQuestion(q: CoreQuestion): CoreQuestion & {
 
 /**
  * Teacher routes
- * All routes require teacher role
+ * Transitional role support:
+ * - teacher (legacy)
+ * - school_superadmin (new primary access path)
  */
 export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
   // Apply role check to all routes
-  fastify.addHook('preHandler', requireRole('teacher'))
+  fastify.addHook('preHandler', requireRole('teacher', 'school_superadmin'))
 
   // Root: GET /api/v1/teacher — quick auth check and list of available endpoints
   fastify.get('/', {

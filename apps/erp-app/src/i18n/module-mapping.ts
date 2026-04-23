@@ -9,14 +9,10 @@
 
 export const MESSAGE_MODULES = [
   'public',
-  'teacher',
   'platform-owner',
   'school-admin',
 ] as const
 export type MessageModule = (typeof MESSAGE_MODULES)[number]
-
-/** Path prefixes that use the teacher message module */
-const TEACHER_PREFIXES = ['/teacher']
 
 /** Path prefixes that use the platform-owner message module */
 const PLATFORM_OWNER_PREFIXES = ['/platform-owner']
@@ -26,12 +22,10 @@ const SCHOOL_ADMIN_PREFIXES = ['/school-admin']
 
 /**
  * Resolves the message module for a given pathname.
- * Order: teacher → platform-owner → school-admin → public (default).
+ * Order: platform-owner → school-admin → public (default).
  */
 export function getMessageModule(pathname: string): MessageModule {
   const normalized = pathname.replace(/\/$/, '') || '/'
-  if (TEACHER_PREFIXES.some((p) => normalized === p || normalized.startsWith(p + '/')))
-    return 'teacher'
   if (PLATFORM_OWNER_PREFIXES.some((p) => normalized === p || normalized.startsWith(p + '/')))
     return 'platform-owner'
   if (SCHOOL_ADMIN_PREFIXES.some((p) => normalized === p || normalized.startsWith(p + '/')))

@@ -113,7 +113,8 @@ export async function authMiddleware(
       }
 
       const meta = profile.metadata as { api_integration_enabled?: boolean } | null
-      if (profile.profile_type !== 'teacher' || !meta?.api_integration_enabled) {
+      const isTeacherCompatibleRole = profile.profile_type === 'teacher' || profile.profile_type === 'school_superadmin'
+      if (!isTeacherCompatibleRole || !meta?.api_integration_enabled) {
         return reply.code(403).send({
           success: false,
           error: {

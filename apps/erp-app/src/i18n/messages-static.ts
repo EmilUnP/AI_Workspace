@@ -1,7 +1,7 @@
 /**
  * Static message imports for i18n.
  * Avoids dynamic import() so Vercel deployment can package the output reliably.
- * See: MESSAGE_MODULES in module-mapping.ts (public, teacher, platform-owner, school-admin).
+ * See: MESSAGE_MODULES in module-mapping.ts (public, platform-owner, school-admin).
  */
 
 import publicAz from '../messages/public/az.json'
@@ -17,13 +17,19 @@ type Messages = Record<string, unknown>
 
 export const MESSAGES = {
   public: { az: publicAz as Messages, en: publicEn as Messages },
-  teacher: { az: teacherAz as Messages, en: teacherEn as Messages },
   'platform-owner': {
     az: platformOwnerAz as Messages,
     en: platformOwnerEn as Messages,
   },
   'school-admin': {
-    az: schoolAdminAz as Messages,
-    en: schoolAdminEn as Messages,
+    // During migration, school-admin pages still reference legacy teacher translation namespaces.
+    az: {
+      ...(teacherAz as Messages),
+      ...(schoolAdminAz as Messages),
+    } as Messages,
+    en: {
+      ...(teacherEn as Messages),
+      ...(schoolAdminEn as Messages),
+    } as Messages,
   },
 } as const

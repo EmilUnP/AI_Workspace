@@ -7,6 +7,12 @@ const navigation = [
   { name: 'Dashboard', href: '/school-admin', icon: 'LayoutDashboard' },
   { name: 'Users', href: '/school-admin/users', icon: 'Users' },
   { name: 'Reports', href: '/school-admin/reports', icon: 'BarChart3' },
+  { name: 'Documents', href: '/school-admin/documents', icon: 'FolderOpen' },
+  { name: 'Exams', href: '/school-admin/exams', icon: 'FileText' },
+  { name: 'Lessons', href: '/school-admin/lessons', icon: 'GraduationCap' },
+  { name: 'AI Tutor', href: '/school-admin/chat', icon: 'MessageSquare' },
+  { name: 'Education Plans', href: '/school-admin/education-plans', icon: 'CalendarRange' },
+  { name: 'Tokens', href: '/school-admin/tokens', icon: 'Coins' },
 ]
 
 export default async function SchoolAdminLayout({

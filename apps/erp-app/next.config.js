@@ -68,6 +68,16 @@ const nextConfig = {
         destination: `${marketingBaseUrl}/services`,
         permanent: false,
       },
+      {
+        source: '/teacher',
+        destination: '/school-admin',
+        permanent: false,
+      },
+      {
+        source: '/teacher/:path*',
+        destination: '/school-admin/:path*',
+        permanent: false,
+      },
     ]
   },
   webpack: (config, { isServer }) => {

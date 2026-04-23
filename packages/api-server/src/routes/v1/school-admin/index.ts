@@ -5,11 +5,13 @@ import { profileSchema, classSchema, errorSchema, successResponse} from '../../s
 
 /**
  * School Admin routes
- * All routes require school_superadmin role
+ * Transitional role support:
+ * - school_superadmin (primary)
+ * - teacher (legacy during migration)
  */
 export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void> {
   // Apply role check to all routes
-  fastify.addHook('preHandler', requireRole('school_superadmin'))
+  fastify.addHook('preHandler', requireRole('school_superadmin', 'teacher'))
 
   // Dashboard overview
   fastify.get('/dashboard', {
