@@ -106,8 +106,9 @@ export function getTokenCost(
       }
       return cost
     }
+    case 'learner_chat':
     case 'student_chat':
-      return getTokens(byKey, TOKEN_SETTING_KEYS.STUDENT_CHAT_PER_MESSAGE)
+      return getTokens(byKey, TOKEN_SETTING_KEYS.LEARNER_CHAT_PER_MESSAGE)
     case 'teacher_chat':
       return getTokens(byKey, TOKEN_SETTING_KEYS.TEACHER_CHAT_PER_MESSAGE)
     default:

@@ -57,7 +57,7 @@ export interface AITutorLabels {
   createTutorSession?: string
   newSession?: string
   loading?: string
-  noSessionsStudent?: string
+  noSessions?: string
   startNewSession?: string
   untitledConversation?: string
   deleteSessionAria?: string
@@ -74,12 +74,12 @@ export interface AITutorLabels {
   shortAnswers?: string
   shortAnswersHint?: string
   inputPlaceholder?: string
-  inputPlaceholderStudent?: string
+  inputPlaceholderFallback?: string
   sendMessageAria?: string
   aiGeneratedDisclaimer?: string
   selectSession?: string
   noSessionSelected?: string
-  chooseSessionStudent?: string
+  chooseSession?: string
   createOrSelectSession?: string
   deleteConfirm?: string
   deleteSuccess?: string
@@ -90,7 +90,6 @@ export interface AITutorLabels {
 interface AITutorProps {
   documents?: Document[]
   documentsPath?: string
-  isStudent?: boolean // If true, hide create/delete buttons and show class names
   labels?: AITutorLabels
   getConversations: () => Promise<{ data?: any[]; error?: string }>
   getConversation: (id: string) => Promise<{ data?: any; error?: string }>
@@ -113,7 +112,7 @@ const DEFAULT_AITUTOR_LABELS: AITutorLabels = {
   createTutorSession: 'Create Tutor Session',
   newSession: 'New session',
   loading: 'Loading...',
-  noSessionsStudent: 'No tutor sessions from your classes yet.',
+  noSessions: 'No tutor sessions yet.',
   startNewSession: 'Start a new session to begin.',
   untitledConversation: 'Untitled Conversation',
   deleteSessionAria: 'Delete tutor session',
@@ -130,12 +129,12 @@ const DEFAULT_AITUTOR_LABELS: AITutorLabels = {
   shortAnswers: 'Short answers',
   shortAnswersHint: '(clear = detailed)',
   inputPlaceholder: 'Ask about lesson planning, exams, teaching strategies...',
-  inputPlaceholderStudent: 'Ask a question...',
+  inputPlaceholderFallback: 'Ask a question...',
   sendMessageAria: 'Send message',
   aiGeneratedDisclaimer: 'AI-generated. Verify important information.',
   selectSession: 'Select a session',
   noSessionSelected: 'No session selected',
-  chooseSessionStudent: 'Choose a tutor session from the list to start.',
+  chooseSession: 'Choose a tutor session from the list to start.',
   createOrSelectSession: 'Create a new session or select one from the list.',
   deleteConfirm: 'Are you sure you want to delete this conversation?',
   deleteSuccess: 'Conversation deleted.',
@@ -146,7 +145,6 @@ const DEFAULT_AITUTOR_LABELS: AITutorLabels = {
 export function AITutor({
   documents = [],
   documentsPath = '/teacher/documents',
-  isStudent = false,
   labels = {},
   getConversations,
   getConversation,
@@ -213,9 +211,7 @@ export function AITutor({
   }
 
   const handleNewConversation = async () => {
-    if (isStudent) return // Students can't create conversations
-    
-    // Open dialog for teachers to set title
+    // Open dialog for creating a titled session
     setNewConversationTitle('')
     setNewConversationDocs(selectedDocuments)
     setShowNewConversationDialog(true)
@@ -320,7 +316,7 @@ export function AITutor({
   return (
     <>
       {/* New Conversation Dialog */}
-      {showNewConversationDialog && !isStudent && (
+      {showNewConversationDialog && (
         <div className="fixed inset-0 z-[100] overflow-y-auto">
           {/* Backdrop */}
           <div
@@ -435,24 +431,22 @@ export function AITutor({
       <div className="flex flex-1 min-h-[420px] h-[calc(100vh-6rem)] rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       {/* Sidebar - Conversations */}
       <div className="w-72 sm:w-80 flex-shrink-0 border-r border-gray-100 flex flex-col bg-gray-50/50 min-h-0">
-        {!isStudent && (
-          <div className="p-3 border-b border-gray-100">
-            <button
-              onClick={handleNewConversation}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              {L.newSession}
-            </button>
-          </div>
-        )}
+        <div className="p-3 border-b border-gray-100">
+          <button
+            onClick={handleNewConversation}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            {L.newSession}
+          </button>
+        </div>
 
         <div className="flex-1 overflow-y-auto py-2">
           {isLoadingConversations ? (
             <div className="p-4 text-center text-sm text-gray-500">{L.loading}</div>
           ) : conversations.length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-500">
-              {isStudent ? L.noSessionsStudent : L.startNewSession}
+              {L.noSessions ?? L.startNewSession}
             </div>
           ) : (
             <div className="px-2 space-y-1">
@@ -476,29 +470,22 @@ export function AITutor({
                       <p className="text-xs text-gray-500 mt-0.5">
                         {new Date(conv.updated_at).toLocaleDateString()}
                       </p>
-                      {isStudent && conv.class_name && (
-                        <p className="text-xs text-green-600 mt-1 font-medium">
-                          {conv.class_name}
-                        </p>
-                      )}
                       {conv.document_ids && conv.document_ids.length > 0 && (
                         <p className="text-xs text-blue-600 mt-1">
                           {(L.documentsCount ?? '{count} document(s)').replace('{count}', String(conv.document_ids.length))}
                         </p>
                       )}
                     </button>
-                    {!isStudent && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteConversation(conv.id)
-                        }}
-                        className="flex-shrink-0 p-1 rounded hover:bg-red-100 text-red-600"
-                        aria-label="Delete tutor session"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteConversation(conv.id)
+                      }}
+                      className="flex-shrink-0 p-1 rounded hover:bg-red-100 text-red-600"
+                      aria-label="Delete tutor session"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -634,9 +621,8 @@ export function AITutor({
             {/* Input Area */}
             <div className="flex-shrink-0 border-t border-gray-200 p-4 bg-white">
               <div className="mx-auto max-w-3xl space-y-3">
-                {/* Document Selection - Only for teachers */}
-                {!isStudent && (
-                  documents.length > 0 ? (
+                {/* Document Selection */}
+                {documents.length > 0 ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium text-gray-500">{L.documentsLabel}</span>
                     {documents.map((doc) => (
@@ -660,17 +646,16 @@ export function AITutor({
                       </label>
                     ))}
                   </div>
-                  ) : (
+                ) : (
                   <p className="text-xs text-gray-500">
                     <a href={documentsPath} className="text-blue-600 hover:underline">{L.uploadDocumentsLink}</a>
                     {' '}{L.uploadDocumentsHint}
                   </p>
-                  )
                 )}
 
                 {/* Options row: RAG + Short answer */}
                 <div className="flex flex-wrap items-center gap-4 py-1">
-                  {!isStudent && documents.length > 0 && (
+                  {documents.length > 0 && (
                     <label className="inline-flex items-center gap-2 cursor-pointer select-none">
                       <input
                         type="checkbox"
@@ -723,7 +708,7 @@ export function AITutor({
                         }
                       }}
                       rows={2}
-                      placeholder={isStudent ? L.inputPlaceholderStudent : L.inputPlaceholder}
+                      placeholder={L.inputPlaceholder ?? L.inputPlaceholderFallback}
                       className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none bg-gray-50/80"
                     />
                   </div>
@@ -753,20 +738,18 @@ export function AITutor({
                 <Bot className="h-8 w-8" />
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-1">
-                {isStudent ? L.selectSession : L.noSessionSelected}
+                {L.noSessionSelected}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                {isStudent ? L.chooseSessionStudent : L.createOrSelectSession}
+                {L.chooseSession ?? L.createOrSelectSession}
               </p>
-              {!isStudent && (
-                <button
-                  onClick={handleNewConversation}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  <Plus className="h-4 w-4" />
-                  {L.newSession}
-                </button>
-              )}
+              <button
+                onClick={handleNewConversation}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                <Plus className="h-4 w-4" />
+                {L.newSession}
+              </button>
             </div>
           </div>
         )}

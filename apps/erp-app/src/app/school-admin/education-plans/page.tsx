@@ -28,7 +28,7 @@ type PlanRow = {
   created_at: string
 }
 
-async function getTeacherData() {
+async function getAdminData() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -38,21 +38,21 @@ async function getTeacherData() {
     .eq('user_id', user.id)
     .single()
   if (!profile?.organization_id) return null
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+  return { adminId: profile.id, organizationId: profile.organization_id }
 }
 
-async function getPlanStats(teacherId: string, organizationId: string) {
+async function getPlanStats(adminId: string, organizationId: string) {
   const supabase = await createClient()
   try {
     const { count: total } = await supabase
       .from('education_plans')
       .select('*', { count: 'exact', head: true })
-      .eq('teacher_id', teacherId)
+      .eq('teacher_id', adminId)
       .eq('organization_id', organizationId)
     const { count: shared } = await supabase
       .from('education_plans')
       .select('*', { count: 'exact', head: true })
-      .eq('teacher_id', teacherId)
+      .eq('teacher_id', adminId)
       .eq('organization_id', organizationId)
       .eq('is_shared_with_students', true)
     return { total: total ?? 0, shared: shared ?? 0 }
@@ -62,7 +62,7 @@ async function getPlanStats(teacherId: string, organizationId: string) {
 }
 
 async function getPlans(
-  teacherId: string,
+  adminId: string,
   organizationId: string,
   params: { search?: string; classId?: string; shared?: string }
 ): Promise<PlanRow[]> {
@@ -71,7 +71,7 @@ async function getPlans(
     const { data: plans, error } = await supabase
       .from('education_plans')
       .select('id, name, description, class_id, period_months, sessions_per_week, hours_per_session, is_shared_with_students, created_at')
-      .eq('teacher_id', teacherId)
+      .eq('teacher_id', adminId)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
     if (error) {
@@ -102,16 +102,16 @@ async function getPlans(
   }
 }
 
-async function getClasses(teacherId: string, organizationId: string) {
+async function getClasses(adminId: string, organizationId: string) {
   const supabase = await createClient()
   const admin = createAdminClient()
   const { data: primary } = await supabase
     .from('classes')
     .select('id, name')
     .eq('organization_id', organizationId)
-    .eq('teacher_id', teacherId)
+    .eq('teacher_id', adminId)
     .eq('is_active', true)
-  const { data: ct } = await admin.from('class_teachers').select('class_id').eq('teacher_id', teacherId)
+  const { data: ct } = await admin.from('class_teachers').select('class_id').eq('teacher_id', adminId)
   const assignedIds = ct?.map((x) => x.class_id) || []
   let extra: Array<{ id: string; name: string }> = []
   if (assignedIds.length > 0) {
@@ -126,20 +126,20 @@ async function getClasses(teacherId: string, organizationId: string) {
   return Array.from(new Map(all.map((c) => [c.id, c])).values())
 }
 
-export default async function TeacherEducationPlansPage({
+export default async function SchoolAdminEducationPlansPage({
   searchParams,
 }: {
   searchParams: Promise<{ search?: string; classId?: string; shared?: string }>
 }) {
-  const teacherData = await getTeacherData()
-  if (!teacherData) redirect('/auth/login')
-  const { teacherId, organizationId } = teacherData
+  const adminData = await getAdminData()
+  if (!adminData) redirect('/auth/login')
+  const { adminId, organizationId } = adminData
   const params = await searchParams
 
   const [plans, stats, classes, t] = await Promise.all([
-    getPlans(teacherId, organizationId, params),
-    getPlanStats(teacherId, organizationId),
-    getClasses(teacherId, organizationId),
+    getPlans(adminId, organizationId, params),
+    getPlanStats(adminId, organizationId),
+    getClasses(adminId, organizationId),
     getTranslations('teacherEducationPlans'),
   ])
   const classesMap = Object.fromEntries(classes.map((c) => [c.id, c.name]))

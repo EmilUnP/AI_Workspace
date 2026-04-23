@@ -83,14 +83,16 @@ export const schoolAdminEndpoints = {
   reports: {
     overview: `${BASE}/school-admin/reports`,
     teachers: `${BASE}/school-admin/reports/teachers`,
+    learners: `${BASE}/school-admin/reports/students`,
+    // Deprecated alias kept for compatibility.
     students: `${BASE}/school-admin/reports/students`,
   },
 }
 
 /**
- * Teacher endpoints
+ * School-admin teaching endpoints (legacy `/teacher/*` paths).
  */
-export const teacherEndpoints = {
+export const schoolAdminTeachingEndpoints = {
   // Dashboard
   dashboard: `${BASE}/teacher/dashboard`,
   // Exams
@@ -112,6 +114,11 @@ export const teacherEndpoints = {
     get: (id: string) => `${BASE}/teacher/classes/${id}`,
     update: (id: string) => `${BASE}/teacher/classes/${id}`,
     delete: (id: string) => `${BASE}/teacher/classes/${id}`,
+    learners: (id: string) => `${BASE}/teacher/classes/${id}/students`,
+    addLearner: (id: string) => `${BASE}/teacher/classes/${id}/students`,
+    removeLearner: (classId: string, learnerId: string) =>
+      `${BASE}/teacher/classes/${classId}/students/${learnerId}`,
+    // Deprecated aliases
     students: (id: string) => `${BASE}/teacher/classes/${id}/students`,
     addStudent: (id: string) => `${BASE}/teacher/classes/${id}/students`,
     removeStudent: (classId: string, studentId: string) =>
@@ -133,11 +140,16 @@ export const teacherEndpoints = {
     exam: (examId: string) => `${BASE}/teacher/analytics/exam/${examId}`,
   },
 }
+/** @deprecated Use schoolAdminTeachingEndpoints */
+export const teacherEndpoints = schoolAdminTeachingEndpoints
 
 /**
- * Student endpoints
+ * Learner endpoints
+ *
+ * NOTE: These routes are legacy-compatible and may map to old `/student/*` API paths
+ * where backend migration is still in progress.
  */
-export const studentEndpoints = {
+export const learnerEndpoints = {
   // Dashboard
   dashboard: `${BASE}/student/dashboard`,
   // Classes

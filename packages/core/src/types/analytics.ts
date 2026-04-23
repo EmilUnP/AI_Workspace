@@ -73,14 +73,14 @@ export interface OrganizationAnalytics {
   time_range: AnalyticsTimeRange
   overview: OrganizationOverview
   teacher_performance: TeacherPerformance[]
-  student_performance: StudentPerformanceSummary
+  learner_performance: LearnerPerformanceSummary
   exam_analytics: ExamAnalyticsSummary
   usage: OrganizationUsage
 }
 
 export interface OrganizationOverview {
   total_teachers: number
-  total_students: number
+  total_learners: number
   total_classes: number
   total_exams: number
   total_lessons: number
@@ -92,19 +92,19 @@ export interface TeacherPerformance {
   teacher_id: string
   teacher_name: string
   classes_count: number
-  students_count: number
+  learners_count: number
   exams_created: number
   lessons_created: number
   average_class_score: number
-  student_engagement_rate: number
+  learner_engagement_rate: number
 }
 
-export interface StudentPerformanceSummary {
+export interface LearnerPerformanceSummary {
   average_score: number
   score_distribution: ScoreDistribution
   improvement_trend: TimeSeriesData[]
-  top_performers: StudentSummary[]
-  at_risk_students: StudentSummary[]
+  top_performers: LearnerSummary[]
+  at_risk_learners: LearnerSummary[]
 }
 
 export interface ScoreDistribution {
@@ -115,9 +115,9 @@ export interface ScoreDistribution {
   poor: number // 0-29%
 }
 
-export interface StudentSummary {
-  student_id: string
-  student_name: string
+export interface LearnerSummary {
+  learner_id: string
+  learner_name: string
   average_score: number
   exams_completed: number
   trend: 'improving' | 'declining' | 'stable'
@@ -148,13 +148,13 @@ export interface TeacherAnalytics {
   time_range: AnalyticsTimeRange
   classes: ClassAnalytics[]
   exam_performance: TeacherExamPerformance
-  student_engagement: EngagementMetrics
+  learner_engagement: EngagementMetrics
 }
 
 export interface ClassAnalytics {
   class_id: string
   class_name: string
-  student_count: number
+  learner_count: number
   average_score: number
   completion_rate: number
   recent_activity: ActivitySummary
@@ -177,8 +177,8 @@ export interface QuestionEffectiveness {
 }
 
 export interface EngagementMetrics {
-  active_students: number
-  total_students: number
+  active_learners: number
+  total_learners: number
   engagement_rate: number
   average_login_frequency: number
   assignment_completion_rate: number
@@ -192,11 +192,11 @@ export interface ActivitySummary {
 }
 
 /**
- * Student Analytics
+ * Learner Analytics
  */
-export interface StudentAnalytics {
-  student_id: string
-  overview: StudentOverview
+export interface LearnerAnalytics {
+  learner_id: string
+  overview: LearnerOverview
   exam_history: ExamHistoryItem[]
   progress: LearningProgress
   strengths: string[]
@@ -204,7 +204,7 @@ export interface StudentAnalytics {
   recommendations: string[]
 }
 
-export interface StudentOverview {
+export interface LearnerOverview {
   total_exams_taken: number
   average_score: number
   total_time_spent_hours: number
@@ -256,7 +256,7 @@ export interface Badge {
  * Report Generation Types
  */
 export interface ReportRequest {
-  type: 'organization' | 'class' | 'student' | 'exam'
+  type: 'organization' | 'class' | 'learner' | 'exam'
   entity_id: string
   time_range: AnalyticsTimeRange
   format: 'pdf' | 'excel' | 'csv'

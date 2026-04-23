@@ -24,9 +24,9 @@ interface CreateExamInput {
   isPublished: boolean
   language?: string // Primary language code (e.g., 'en', 'az', 'tr')
   translations?: Record<string, Question[]> // Translations in other languages
-  /** Teacher setting: show correct answers in student results (default true) */
+  /** Teacher setting: show correct answers in learner results (default true) */
   showCorrectAnswers?: boolean
-  /** Teacher setting: show explanations in student results (default true) */
+  /** Teacher setting: show explanations in learner results (default true) */
   showExplanations?: boolean
 }
 

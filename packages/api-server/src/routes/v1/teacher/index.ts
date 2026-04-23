@@ -87,7 +87,8 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
         overview: {
           total_classes: classes.length,
           total_exams: examCount,
-          total_students: 0, // Would calculate from enrollments
+          total_learners: 0, // Would calculate from enrollments
+          total_students: 0, // deprecated alias
           token_balance: balance,
         },
         recent_exams: exams.slice(0, 5),
@@ -1098,10 +1099,10 @@ pagination: {
     })
   })
 
-  // Get class students
+  // Get class learners
   fastify.get('/classes/:id/students', {
     schema: {
-      description: 'Get students in class',
+      description: 'Get learners in class',
       tags: ['Teacher', 'Classes'],
       security: [{ bearerAuth: [] }],
     },
@@ -1117,11 +1118,11 @@ pagination: {
       })
     }
 
-    const students = await classRepository.getStudents(id)
+    const learners = await classRepository.getLearners(id)
 
     return reply.send({
       success: true,
-      data: students,
+      data: learners,
     })
   })
 
@@ -1144,13 +1145,15 @@ pagination: {
         summary: {
           total_classes: classes.length,
           total_exams: examCount,
-          total_students: 0,
+          total_learners: 0,
+          total_students: 0, // deprecated alias
           average_score: 0,
         },
         classes: classes.map((c) => ({
           id: c.id,
           name: c.name,
-          student_count: 0,
+          learner_count: 0,
+          student_count: 0, // deprecated alias
           average_score: 0,
         })),
       },

@@ -76,7 +76,8 @@ export const TOKEN_ACTION_TYPES = {
   LESSON_IMAGES: 'lesson_images',
   LESSON_AUDIO: 'lesson_audio',
   COURSE_GENERATION: 'course_generation',
-  STUDENT_CHAT: 'student_chat',
+  /** Backward-compatible DB value for learner chat usage. */
+  LEARNER_CHAT: 'student_chat',
   TEACHER_CHAT: 'teacher_chat',
   PURCHASE: 'purchase',
   ADMIN_GRANT: 'admin_grant',
@@ -95,7 +96,8 @@ export const TOKEN_SETTING_KEYS = {
   LESSON_IMAGES_PER_BATCH: 'lesson_images_per_batch',
   LESSON_AUDIO: 'lesson_audio',
   COURSE_BASE: 'course_base',
-  STUDENT_CHAT_PER_MESSAGE: 'student_chat_per_message',
+  /** Backward-compatible DB key for learner chat usage. */
+  LEARNER_CHAT_PER_MESSAGE: 'student_chat_per_message',
   TEACHER_CHAT_PER_MESSAGE: 'teacher_chat_per_message',
   /** Tokens granted automatically to each new user (platform owner configurable). */
   INITIAL_TOKENS_FOR_NEW_USERS: 'initial_tokens_for_new_users',
@@ -120,6 +122,8 @@ export interface TokenCostParams {
     /** Final exam question count (course includes a generated exam; cost uses exam_per_10_questions) */
     exam_question_count?: number
   }
+  learner_chat?: Record<string, never>
+  /** @deprecated use learner_chat */
   student_chat?: Record<string, never>
   teacher_chat?: Record<string, never>
 }

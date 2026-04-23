@@ -78,7 +78,7 @@ export default async function TeacherEducationPlanDetailPage({
         {plan.is_shared_with_students && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700">
             <Share2 className="h-4 w-4" />
-            {t('sharedWithStudents')}
+            {t('sharedWithLearners')}
           </span>
         )}
       </div>

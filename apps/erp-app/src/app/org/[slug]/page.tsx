@@ -169,7 +169,7 @@ export default async function OrganizationPublicPage({
             accent="green"
             items={[
               { label: t('metricsTeachersLabel'), value: `${stats.teachers}`, hint: t('metricsTeachersHint') },
-              { label: t('metricsStudentsLabel'), value: `${stats.students}`, hint: t('metricsStudentsHint') },
+              { label: t('metricsLearnersLabel'), value: `${stats.students}`, hint: t('metricsLearnersHint') },
               { label: t('metricsActiveClassesLabel'), value: `${stats.classes}`, hint: t('metricsActiveClassesHint') },
               { label: t('metricsModeLabel'), value: t('metricsModeValue'), hint: t('metricsModeHint') },
             ]}

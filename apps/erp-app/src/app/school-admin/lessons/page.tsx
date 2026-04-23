@@ -41,7 +41,7 @@ function getLanguageDisplay(lang: string): { countryCode: string; label: string 
   return { countryCode, label }
 }
 
-async function getTeacherInfo() {
+async function getAdminInfo() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -51,26 +51,26 @@ async function getTeacherInfo() {
     .eq('user_id', user.id)
     .single()
   if (!profile?.organization_id) return null
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+  return { adminId: profile.id, organizationId: profile.organization_id }
 }
 
-export default async function TeacherLessonsPage({
+export default async function SchoolAdminLessonsPage({
   searchParams,
 }: {
   searchParams: Promise<{ search?: string; status?: string; page?: string; classId?: string }>
 }) {
-  const teacherData = await getTeacherInfo()
-  if (!teacherData) redirect('/auth/login')
+  const adminData = await getAdminInfo()
+  if (!adminData) redirect('/auth/login')
 
-  const { teacherId, organizationId } = teacherData
+  const { adminId, organizationId } = adminData
   const params = await searchParams
   const t = await getTranslations('teacherLessons')
   const supabase = await createClient()
 
-  const [lessonsResult, stats, teacherClasses] = await Promise.all([
-    getTeacherLessons(supabase, teacherId, organizationId, params),
-    getTeacherLessonStats(supabase, teacherId, organizationId),
-    getTeacherClasses(supabase, teacherId),
+  const [lessonsResult, stats, adminClasses] = await Promise.all([
+    getTeacherLessons(supabase, adminId, organizationId, params),
+    getTeacherLessonStats(supabase, adminId, organizationId),
+    getTeacherClasses(supabase, adminId),
   ])
 
   const { data: lessons, count: totalLessons, page: currentPage } = lessonsResult
@@ -158,7 +158,7 @@ export default async function TeacherLessonsPage({
         </form>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {teacherClasses.length > 0 && (
+          {adminClasses.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-gray-500 whitespace-nowrap">{t('classFilter')}</span>
               <div className="flex flex-wrap gap-1">
@@ -168,7 +168,7 @@ export default async function TeacherLessonsPage({
                 >
                   {t('allClasses')}
                 </Link>
-                {teacherClasses.map((c) => (
+                {adminClasses.map((c) => (
                   <Link
                     key={c.id}
                     href={`/school-admin/lessons?classId=${c.id}${params.status ? `&status=${params.status}` : ''}`}

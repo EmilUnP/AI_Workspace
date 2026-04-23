@@ -130,7 +130,7 @@ export const courseRepository = {
   },
 
   /**
-   * Get a course by access code (for students) — only published, non-archived
+   * Get a course by access code (for learners) — only published, non-archived
    */
   async getByAccessCode(accessCode: string): Promise<CourseRow | null> {
     const supabase = getDbClient()
@@ -179,16 +179,16 @@ export const courseRepository = {
   },
 
   /**
-   * Get all courses for a teacher
+   * Get all courses for an owner profile id.
    */
-  async getByTeacher(teacherId: string, organizationId?: string): Promise<CourseRow[]> {
+  async getByOwner(ownerId: string, organizationId?: string): Promise<CourseRow[]> {
     const supabase = getDbClient()
     
     const courseListColumns = 'id, organization_id, created_by, title, description, subject, grade_level, difficulty_level, language, course_style, access_code, lesson_ids, total_lessons, estimated_duration_minutes, is_published, is_archived, metadata, created_at, updated_at'
     let query = supabase
       .from('courses')
       .select(courseListColumns)
-      .eq('created_by', teacherId)
+      .eq('created_by', ownerId)
       .eq('is_archived', false)
       .order('created_at', { ascending: false })
     
@@ -205,7 +205,6 @@ export const courseRepository = {
     
     return (data || []) as CourseRow[]
   },
-
   /**
    * Update a course
    */

@@ -136,9 +136,9 @@ export const examRepository = {
   },
 
   /**
-   * Get available exams for student
+   * Get available exams for learner
    */
-  async getAvailableForStudent(_studentId: string, classIds: string[]) {
+  async getAvailableForLearner(_learnerId: string, classIds: string[]) {
     const supabase = getDbClient()
 
     const now = new Date().toISOString()
@@ -311,7 +311,7 @@ export const examRepository = {
    */
   async createSubmission(
     examId: string,
-    studentId: string,
+    learnerId: string,
     attemptNumber: number
   ): Promise<ExamSubmission | null> {
     const supabase = getDbClient()
@@ -320,7 +320,7 @@ export const examRepository = {
       .from('exam_submissions')
       .insert({
         exam_id: examId,
-        student_id: studentId,
+        student_id: learnerId,
         answers: [],
         started_at: new Date().toISOString(),
         time_spent_seconds: 0,
@@ -369,7 +369,7 @@ export const examRepository = {
   },
 
   /**
-   * Get student submissions for an exam
+   * Get learner submissions for an exam
    */
   async getSubmissions(examId: string) {
     const supabase = getDbClient()
@@ -392,22 +392,22 @@ export const examRepository = {
   },
 
   /**
-   * Get student's submission for an exam
+   * Get learner's submission for an exam
    */
-  async getStudentSubmission(examId: string, studentId: string) {
+  async getLearnerSubmission(examId: string, learnerId: string) {
     const supabase = getDbClient()
 
     const { data, error } = await supabase
       .from('exam_submissions')
       .select('*')
       .eq('exam_id', examId)
-      .eq('student_id', studentId)
+      .eq('student_id', learnerId)
       .order('attempt_number', { ascending: false })
       .limit(1)
       .single()
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error getting student submission:', error)
+      console.error('Error getting learner submission:', error)
       return null
     }
 

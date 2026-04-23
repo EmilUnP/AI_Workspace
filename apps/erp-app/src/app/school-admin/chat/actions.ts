@@ -23,7 +23,7 @@ export interface SendMessageInput {
 }
 
 /**
- * Get all conversations for the current teacher
+ * Get all conversations for the current school admin
  */
 export async function getConversations() {
   const supabase = await createClient()
@@ -170,7 +170,7 @@ export async function sendMessage(input: SendMessageInput) {
     return { error: 'Profile not found' }
   }
 
-  // Verify conversation belongs to teacher
+  // Verify conversation belongs to school admin
   const { data: conversation, error: convError } = await supabase
     .from('teacher_chat_conversations')
     .select('document_ids, context')

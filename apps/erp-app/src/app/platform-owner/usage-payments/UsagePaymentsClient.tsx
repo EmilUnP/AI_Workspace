@@ -29,6 +29,9 @@ import {
   LineChart,
   HorizontalBarChart,
 } from '@eduator/ui'
+import { TOKEN_ACTION_TYPES } from '@eduator/core/types/token'
+
+const LEARNER_CHAT_ACTION = TOKEN_ACTION_TYPES.LEARNER_CHAT
 
 const ACTION_LABELS: Record<string, string> = {
   exam_generation: 'Exam generation',
@@ -39,7 +42,7 @@ const ACTION_LABELS: Record<string, string> = {
   lesson_images: 'Lesson images',
   lesson_audio: 'Lesson audio',
   course_generation: 'Course generation',
-  student_chat: 'Learner AI chat',
+  [LEARNER_CHAT_ACTION]: 'Learner AI chat',
   teacher_chat: 'Teacher AI chat',
   purchase: 'Token purchase',
   admin_grant: 'Admin grant',
@@ -142,7 +145,7 @@ const ACTION_TYPES = [
   'lesson_images',
   'lesson_audio',
   'course_generation',
-  'student_chat',
+  LEARNER_CHAT_ACTION,
   'teacher_chat',
   'purchase',
   'admin_grant',
@@ -157,7 +160,7 @@ const BREAKDOWN_ACTION_TYPES = [
   'education_plan_generation',
   'lesson_generation',
   'course_generation',
-  'student_chat',
+  LEARNER_CHAT_ACTION,
   'teacher_chat'
 ] as const
 

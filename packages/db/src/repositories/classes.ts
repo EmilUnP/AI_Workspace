@@ -165,9 +165,9 @@ export const classRepository = {
   },
 
   /**
-   * Get classes for a student
+   * Get classes for a learner profile id
    */
-  async getForStudent(studentId: string) {
+  async getForLearner(learnerId: string) {
     const supabase = getDbClient()
 
     const { data, error } = await supabase
@@ -178,11 +178,11 @@ export const classRepository = {
           teacher:profiles!teacher_id(id, full_name, avatar_url)
         )
       `)
-      .eq('student_id', studentId)
+      .eq('student_id', learnerId)
       .eq('status', 'active')
 
     if (error) {
-      console.error('Error getting student classes:', error)
+      console.error('Error getting learner classes:', error)
       return []
     }
 
@@ -281,19 +281,19 @@ export const classRepository = {
   },
 
   /**
-   * Enroll student in class
+   * Enroll learner in class
    */
-  async enrollStudent(classId: string, studentId: string): Promise<boolean> {
+  async enrollLearner(classId: string, learnerId: string): Promise<boolean> {
     const supabase = getDbClient()
 
     const { error } = await supabase.from('class_enrollments').insert({
       class_id: classId,
-      student_id: studentId,
+      student_id: learnerId,
       status: 'active',
     })
 
     if (error) {
-      console.error('Error enrolling student:', error)
+      console.error('Error enrolling learner:', error)
       return false
     }
 
@@ -301,19 +301,19 @@ export const classRepository = {
   },
 
   /**
-   * Unenroll student from class
+   * Unenroll learner from class
    */
-  async unenrollStudent(classId: string, studentId: string): Promise<boolean> {
+  async unenrollLearner(classId: string, learnerId: string): Promise<boolean> {
     const supabase = getDbClient()
 
     const { error } = await supabase
       .from('class_enrollments')
       .update({ status: 'dropped' })
       .eq('class_id', classId)
-      .eq('student_id', studentId)
+      .eq('student_id', learnerId)
 
     if (error) {
-      console.error('Error unenrolling student:', error)
+      console.error('Error unenrolling learner:', error)
       return false
     }
 
@@ -321,9 +321,9 @@ export const classRepository = {
   },
 
   /**
-   * Get students in a class
+   * Get learners in a class
    */
-  async getStudents(classId: string) {
+  async getLearners(classId: string) {
     const supabase = getDbClient()
 
     const { data, error } = await supabase
@@ -343,7 +343,7 @@ export const classRepository = {
       .order('enrolled_at', { ascending: true })
 
     if (error) {
-      console.error('Error getting class students:', error)
+      console.error('Error getting class learners:', error)
       return []
     }
 
@@ -353,7 +353,7 @@ export const classRepository = {
   /**
    * Join class by code
    */
-  async joinByCode(code: string, studentId: string): Promise<{ success: boolean; error?: string }> {
+  async joinByCode(code: string, learnerId: string): Promise<{ success: boolean; error?: string }> {
     const classData = await this.getByCode(code)
 
     if (!classData) {
@@ -364,7 +364,7 @@ export const classRepository = {
       return { success: false, error: 'Class is not active' }
     }
 
-    const enrolled = await this.enrollStudent(classData.id, studentId)
+    const enrolled = await this.enrollLearner(classData.id, learnerId)
 
     if (!enrolled) {
       return { success: false, error: 'Failed to enroll in class' }

@@ -32,7 +32,7 @@
     "forgotPassword": "Şifrəni unutmusunuz?",
     "signIn": "Daxil ol",
     "signingIn": "Daxil olunur...",
-    "teacherOrStudent": "Müəllim və ya Tələbə?",
+    "teacherOrLearner": "Müəllim və ya Öyrənən?",
     "goToSaasPortal": "SAAS Portalına keçin",
     "serviceUnavailable": "Autentifikasiya xidməti müvəqqəti olaraq əlçatan deyil. Zəhmət olmasa bir neçə dəqiqə sonra yenidən cəhd edin.",
     "callbackError": "Daxil olma tamamlanmadı. Zəhmət olmasa yenidən cəhd edin.",
@@ -56,15 +56,15 @@
   "forgotPassword": {
     "title": "Şifrəni",
     "titleHighlight": "unutdunuz?",
-    "description": "ERP (admin) hesabları üçün şifrənizi sıfırlamaq üçün platforma və ya məktəb administratorunuzla əlaqə saxlayın. Müəllim və ya tələbəsinizsə, şifrənizi sıfırlamaq üçün SAAS portalından istifadə edin.",
+    "description": "ERP (admin) hesabları üçün şifrənizi sıfırlamaq üçün platforma və ya məktəb administratorunuzla əlaqə saxlayın. Müəllim və ya öyrənənsinizsə, şifrənizi sıfırlamaq üçün SAAS portalından istifadə edin.",
     "backToSignIn": "Daxil olmağa qayıt",
-    "goToSaasPortal": "Mən müəllim və ya tələbəyəm — SAAS portalına keç"
+    "goToSaasPortal": "Mən müəllim və ya öyrənənyəm — SAAS portalına keç"
   },
   "orgPublic": {
     "metricsTeachersLabel": "Müəllimlər",
     "metricsTeachersHint": "Aktiv heyət üzvləri",
-    "metricsStudentsLabel": "Tələbələr",
-    "metricsStudentsHint": "Qeydiyyatdan keçmiş öyrənənlər",
+    "metricsLearnersLabel": "Öyrənənlər",
+    "metricsLearnersHint": "Qeydiyyatdan keçmiş öyrənənlər",
     "metricsActiveClassesLabel": "Aktiv siniflər",
     "metricsActiveClassesHint": "Davam edən sinif qrupları",
     "metricsModeLabel": "Qurum rejimi",
@@ -73,7 +73,7 @@
     "aboutTitle": "{name} haqqında",
     "aboutFallback": "{name} səhifəsinə xoş gəlmisiniz. Biz keyfiyyətli təhsilə və güclü öyrənmə icmasına sadiqik.",
     "flowOrganizeTitle": "Təşkil et",
-    "flowOrganizeDescription": "Müəllimləri, tələbələri və sinif strukturunu vahid idarəetmədən yönəldin.",
+    "flowOrganizeDescription": "Müəllimləri, öyrənənləri və sinif strukturunu vahid idarəetmədən yönəldin.",
     "flowTeachTitle": "Tədris et",
     "flowTeachDescription": "Dərs və qiymətləndirmələri sabit iş axınları ilə həyata keçirin.",
     "flowMonitorTitle": "İzlə",

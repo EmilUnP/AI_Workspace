@@ -4,8 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient, isSuccess } from './client'
 import {
   platformOwnerEndpoints,
-  teacherEndpoints,
-  studentEndpoints,
+  schoolAdminTeachingEndpoints,
+  learnerEndpoints,
   profileEndpoints,
 } from './endpoints'
 import type {
@@ -47,12 +47,12 @@ export const queryKeys = {
   // Classes
   classes: (filters?: Record<string, unknown>) => ['classes', filters] as const,
   class: (id: string) => ['classes', id] as const,
-  classStudents: (classId: string) => ['classes', classId, 'students'] as const,
+  classLearners: (classId: string) => ['classes', classId, 'learners'] as const,
   
-  // Student
-  availableExams: ['student', 'exams'] as const,
-  studentProgress: ['student', 'progress'] as const,
-  examHistory: ['student', 'exam-history'] as const,
+  // Learner
+  availableExams: ['learner', 'exams'] as const,
+  learnerProgress: ['learner', 'progress'] as const,
+  examHistory: ['learner', 'exam-history'] as const,
   
   // Analytics
   platformAnalytics: ['analytics', 'platform'] as const,
@@ -228,7 +228,7 @@ export function useTeacherExams(params?: { page?: number; perPage?: number; clas
     queryKey: queryKeys.exams(params),
     queryFn: async () => {
       const response = await apiClient.get<PaginatedResponse<Exam>>(
-        teacherEndpoints.exams.list,
+        schoolAdminTeachingEndpoints.exams.list,
         params as Record<string, string | number | boolean>
       )
       if (!isSuccess(response)) throw new Error(response.error?.message)
@@ -241,7 +241,7 @@ export function useExam(id: string) {
   return useQuery({
     queryKey: queryKeys.exam(id),
     queryFn: async () => {
-      const response = await apiClient.get<Exam>(teacherEndpoints.exams.get(id))
+      const response = await apiClient.get<Exam>(schoolAdminTeachingEndpoints.exams.get(id))
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -254,7 +254,7 @@ export function useCreateExam() {
   
   return useMutation({
     mutationFn: async (data: CreateExamInput) => {
-      const response = await apiClient.post<Exam>(teacherEndpoints.exams.create, data)
+      const response = await apiClient.post<Exam>(schoolAdminTeachingEndpoints.exams.create, data)
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -269,7 +269,7 @@ export function useGenerateExam() {
   
   return useMutation({
     mutationFn: async (data: ExamGenerationRequest) => {
-      const response = await apiClient.post<Exam>(teacherEndpoints.exams.generate, data)
+      const response = await apiClient.post<Exam>(schoolAdminTeachingEndpoints.exams.generate, data)
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -284,7 +284,7 @@ export function useUpdateExam() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateExamInput }) => {
-      const response = await apiClient.put<Exam>(teacherEndpoints.exams.update(id), data)
+      const response = await apiClient.put<Exam>(schoolAdminTeachingEndpoints.exams.update(id), data)
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -300,7 +300,7 @@ export function useDeleteExam() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.delete(teacherEndpoints.exams.delete(id))
+      const response = await apiClient.delete(schoolAdminTeachingEndpoints.exams.delete(id))
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -315,7 +315,7 @@ export function usePublishExam() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.patch<Exam>(teacherEndpoints.exams.publish(id))
+      const response = await apiClient.patch<Exam>(schoolAdminTeachingEndpoints.exams.publish(id))
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -332,7 +332,7 @@ export function useTeacherClasses() {
   return useQuery({
     queryKey: queryKeys.classes(),
     queryFn: async () => {
-      const response = await apiClient.get<Class[]>(teacherEndpoints.classes.list)
+      const response = await apiClient.get<Class[]>(schoolAdminTeachingEndpoints.classes.list)
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -343,7 +343,7 @@ export function useClass(id: string) {
   return useQuery({
     queryKey: queryKeys.class(id),
     queryFn: async () => {
-      const response = await apiClient.get<Class>(teacherEndpoints.classes.get(id))
+      const response = await apiClient.get<Class>(schoolAdminTeachingEndpoints.classes.get(id))
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -351,13 +351,13 @@ export function useClass(id: string) {
   })
 }
 
-// ==================== Student Hooks ====================
+// ==================== Learner Hooks ====================
 
 export function useAvailableExams() {
   return useQuery({
     queryKey: queryKeys.availableExams,
     queryFn: async () => {
-      const response = await apiClient.get<Exam[]>(studentEndpoints.exams.available)
+      const response = await apiClient.get<Exam[]>(learnerEndpoints.exams.available)
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -370,7 +370,7 @@ export function useSubmitExam() {
   return useMutation({
     mutationFn: async ({ examId, answers, timeSpent }: { examId: string; answers: Array<{ question_id: string; answer: string | string[] }>; timeSpent: number }) => {
       const response = await apiClient.post<ExamSubmission>(
-        studentEndpoints.exams.submit(examId),
+        learnerEndpoints.exams.submit(examId),
         { answers, time_spent_seconds: timeSpent }
       )
       if (!isSuccess(response)) throw new Error(response.error?.message)
@@ -383,11 +383,11 @@ export function useSubmitExam() {
   })
 }
 
-export function useStudentProgress() {
+export function useLearnerProgress() {
   return useQuery({
-    queryKey: queryKeys.studentProgress,
+    queryKey: queryKeys.learnerProgress,
     queryFn: async () => {
-      const response = await apiClient.get(studentEndpoints.progress.overview)
+      const response = await apiClient.get(learnerEndpoints.progress.overview)
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -399,7 +399,7 @@ export function useJoinClass() {
   
   return useMutation({
     mutationFn: async (classCode: string) => {
-      const response = await apiClient.post(studentEndpoints.classes.join, { code: classCode })
+      const response = await apiClient.post(learnerEndpoints.classes.join, { code: classCode })
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
     },
@@ -408,3 +408,4 @@ export function useJoinClass() {
     },
   })
 }
+

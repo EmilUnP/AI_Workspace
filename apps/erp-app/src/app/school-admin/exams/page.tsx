@@ -33,7 +33,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   ja: 'Japanese', ko: 'Korean', nl: 'Dutch', pl: 'Polish', uk: 'Ukrainian', az: 'Azerbaijani',
 }
 
-async function getTeacherInfo() {
+async function getAdminInfo() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -43,28 +43,28 @@ async function getTeacherInfo() {
     .eq('user_id', user.id)
     .single()
   if (!profile?.organization_id) return null
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+  return { adminId: profile.id, organizationId: profile.organization_id }
 }
 
-export default async function TeacherExamsPage({
+export default async function SchoolAdminExamsPage({
   searchParams,
 }: {
   searchParams: Promise<{ search?: string; status?: string; page?: string; classId?: string }>
 }) {
-  const teacherData = await getTeacherInfo()
+  const adminData = await getAdminInfo()
   
-  if (!teacherData) {
+  if (!adminData) {
     redirect('/auth/login')
   }
   
-  const { teacherId, organizationId } = teacherData
+  const { adminId, organizationId } = adminData
   const params = await searchParams
   const supabase = await createClient()
 
-  const [examsResult, stats, teacherClasses] = await Promise.all([
-    getTeacherExams(supabase, teacherId, organizationId, params),
-    getTeacherExamStats(supabase, teacherId, organizationId),
-    getTeacherClasses(supabase, teacherId),
+  const [examsResult, stats, adminClasses] = await Promise.all([
+    getTeacherExams(supabase, adminId, organizationId, params),
+    getTeacherExamStats(supabase, adminId, organizationId),
+    getTeacherClasses(supabase, adminId),
   ])
 
   const { data: exams, count: totalExams, page: currentPage } = examsResult
@@ -129,7 +129,7 @@ export default async function TeacherExamsPage({
           />
         </form>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          {teacherClasses.length > 0 && (
+          {adminClasses.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-gray-500 whitespace-nowrap">{t('classFilter')}</span>
               <div className="flex flex-wrap gap-1.5">
@@ -139,7 +139,7 @@ export default async function TeacherExamsPage({
                 >
                   {t('allClasses')}
                 </Link>
-                {teacherClasses.map((c) => (
+                {adminClasses.map((c) => (
                   <Link
                     key={c.id}
                     href={`/school-admin/exams?classId=${c.id}${params.status ? `&status=${params.status}` : ''}`}

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Coins, ExternalLink } from 'lucide-react'
 import { tokenRepository } from '@eduator/db/repositories/tokens'
+import { TOKEN_ACTION_TYPES } from '@eduator/core/types/token'
 import { getTranslations } from 'next-intl/server'
 import { getMarketingUrl } from '@/lib/marketing-url'
 
@@ -33,12 +34,13 @@ export default async function TeacherTokensPage() {
     tokenRepository.getTransactions(profile.id, 30),
   ])
 
+  const LEARNER_CHAT_ACTION = TOKEN_ACTION_TYPES.LEARNER_CHAT
   const ACTION_LABELS: Record<string, string> = {
     exam_generation: t('examGeneration'),
     lesson_generation: t('lessonGeneration'),
     lesson_images: t('lessonImages'),
     lesson_audio: t('lessonAudio'),
-    student_chat: t('learnerAiChat'),
+    [LEARNER_CHAT_ACTION]: t('learnerAiChat'),
     teacher_chat: t('teacherAiChat'),
     purchase: t('tokenPurchase'),
     admin_grant: t('adminGrant'),

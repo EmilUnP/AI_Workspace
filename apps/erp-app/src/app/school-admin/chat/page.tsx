@@ -13,7 +13,7 @@ import {
   deleteConversation,
 } from './actions'
 
-async function getTeacherInfo() {
+async function getAdminInfo() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -26,33 +26,33 @@ async function getTeacherInfo() {
   
   if (!profile?.organization_id) return null
   
-  return { teacherId: profile.id, organizationId: profile.organization_id, name: profile.full_name }
+  return { adminId: profile.id, organizationId: profile.organization_id, name: profile.full_name }
 }
 
-async function getTeacherDocuments(teacherId: string, organizationId: string) {
+async function getAdminDocuments(adminId: string, organizationId: string) {
   const supabase = await createClient()
   
   const { data: documents } = await supabase
     .from('documents')
     .select('id, title, file_type, file_name')
     .eq('organization_id', organizationId)
-    .eq('created_by', teacherId)
+    .eq('created_by', adminId)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
   
   return documents || []
 }
 
-export default async function TeacherChatPage() {
+export default async function SchoolAdminChatPage() {
   const t = await getTranslations('teacherChat')
 
-  const teacherData = await getTeacherInfo()
+  const adminData = await getAdminInfo()
   
-  if (!teacherData) {
+  if (!adminData) {
     redirect('/auth/login')
   }
 
-  const documents = await getTeacherDocuments(teacherData.teacherId, teacherData.organizationId)
+  const documents = await getAdminDocuments(adminData.adminId, adminData.organizationId)
 
   return (
     <div className="space-y-3 max-w-6xl mx-auto">
@@ -90,7 +90,7 @@ export default async function TeacherChatPage() {
           createTutorSession: t('createTutorSession'),
           newSession: t('newSession'),
           loading: t('loading'),
-          noSessionsStudent: t('noSessionsStudent'),
+          noSessions: t('noSessionsLearner'),
           startNewSession: t('startNewSession'),
           untitledConversation: t('untitledConversation'),
           deleteSessionAria: t('deleteSessionAria'),
@@ -107,12 +107,12 @@ export default async function TeacherChatPage() {
           shortAnswers: t('shortAnswers'),
           shortAnswersHint: t('shortAnswersHint'),
           inputPlaceholder: t('inputPlaceholder'),
-          inputPlaceholderStudent: t('inputPlaceholderStudent'),
+          inputPlaceholderFallback: t('inputPlaceholderLearner'),
           sendMessageAria: t('sendMessageAria'),
           aiGeneratedDisclaimer: t('aiGeneratedDisclaimer'),
           selectSession: t('selectSession'),
           noSessionSelected: t('noSessionSelected'),
-          chooseSessionStudent: t('chooseSessionStudent'),
+          chooseSession: t('chooseSessionLearner'),
           createOrSelectSession: t('createOrSelectSession'),
           deleteConfirm: t('deleteConfirm'),
           deleteSuccess: t('deleteSuccess'),

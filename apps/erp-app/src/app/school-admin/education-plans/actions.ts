@@ -2,7 +2,7 @@
 
 import { createClient } from '@eduator/auth/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { insertEducationPlan } from '@eduator/core/utils/school-admin-education-plans'
+import { insertEducationPlan } from '@eduator/core/utils/teacher-education-plans'
 import type { EducationPlanWeek } from '@eduator/core/types/education-plan'
 
 export async function createEducationPlan(params: {

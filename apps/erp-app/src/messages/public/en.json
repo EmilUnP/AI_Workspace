@@ -32,7 +32,7 @@
     "forgotPassword": "Forgot password?",
     "signIn": "Sign in",
     "signingIn": "Signing in...",
-    "teacherOrStudent": "Teacher or Student?",
+    "teacherOrLearner": "Teacher or Learner?",
     "goToSaasPortal": "Go to SAAS Portal",
     "serviceUnavailable": "Auth service is temporarily unavailable. Please try again in a few minutes.",
     "callbackError": "Sign-in could not be completed. Please try again.",
@@ -56,15 +56,15 @@
   "forgotPassword": {
     "title": "Forgot",
     "titleHighlight": "password?",
-    "description": "For ERP (admin) accounts, contact your platform or school administrator to reset your password. If you are a teacher or student, use the SAAS portal to reset your password.",
+    "description": "For ERP (admin) accounts, contact your platform or school administrator to reset your password. If you are a teacher or learner, use the SAAS portal to reset your password.",
     "backToSignIn": "Back to sign in",
-    "goToSaasPortal": "I'm a teacher or student — go to SAAS portal"
+    "goToSaasPortal": "I'm a teacher or learner — go to SAAS portal"
   },
   "orgPublic": {
     "metricsTeachersLabel": "Teachers",
     "metricsTeachersHint": "Active faculty members",
-    "metricsStudentsLabel": "Students",
-    "metricsStudentsHint": "Enrolled learners",
+    "metricsLearnersLabel": "Learners",
+    "metricsLearnersHint": "Enrolled learners",
     "metricsActiveClassesLabel": "Active classes",
     "metricsActiveClassesHint": "Running class groups",
     "metricsModeLabel": "Institution mode",
@@ -73,7 +73,7 @@
     "aboutTitle": "About {name}",
     "aboutFallback": "Welcome to {name}. We are committed to quality education and building a strong learning community.",
     "flowOrganizeTitle": "Organize",
-    "flowOrganizeDescription": "Manage teachers, students, and class structure from one control plane.",
+    "flowOrganizeDescription": "Manage teachers, learners, and class structure from one control plane.",
     "flowTeachTitle": "Teach",
     "flowTeachDescription": "Deliver lessons and assessments with consistent workflows.",
     "flowMonitorTitle": "Monitor",

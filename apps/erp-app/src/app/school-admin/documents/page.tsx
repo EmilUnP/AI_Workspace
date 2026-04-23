@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { DocumentsClient } from './documents-client'
 
-async function getTeacherInfo() {
+async function getAdminInfo() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -18,7 +18,7 @@ async function getTeacherInfo() {
   
   if (!profile?.organization_id) return null
   
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+  return { adminId: profile.id, organizationId: profile.organization_id }
 }
 
 // Columns needed for list view only; excludes heavy columns to avoid statement timeouts
@@ -41,14 +41,14 @@ function isRetryableSupabaseError(error: unknown): boolean {
   )
 }
 
-async function getDocuments(teacherId: string, organizationId: string, retried = false) {
+async function getDocuments(adminId: string, organizationId: string, retried = false) {
   const supabase = await createServerClient()
 
   const { data: documents, error: documentsError } = await supabase
     .from('documents')
     .select(DOCUMENTS_LIST_SELECT)
     .eq('organization_id', organizationId)
-    .eq('created_by', teacherId)
+    .eq('created_by', adminId)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
 
@@ -56,7 +56,7 @@ async function getDocuments(teacherId: string, organizationId: string, retried =
     if (isRetryableSupabaseError(documentsError) && !retried) {
       console.warn('Supabase temporarily unavailable (e.g. 520/JSON), retrying in 2s...')
       await new Promise((r) => setTimeout(r, 2000))
-      return getDocuments(teacherId, organizationId, true)
+      return getDocuments(adminId, organizationId, true)
     }
     const logMsg = isRetryableSupabaseError(documentsError)
       ? 'Supabase temporarily unavailable; documents list may be incomplete.'
@@ -96,17 +96,17 @@ async function getDocuments(teacherId: string, organizationId: string, retried =
 }
 
 
-export default async function TeacherDocumentsPage() {
+export default async function SchoolAdminDocumentsPage() {
   const t = await getTranslations('teacherDocuments')
 
-  const teacherData = await getTeacherInfo()
+  const adminData = await getAdminInfo()
   
-  if (!teacherData) {
+  if (!adminData) {
     redirect('/auth/login')
   }
   
-  const { teacherId, organizationId } = teacherData
-  const documents = await getDocuments(teacherId, organizationId)
+  const { adminId, organizationId } = adminData
+  const documents = await getDocuments(adminId, organizationId)
 
   const uploadTranslations = {
     dropFileHere: t('uploadDropFileHere'),
