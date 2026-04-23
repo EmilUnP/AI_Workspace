@@ -184,9 +184,6 @@ export {
 // Reports Components
 export { TeacherReportsClient, type TeacherReportsClientProps } from './components/reports/teacher-reports-client'
 
-// Agent Components
-export { AIAgentWidget, type Message } from './components/agent'
-
 // Calendar Components
 export { TeacherCalendarHub, type TeacherCalendarHubProps, type TeacherCalendarHubLabels } from './components/teacher/calendar/teacher-calendar-hub'
 export { SmartCalendar, type CalendarEvent, type SmartCalendarProps } from './components/teacher/calendar/smart-calendar'

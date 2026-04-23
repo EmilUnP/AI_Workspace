@@ -30,8 +30,6 @@
       "@eduator/db/*": ["packages/db/src/*"],
       "@eduator/ai": ["packages/ai/src"],
       "@eduator/ai/*": ["packages/ai/src/*"],
-      "@eduator/agent": ["packages/agent/src"],
-      "@eduator/agent/*": ["packages/agent/src/*"],
       "@eduator/api-client": ["packages/api-client/src"],
       "@eduator/api-client/*": ["packages/api-client/src/*"],
       "@eduator/api-server": ["packages/api-server/src"],

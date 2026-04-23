@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@eduator/agent": "*",
     "@eduator/ai": "*",
     "@eduator/api-client": "*",
     "@eduator/auth": "*",

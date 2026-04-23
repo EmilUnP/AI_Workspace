@@ -15,15 +15,16 @@ function redirectTo(url: URL) {
 }
 
 function getRequestOrigin(request: NextRequest) {
-  const explicitOrigin = process.env.NEXT_PUBLIC_ERP_URL || process.env.NEXT_PUBLIC_APP_URL
-  if (explicitOrigin) return explicitOrigin.replace(/\/+$/, '')
-
   const forwardedHost = request.headers
     .get('x-forwarded-host')
     ?.split(',')[0]
     ?.trim()
   const host = forwardedHost || request.headers.get('host')?.split(',')[0]?.trim()
-  if (!host) return request.nextUrl.origin
+  if (!host) {
+    const explicitOrigin = process.env.NEXT_PUBLIC_ERP_URL || process.env.NEXT_PUBLIC_APP_URL
+    if (explicitOrigin) return explicitOrigin.replace(/\/+$/, '')
+    return request.nextUrl.origin
+  }
 
   const forwardedProto = request.headers
     .get('x-forwarded-proto')

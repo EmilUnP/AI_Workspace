@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { GraduationCap, Bell, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { UserNav } from './user-nav'
 import { MobileSidebar, DesktopNavigation } from '../components/mobile-sidebar'
-import { AIAgentClient } from '../components/ai-agent-client'
 import { LocaleSwitcher } from '../components/locale-switcher'
 
 interface NavItem {
@@ -139,7 +138,6 @@ export function SchoolAdminLayoutClient({
         <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
       </div>
 
-      <AIAgentClient />
     </div>
   )
 }

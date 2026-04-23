@@ -11,7 +11,6 @@ const nextConfig = {
   // in Vercel project settings + default tracing. See docs/DEPLOYMENT-VERCEL-ANALYSIS.md
   transpilePackages: [
     '@eduator/ai',
-    '@eduator/agent',
     '@eduator/api-client',
     '@eduator/auth',
     '@eduator/config',
