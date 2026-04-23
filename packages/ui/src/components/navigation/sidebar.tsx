@@ -14,7 +14,6 @@ import {
   ChevronRight,
   GraduationCap,
   BookOpen,
-  MessageSquare,
   BarChart3,
   PlusCircle,
   Calendar,

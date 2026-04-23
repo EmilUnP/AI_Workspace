@@ -137,7 +137,7 @@ export function MobileSidebar({
       : pathname
     
     // For root paths, only match exactly
-    if ((hrefPathNormalized === '/school-admin' || hrefPathNormalized === '/platform-owner' || hrefPathNormalized === '/teacher' || hrefPathNormalized === '/student') && pathnameNormalized !== hrefPathNormalized) {
+    if ((hrefPathNormalized === '/school-admin' || hrefPathNormalized === '/platform-owner' || hrefPathNormalized === '/teacher') && pathnameNormalized !== hrefPathNormalized) {
       return false
     }
     
@@ -168,7 +168,7 @@ export function MobileSidebar({
     
     // Check for nested routes (e.g., /school-admin/users/123 matches /school-admin/users)
     // But exclude root paths from this check
-    if (hrefPathNormalized !== '/' && hrefPathNormalized !== '/school-admin' && hrefPathNormalized !== '/platform-owner' && hrefPathNormalized !== '/teacher' && hrefPathNormalized !== '/student' && pathnameNormalized.startsWith(hrefPathNormalized + '/')) {
+    if (hrefPathNormalized !== '/' && hrefPathNormalized !== '/school-admin' && hrefPathNormalized !== '/platform-owner' && hrefPathNormalized !== '/teacher' && pathnameNormalized.startsWith(hrefPathNormalized + '/')) {
       return true
     }
     
@@ -318,7 +318,7 @@ export function DesktopNavigation({
       : pathname
     
     // For root paths, only match exactly
-    if ((hrefPathNormalized === '/school-admin' || hrefPathNormalized === '/platform-owner' || hrefPathNormalized === '/teacher' || hrefPathNormalized === '/student') && pathnameNormalized !== hrefPathNormalized) {
+    if ((hrefPathNormalized === '/school-admin' || hrefPathNormalized === '/platform-owner' || hrefPathNormalized === '/teacher') && pathnameNormalized !== hrefPathNormalized) {
       return false
     }
     
@@ -349,7 +349,7 @@ export function DesktopNavigation({
     
     // Check for nested routes (e.g., /school-admin/users/123 matches /school-admin/users)
     // But exclude root paths from this check
-    if (hrefPathNormalized !== '/' && hrefPathNormalized !== '/school-admin' && hrefPathNormalized !== '/platform-owner' && hrefPathNormalized !== '/teacher' && hrefPathNormalized !== '/student' && pathnameNormalized.startsWith(hrefPathNormalized + '/')) {
+    if (hrefPathNormalized !== '/' && hrefPathNormalized !== '/school-admin' && hrefPathNormalized !== '/platform-owner' && hrefPathNormalized !== '/teacher' && pathnameNormalized.startsWith(hrefPathNormalized + '/')) {
       return true
     }
     

@@ -7,7 +7,6 @@ import {
   GraduationCap,
   GripVertical,
   School,
-  User,
 } from 'lucide-react'
 import {
   FEATURE_VISIBILITY_DEFINITIONS,
@@ -36,7 +35,6 @@ export function FeatureVisibilityClient({ enabledByKey, sortOrderByKey, parentBy
     return {
       erp: {
         teacher: FEATURE_VISIBILITY_DEFINITIONS.filter((d) => d.appSource === 'erp' && d.role === 'teacher'),
-        student: FEATURE_VISIBILITY_DEFINITIONS.filter((d) => d.appSource === 'erp' && d.role === 'student'),
       },
     }
   }, [])
@@ -164,11 +162,7 @@ export function FeatureVisibilityClient({ enabledByKey, sortOrderByKey, parentBy
         <div className="border-b border-gray-100 bg-gray-50 px-4 py-3 sm:px-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            {role === 'teacher' ? (
-              <GraduationCap className="h-4 w-4 text-blue-600" />
-            ) : (
-              <User className="h-4 w-4 text-emerald-600" />
-            )}
+            <GraduationCap className="h-4 w-4 text-blue-600" />
             <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
           </div>
           <div className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">
@@ -346,7 +340,6 @@ export function FeatureVisibilityClient({ enabledByKey, sortOrderByKey, parentBy
 
       <div className="grid gap-4 lg:grid-cols-2">
         {renderRoleSection('erp', 'teacher', 'Teacher (ERP)')}
-        {renderRoleSection('erp', 'student', 'Student (ERP)')}
       </div>
 
       <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">

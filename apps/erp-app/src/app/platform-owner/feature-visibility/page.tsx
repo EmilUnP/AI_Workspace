@@ -20,7 +20,6 @@ export default async function FeatureVisibilityPage() {
 
   const combinations: { app: FeatureAppSource; role: FeatureRole }[] = [
     { app: 'erp', role: 'teacher' },
-    { app: 'erp', role: 'student' },
   ]
 
   const maps = await Promise.all(
@@ -63,7 +62,7 @@ export default async function FeatureVisibilityPage() {
           Feature visibility control
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-gray-600">
-          Control which pages are visible for Teacher and Student in ERP. Hidden pages are
+          Control which pages are visible for Teachers in ERP. Hidden pages are
           removed from navigation and blocked on direct URL access.
         </p>
 
