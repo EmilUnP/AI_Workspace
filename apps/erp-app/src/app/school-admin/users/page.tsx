@@ -75,7 +75,7 @@ async function getUsers(organizationId: string, searchParams: {
     .from('profiles')
     .select('*', { count: 'exact' })
     .eq('organization_id', organizationId)
-    .in('profile_type', ['teacher', 'student'])
+    .eq('profile_type', 'teacher')
     .order(sortBy, { ascending: sortOrder === 'asc' })
     .range(offset, offset + PER_PAGE - 1)
   
@@ -130,7 +130,7 @@ async function getStats(organizationId: string) {
     .from('profiles')
     .select('profile_type, approval_status')
     .eq('organization_id', organizationId)
-    .in('profile_type', ['teacher', 'student'])
+    .eq('profile_type', 'teacher')
   
   const allProfiles = profiles || []
   

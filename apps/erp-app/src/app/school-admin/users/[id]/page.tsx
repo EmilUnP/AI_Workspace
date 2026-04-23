@@ -37,7 +37,7 @@ async function getUser(id: string, organizationId: string) {
     .select('*')
     .eq('id', id)
     .eq('organization_id', organizationId)
-    .in('profile_type', ['teacher', 'student'])
+    .eq('profile_type', 'teacher')
     .single()
   
   if (error || !data) {

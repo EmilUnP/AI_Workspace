@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Loader2, BookOpen, Building2, Key, Users } from 'lucide-react'
+import { Save, Loader2, BookOpen, Building2, Key } from 'lucide-react'
 import { updateUser } from './actions'
 import { getOrganizationStructure } from '../get-organization-structure'
 
@@ -132,22 +132,6 @@ export function EditUserForm({ user }: EditUserFormProps) {
             </span>
           </button>
 
-          {user.profile_type === 'student' && (
-            <button
-              type="button"
-              onClick={() => setProfileType('student')}
-              className={`flex items-center gap-2 rounded-lg border-2 p-3 transition-all ${
-                profileType === 'student'
-                  ? 'border-gray-500 bg-gray-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <Users className={`h-5 w-5 ${profileType === 'student' ? 'text-gray-600' : 'text-gray-400'}`} />
-              <span className={`text-sm font-medium ${profileType === 'student' ? 'text-gray-700' : 'text-gray-700'}`}>
-                Legacy Student
-              </span>
-            </button>
-          )}
         </div>
         <input type="hidden" name="profile_type" value={profileType} />
       </div>
