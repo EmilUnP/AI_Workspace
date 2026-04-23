@@ -7,7 +7,6 @@ const navigation = [
   { name: 'Dashboard', href: '/school-admin', icon: 'LayoutDashboard' },
   { name: 'Users', href: '/school-admin/users', icon: 'Users' },
   { name: 'Classes', href: '/school-admin/classes', icon: 'BookOpen' },
-  { name: 'Final Exams', href: '/school-admin/final-exams', icon: 'FileCheck' },
   { name: 'Organization', href: '/school-admin/settings?tab=organization', icon: 'Building2' },
   { name: 'Reports', href: '/school-admin/reports', icon: 'BarChart3' },
   { name: 'Settings', href: '/school-admin/settings', icon: 'Settings' },

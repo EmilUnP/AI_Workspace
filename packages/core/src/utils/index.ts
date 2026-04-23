@@ -8,9 +8,6 @@ export * from './teacher-classes'
 // Teacher exams list utilities
 export * from './teacher-exams'
 
-// Final exams (shared school-admin + teacher)
-export * from './final-exams'
-
 // Teacher lessons list utilities
 export * from './teacher-lessons'
 

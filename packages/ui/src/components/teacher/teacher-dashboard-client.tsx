@@ -26,7 +26,6 @@ export interface TeacherDashboardTranslations {
   teacher: string
   newExam: string
   uploadDocument: string
-  teachingStudio: string
   lessonsLink: string
   classes: string
   exams: string
@@ -74,7 +73,6 @@ const DEFAULT_TRANSLATIONS: TeacherDashboardTranslations = {
   teacher: 'Teacher',
   newExam: 'New exam',
   uploadDocument: 'Upload document',
-  teachingStudio: 'Teaching Studio',
   lessonsLink: 'Lessons',
   classes: 'Classes',
   exams: 'Exams',
@@ -87,7 +85,7 @@ const DEFAULT_TRANSLATIONS: TeacherDashboardTranslations = {
   publishedExamsReady: '#N# published exam(s) ready for students',
   activeStudents: '#N# active student(s) across your classes',
   documentsInLibrary: '#N# document(s) in your library',
-  getStarted: 'Get started by creating an exam, uploading documents, or opening Teaching Studio.',
+  getStarted: 'Get started by creating an exam, uploading documents, or generating lessons.',
   recentExams: 'Recent Exams',
   yourLatestExams: 'Your latest exams',
   viewAll: 'View all',
@@ -174,7 +172,7 @@ export function TeacherDashboardClient({
   stats,
   recentExams,
   recentDocuments,
-  recentClasses,
+ 
   variant = 'erp',
   translations: translationsProp
 }: TeacherDashboardClientProps) {

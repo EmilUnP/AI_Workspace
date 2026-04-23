@@ -79,25 +79,6 @@ export { QuestionPreview, type QuestionPreviewProps } from './components/exam/qu
 export { QuestionEditor, type QuestionEditorProps } from './components/exam/question-editor'
 export { exportQuestionsToCsv, type ExportQuestion, type ExportQuestionsCsvOptions } from './components/exam/export-questions-csv'
 
-// Final exam (shared school-admin + teacher)
-export {
-  FinalExamHub,
-  type FinalExamHubProps,
-  type SourceExamOption,
-  type ClassOption,
-  type CourseOption,
-  type QuestionOption,
-  FinalExamList,
-  type FinalExamListProps,
-  type TeacherOption,
-  FinalExamCreatePage,
-  type FinalExamCreatePageProps,
-  FinalExamDetail,
-  type FinalExamDetailProps,
-  FinalExamEditPage,
-  type FinalExamEditPageProps,
-} from './components/final-exam'
-
 // Error boundary (shared by ERP and ERP apps)
 export {
   AppErrorBoundary,

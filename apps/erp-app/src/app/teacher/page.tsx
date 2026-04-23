@@ -217,7 +217,6 @@ export default async function TeacherDashboard() {
     teacher: td('teacher'),
     newExam: td('newExam'),
     uploadDocument: td('uploadDocument'),
-    teachingStudio: td('teachingStudio'),
     lessonsLink: td('lessonsLink'),
     classes: td('classes'),
     exams: td('exams'),

@@ -7,9 +7,6 @@ export * from './organization'
 // Exam Types
 export * from './exam'
 
-// Final Exam Types
-export * from './final-exam'
-
 // Lesson Types
 export * from './lesson'
 
