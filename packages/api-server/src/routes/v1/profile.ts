@@ -10,7 +10,7 @@ const profileSchema = {
   properties: {
     id: { type: 'string', format: 'uuid' },
     user_id: { type: 'string', format: 'uuid' },
-    profile_type: { type: 'string', enum: ['platform_owner', 'school_superadmin', 'teacher', 'student'] },
+    profile_type: { type: 'string', enum: ['platform_owner', 'school_superadmin', 'teacher'] },
     organization_id: { type: 'string', format: 'uuid', nullable: true },
     full_name: { type: 'string', example: 'John Doe' },
     email: { type: 'string', format: 'email', example: 'john@example.com' },

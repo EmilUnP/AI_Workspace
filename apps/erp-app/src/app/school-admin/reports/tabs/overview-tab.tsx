@@ -12,7 +12,7 @@ import { DonutChart } from '../components/charts'
 
 interface OverviewData {
   teachers: number
-  students: number
+  learners: number
   totalClasses: number
   activeClasses: number
   exams: number
@@ -93,8 +93,8 @@ export default function OverviewTab({ organizationId }: { organizationId: string
             </span>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Active Students</p>
-            <p className="mt-1 text-3xl font-bold text-gray-900">{data.students}</p>
+            <p className="text-sm font-medium text-gray-500">Active Learners</p>
+            <p className="mt-1 text-3xl font-bold text-gray-900">{data.learners}</p>
           </div>
         </div>
 
@@ -134,8 +134,8 @@ export default function OverviewTab({ organizationId }: { organizationId: string
           
           <div className="mt-6 relative flex items-center justify-center">
             <DonutChart
-              data={[data.teachers, data.students]}
-              labels={['Teachers', 'Students']}
+              data={[data.teachers, data.learners]}
+              labels={['Teachers', 'Learners']}
               colors={['#10B981', '#3B82F6']}
             />
           </div>
@@ -151,8 +151,8 @@ export default function OverviewTab({ organizationId }: { organizationId: string
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-blue-500" />
               <div>
-                <p className="text-xs font-medium text-gray-700">Students</p>
-                <p className="text-sm font-semibold text-gray-900">{data.students}</p>
+                <p className="text-xs font-medium text-gray-700">Learners</p>
+                <p className="text-sm font-semibold text-gray-900">{data.learners}</p>
               </div>
             </div>
           </div>

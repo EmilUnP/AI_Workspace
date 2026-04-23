@@ -20,14 +20,6 @@ export async function GET(request: NextRequest) {
       .eq('profile_type', 'teacher')
       .eq('approval_status', 'approved')
 
-    // Get students count
-    const { count: studentCount } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('organization_id', organizationId)
-      .eq('profile_type', 'student')
-      .eq('approval_status', 'approved')
-
     // Get classes count
     const { count: classCount } = await supabase
       .from('classes')
@@ -72,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       teachers: teacherCount || 0,
-      students: studentCount || 0,
+      learners: 0,
       totalClasses: classCount || 0,
       activeClasses: activeClassCount || 0,
       exams: examCount || 0,

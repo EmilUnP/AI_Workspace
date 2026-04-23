@@ -23,7 +23,7 @@ const GROUP_CONFIG: Record<string, { label: string; icon: React.ElementType; des
     icon: Sparkles,
     description: 'Cost per AI-generated education plan',
   },
-  chat: { label: 'AI chat', icon: MessageSquare, description: 'Cost per message (student and teacher)' },
+  chat: { label: 'AI chat', icon: MessageSquare, description: 'Cost per message (learner and teacher)' },
   rag: { label: 'RAG documents', icon: MessageSquare, description: 'Cost for indexing/uploading documents for RAG retrieval' },
   onboarding: {
     label: 'New user onboarding',

@@ -38,7 +38,7 @@ export default async function TeacherTokensPage() {
     lesson_generation: t('lessonGeneration'),
     lesson_images: t('lessonImages'),
     lesson_audio: t('lessonAudio'),
-    student_chat: t('studentAiChat'),
+    student_chat: t('learnerAiChat'),
     teacher_chat: t('teacherAiChat'),
     purchase: t('tokenPurchase'),
     admin_grant: t('adminGrant'),

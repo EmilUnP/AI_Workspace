@@ -21,7 +21,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
           per_page: { type: 'integer', default: 20, minimum: 1, maximum: 100, description: 'Items per page' },
           profile_type: { 
             type: 'string', 
-            enum: ['platform_owner', 'school_superadmin', 'teacher', 'student'],
+            enum: ['platform_owner', 'school_superadmin', 'teacher'],
             description: 'Filter by user role',
           },
           approval_status: { 

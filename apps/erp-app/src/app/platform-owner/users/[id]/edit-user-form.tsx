@@ -98,9 +98,6 @@ export function EditUserForm({ user, organizations }: EditUserFormProps) {
           <option value="platform_owner">Platform Owner</option>
           <option value="school_superadmin">School Admin</option>
           <option value="teacher">Teacher</option>
-          {user.profile_type === 'student' && (
-            <option value="student">Legacy Student (existing only)</option>
-          )}
         </select>
       </div>
 

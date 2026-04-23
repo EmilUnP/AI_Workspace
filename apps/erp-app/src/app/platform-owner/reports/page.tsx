@@ -34,7 +34,7 @@ async function getPlatformStats() {
     .from('profiles')
     .select('profile_type, approval_status')
   
-  const userCounts = { platform_owner: 0, school_superadmin: 0, teacher: 0, student: 0 }
+  const userCounts = { platform_owner: 0, school_superadmin: 0, teacher: 0 }
   const approvalCounts = { approved: 0, pending: 0, rejected: 0 }
   
   profiles?.forEach(profile => {
@@ -251,8 +251,8 @@ export default async function ReportsPage() {
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Students</p>
-            <p className="mt-1 text-3xl font-bold text-gray-900">{stats.userCounts.student}</p>
+            <p className="text-sm font-medium text-gray-500">Core Users</p>
+            <p className="mt-1 text-3xl font-bold text-gray-900">{stats.userCounts.school_superadmin}</p>
           </div>
         </div>
       </div>
@@ -299,15 +299,14 @@ export default async function ReportsPage() {
               data={[
                 stats.userCounts.platform_owner,
                 stats.userCounts.school_superadmin,
-                stats.userCounts.teacher,
-                stats.userCounts.student
+                stats.userCounts.teacher
               ]}
-              labels={['Platform Owners', 'School Admins', 'Teachers', 'Students']}
-              colors={['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B']}
+              labels={['Platform Owners', 'School Admins', 'Teachers']}
+              colors={['#8B5CF6', '#3B82F6', '#10B981']}
             />
           </div>
           
-          <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="mt-6 grid grid-cols-3 gap-3">
             <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-purple-500" />
               <div>
@@ -327,13 +326,6 @@ export default async function ReportsPage() {
               <div>
                 <p className="text-xs font-medium text-gray-700">Teachers</p>
                 <p className="text-sm font-semibold text-gray-900">{stats.userCounts.teacher}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-amber-500" />
-              <div>
-                <p className="text-xs font-medium text-gray-700">Students</p>
-                <p className="text-sm font-semibold text-gray-900">{stats.userCounts.student}</p>
               </div>
             </div>
           </div>

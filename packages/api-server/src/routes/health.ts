@@ -125,7 +125,6 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
                 platformOwner: { type: 'string' },
                 schoolAdmin: { type: 'string' },
                 teacher: { type: 'string' },
-                student: { type: 'string' },
               },
             },
           },
@@ -144,7 +143,6 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
         platformOwner: '/api/v1/platform-owner',
         schoolAdmin: '/api/v1/school-admin',
         teacher: '/api/v1/teacher',
-        student: '/api/v1/student',
       },
     }
   })

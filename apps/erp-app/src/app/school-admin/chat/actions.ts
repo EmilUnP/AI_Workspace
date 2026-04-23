@@ -7,7 +7,7 @@ import { tokenRepository } from '@eduator/db/repositories/tokens'
 export interface CreateConversationInput {
   title?: string
   document_ids?: string[]
-  class_id?: string | null // Optional: assign to a class for student access
+  class_id?: string | null // Optional: assign to a class for learner access
   context?: {
     subject?: string
     grade_level?: string
@@ -282,7 +282,7 @@ export async function updateConversation(
   updates: {
     title?: string
     document_ids?: string[]
-    class_id?: string | null // Optional: assign to a class for student access
+    class_id?: string | null // Optional: assign to a class for learner access
     context?: Record<string, unknown>
   }
 ) {

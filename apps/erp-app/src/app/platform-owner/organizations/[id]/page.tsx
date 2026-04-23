@@ -51,15 +51,9 @@ async function getOrganizationStats(orgId: string) {
     .eq('organization_id', orgId)
     .eq('profile_type', 'teacher')
   
-  const { count: studentCount } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('organization_id', orgId)
-    .eq('profile_type', 'student')
-  
   return {
     teachers: teacherCount || 0,
-    students: studentCount || 0,
+    learners: 0,
   }
 }
 
@@ -265,8 +259,8 @@ export default async function OrganizationDetailPage({
               </div>
               <div className="rounded-lg bg-gray-50 p-4 text-center">
                 <Users className="mx-auto h-6 w-6 text-blue-600" />
-                <p className="mt-2 text-2xl font-bold text-gray-900">{stats.students}</p>
-                <p className="text-xs text-gray-500">Students</p>
+                <p className="mt-2 text-2xl font-bold text-gray-900">{stats.learners}</p>
+                <p className="text-xs text-gray-500">Learners</p>
               </div>
             </div>
           </div>

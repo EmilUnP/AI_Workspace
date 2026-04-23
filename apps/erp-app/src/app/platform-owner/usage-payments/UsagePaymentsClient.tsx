@@ -39,7 +39,7 @@ const ACTION_LABELS: Record<string, string> = {
   lesson_images: 'Lesson images',
   lesson_audio: 'Lesson audio',
   course_generation: 'Course generation',
-  student_chat: 'Student AI chat',
+  student_chat: 'Learner AI chat',
   teacher_chat: 'Teacher AI chat',
   purchase: 'Token purchase',
   admin_grant: 'Admin grant',
@@ -616,7 +616,7 @@ export function UsagePaymentsClient({
                           <p className="mt-1 text-sm text-gray-500">
                             {actionFilter !== 'all'
                               ? 'Try another filter.'
-                              : 'Usage will appear when teachers or students use AI features.'}
+                              : 'Usage will appear when teachers or learners use AI features.'}
                           </p>
                         </td>
                       </tr>

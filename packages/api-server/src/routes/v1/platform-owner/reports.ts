@@ -55,7 +55,6 @@ export async function reportsRoutes(fastify: FastifyInstance): Promise<void> {
                     platform_owner: { type: 'integer' },
                     school_superadmin: { type: 'integer' },
                     teacher: { type: 'integer' },
-                    student: { type: 'integer' },
                   },
                 },
                 recent_signups: { type: 'array', items: { type: 'object' } },
@@ -88,7 +87,6 @@ export async function reportsRoutes(fastify: FastifyInstance): Promise<void> {
       platform_owner: allUsers.filter((u) => u.profile_type === 'platform_owner').length,
       school_superadmin: allUsers.filter((u) => u.profile_type === 'school_superadmin').length,
       teacher: allUsers.filter((u) => u.profile_type === 'teacher').length,
-      student: allUsers.filter((u) => u.profile_type === 'student').length,
     }
 
     const { data: recentUsers } = await profileRepository.getAll({ perPage: 10 })

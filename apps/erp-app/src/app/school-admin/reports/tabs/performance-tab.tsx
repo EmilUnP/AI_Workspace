@@ -95,7 +95,7 @@ export default function PerformanceTab({ organizationId }: { organizationId: str
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-500">Pass Rate</p>
             <p className="mt-1 text-3xl font-bold text-gray-900">{data.passRate}%</p>
-            <p className="mt-1 text-xs text-gray-500">Students passing</p>
+            <p className="mt-1 text-xs text-gray-500">Learners passing</p>
           </div>
         </div>
 
@@ -174,7 +174,7 @@ export default function PerformanceTab({ organizationId }: { organizationId: str
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Top Performers</h3>
-              <p className="text-sm text-gray-500">Students scoring above 80%</p>
+              <p className="text-sm text-gray-500">Learners scoring above 80%</p>
             </div>
           </div>
           <div className="mt-4">
@@ -190,7 +190,7 @@ export default function PerformanceTab({ organizationId }: { organizationId: str
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Needs Improvement</h3>
-              <p className="text-sm text-gray-500">Students scoring below 60%</p>
+              <p className="text-sm text-gray-500">Learners scoring below 60%</p>
             </div>
           </div>
           <div className="mt-4">

@@ -129,7 +129,6 @@ export { formatDate, formatFileSize, getGreeting } from './utils/teacher-dashboa
 export { TeacherSettingsClient, type TeacherSettingsClientProps, type TeacherSettingsTranslations } from './components/teacher/teacher-settings-client'
 
 export { AddClassDialog, type AddClassDialogProps, type AddClassDialogLabels } from './components/teacher/add-class-dialog'
-export { EnrollStudentDialog, type EnrollStudentDialogProps, type EnrollStudentDialogLabels, type Student } from './components/teacher/enroll-student-dialog'
 export { ClassAITutor, type ClassAITutorLabels } from './components/teacher/class-ai-tutor'
 export { ShareExamDialog, type ShareExamDialogProps, type ShareExamDialogLabels } from './components/teacher/share-exam-dialog'
 export { ShareDocumentDialog, type ShareDocumentDialogProps, type ShareDocumentDialogLabels, type Document as ShareDocument } from './components/teacher/share-document-dialog'

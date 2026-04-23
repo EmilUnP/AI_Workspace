@@ -36,7 +36,7 @@ export async function createUser(formData: FormData) {
   }
 
   if (profile_type !== 'teacher') {
-    return { error: 'Only teacher role can be created in this lightweight version' }
+    return { error: 'Only core user role can be created in this lightweight version' }
   }
 
   if (password.length < 6) {

@@ -74,11 +74,8 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
     case 'teacher':
       redirect('/school-admin')
       break
-    case 'student':
-      redirect('/auth/access-denied')
-      break
     default:
-      redirect('/')
+      redirect('/auth/access-denied')
   }
   return null
 }

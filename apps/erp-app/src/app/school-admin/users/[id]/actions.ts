@@ -59,9 +59,8 @@ export async function updateUser(formData: FormData) {
     .eq('id', id)
     .single()
 
-  const isLegacyStudent = existingProfile?.profile_type === 'student'
-  if (profile_type !== 'teacher' && !(isLegacyStudent && profile_type === 'student')) {
-    return { error: 'Only teacher role can be assigned in this lightweight version' }
+  if (profile_type !== 'teacher') {
+    return { error: 'Only core user role can be assigned in this lightweight version' }
   }
 
   const { error: accessError, organizationId } = await verifyOrganizationAccess(id)

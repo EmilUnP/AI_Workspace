@@ -28,7 +28,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
               type: 'object',
               properties: {
                 total_teachers: { type: 'integer', example: 25 },
-                total_students: { type: 'integer', example: 500 },
+                total_learners: { type: 'integer', example: 500 },
                 total_classes: { type: 'integer', example: 30 },
                 pending_approvals: { type: 'integer', example: 5 },
               },
@@ -54,7 +54,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
     }
 
     const teachers = await profileRepository.getByOrganization(organizationId, { profileType: 'teacher' })
-    const students = await profileRepository.getByOrganization(organizationId, { profileType: 'student' })
+    const learners = await profileRepository.getByOrganization(organizationId, { profileType: 'student' })
     const pendingApprovals = await profileRepository.getByOrganization(organizationId, { approvalStatus: 'pending' })
     const { data: classes, count: totalClasses } = await classRepository.getByOrganization(organizationId)
 
@@ -63,7 +63,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
       data: {
         overview: {
           total_teachers: teachers.length,
-          total_students: students.length,
+          total_learners: learners.length,
           total_classes: totalClasses,
           pending_approvals: pendingApprovals.length,
         },
@@ -78,7 +78,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
   fastify.get('/users', {
     schema: {
       summary: 'List Organization Users',
-      description: 'List all teachers and students in the organization with optional filters',
+      description: 'List all active organization users with optional filters',
       tags: ['School Admin', 'Users'],
       security: [{ bearerAuth: [] }],
       querystring: {
@@ -86,7 +86,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
         properties: {
           profile_type: { 
             type: 'string', 
-            enum: ['teacher', 'student'],
+            enum: ['teacher'],
             description: 'Filter by user role',
           },
           approval_status: { 
@@ -285,7 +285,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
               type: 'object',
               properties: {
                 total_teachers: { type: 'integer' },
-                total_students: { type: 'integer' },
+                total_learners: { type: 'integer' },
                 total_classes: { type: 'integer' },
                 total_exams: { type: 'integer' },
               },
@@ -306,7 +306,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
     const organizationId = request.user!.profile!.organization_id!
 
     const teachers = await profileRepository.getByOrganization(organizationId, { profileType: 'teacher' })
-    const students = await profileRepository.getByOrganization(organizationId, { profileType: 'student' })
+    const learners = await profileRepository.getByOrganization(organizationId, { profileType: 'student' })
     const { count: classCount } = await classRepository.getByOrganization(organizationId)
 
     return reply.send({
@@ -314,7 +314,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
       data: {
         summary: {
           total_teachers: teachers.length,
-          total_students: students.length,
+          total_learners: learners.length,
           total_classes: classCount,
           total_exams: 0,
         },
