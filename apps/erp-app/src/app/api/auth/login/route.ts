@@ -37,7 +37,7 @@ function getRequestOrigin(request: NextRequest) {
 
 /**
  * POST /api/auth/login – form login handler.
- * Used instead of /auth/login/action so Vercel reliably accepts POST on API routes.
+ * Primary login POST endpoint for ERP authentication.
  */
 /** Allow redirect only to same-origin paths (e.g. /org/slug) */
 function isSafeRedirect(path: string | null): path is string {

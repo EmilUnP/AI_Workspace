@@ -25,7 +25,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf apps/*/node_modules && rm -rf packages/*/dist && rm -rf apps/*/.next",
-    "debug:vercel:erp": "node scripts/debug-vercel-build.mjs erp",
     "prepare": "node -e \"if (!process.env.CI && !process.env.VERCEL) { require('child_process').execSync('npx husky install', {stdio:'inherit'}) }\""
   },
   "overrides": {

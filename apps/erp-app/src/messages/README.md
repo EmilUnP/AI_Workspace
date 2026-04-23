@@ -2,9 +2,8 @@
 
 Messages are split by route module. Edit the JSON files in each folder:
 
-- **public/** — Landing, auth, about, pricing (en.json, az.json, ru.json)
+- **public/** — Landing and auth (en.json, az.json)
 - **teacher/** — Teacher dashboard and tools
-- **student/** — Student settings
 - **platform-owner/** — Platform owner dashboard
 - **school-admin/** — School admin dashboard
 

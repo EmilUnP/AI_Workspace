@@ -110,7 +110,6 @@ export { LessonRowActions, type LessonRowActionsProps } from './components/lesso
 
 // AI Tutor Components
 export { AITutor } from './components/chat/teacher-chat'
-export { AITutor as TeacherChat } from './components/chat/teacher-chat' // Backward compatibility
 
 // Teacher Dashboard Components
 export { DashboardHeader } from './components/teacher/dashboard-header'
