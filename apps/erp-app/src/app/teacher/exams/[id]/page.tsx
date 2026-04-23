@@ -67,7 +67,7 @@ interface PageProps {
 
 export default async function ExamDetailPage({ params, searchParams }: PageProps) {
   const { id: examId } = await params
-  const { fromCourse, fromRun } = await searchParams
+  const { fromCourse: _fromCourse, fromRun: _fromRun } = await searchParams
   const teacherData = await getTeacherInfo()
   
   if (!teacherData) {
@@ -115,12 +115,8 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
     ])
   ) as Record<string, typeof questions>
 
-  const backHref = fromCourse
-    ? fromRun === '1'
-      ? `/teacher/courses/${fromCourse}/run`
-      : `/teacher/courses/${fromCourse}`
-    : '/teacher/exams'
-  const backLabel = fromCourse ? t('backToCourse') : t('backToExams')
+  const backHref = '/teacher/exams'
+  const backLabel = t('backToExams')
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -169,7 +165,7 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
                 examTitle={exam.title}
                 languageCode={primaryLanguage}
               />
-              <ExamActions examId={exam.id} isPublished={exam.is_published} fromCourse={fromCourse} fromRun={fromRun} />
+              <ExamActions examId={exam.id} isPublished={exam.is_published} />
             </div>
           </div>
         </div>

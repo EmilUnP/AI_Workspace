@@ -15,16 +15,13 @@ export interface FeatureVisibilityDefinition {
 export const FEATURE_VISIBILITY_DEFINITIONS: FeatureVisibilityDefinition[] = [
   // ERP teacher
   { key: 'dashboard', label: 'Dashboard', appSource: 'erp', role: 'teacher', navHref: '/teacher', routePrefixes: ['/teacher'], core: true },
-  { key: 'teaching_studio', label: 'Teaching Studio', appSource: 'erp', role: 'teacher', navHref: '/teacher/teaching-studio', routePrefixes: ['/teacher/teaching-studio'] },
-  { key: 'documents', label: 'Documents', appSource: 'erp', role: 'teacher', navHref: '/teacher/documents', routePrefixes: ['/teacher/documents'], parentKey: 'teaching_studio' },
-  { key: 'exams', label: 'Exams', appSource: 'erp', role: 'teacher', navHref: '/teacher/exams', routePrefixes: ['/teacher/exams'], parentKey: 'teaching_studio' },
-  { key: 'lessons', label: 'Lessons', appSource: 'erp', role: 'teacher', navHref: '/teacher/lessons', routePrefixes: ['/teacher/lessons'], parentKey: 'teaching_studio' },
-  { key: 'courses', label: 'Courses', appSource: 'erp', role: 'teacher', navHref: '/teacher/courses', routePrefixes: ['/teacher/courses'], parentKey: 'teaching_studio' },
-  { key: 'ai_tutor', label: 'AI Tutor', appSource: 'erp', role: 'teacher', navHref: '/teacher/chat', routePrefixes: ['/teacher/chat'], parentKey: 'teaching_studio' },
+  { key: 'documents', label: 'Documents', appSource: 'erp', role: 'teacher', navHref: '/teacher/documents', routePrefixes: ['/teacher/documents'] },
+  { key: 'exams', label: 'Exams', appSource: 'erp', role: 'teacher', navHref: '/teacher/exams', routePrefixes: ['/teacher/exams'] },
+  { key: 'lessons', label: 'Lessons', appSource: 'erp', role: 'teacher', navHref: '/teacher/lessons', routePrefixes: ['/teacher/lessons'] },
+  { key: 'ai_tutor', label: 'AI Tutor', appSource: 'erp', role: 'teacher', navHref: '/teacher/chat', routePrefixes: ['/teacher/chat'] },
   { key: 'education_plans', label: 'Education Plans', appSource: 'erp', role: 'teacher', navHref: '/teacher/education-plans', routePrefixes: ['/teacher/education-plans'] },
   { key: 'tokens', label: 'Tokens', appSource: 'erp', role: 'teacher', navHref: '/teacher/tokens', routePrefixes: ['/teacher/tokens'] },
   { key: 'api_integration', label: 'API Integration', appSource: 'erp', role: 'teacher', navHref: '/teacher/api-integration', routePrefixes: ['/teacher/api-integration'] },
-  { key: 'settings', label: 'Settings', appSource: 'erp', role: 'teacher', navHref: '/teacher/settings', routePrefixes: ['/teacher/settings'], core: true },
 
 ]
 

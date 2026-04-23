@@ -60,7 +60,7 @@ async function getLesson(lessonId: string, teacherId: string) {
 
 export default async function LessonDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params
-  const { fromCourse, fromRun } = await searchParams
+  const { fromCourse: _fromCourse, fromRun: _fromRun } = await searchParams
   const teacherData = await getTeacherInfo()
   if (!teacherData) {
     redirect('/auth/login')
@@ -95,7 +95,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div className="flex items-start gap-4">
             <Link
-              href={fromCourse ? (fromRun === '1' ? `/teacher/courses/${fromCourse}/run` : `/teacher/courses/${fromCourse}`) : '/teacher/lessons'}
+              href="/teacher/lessons"
               className="flex items-center justify-center w-10 h-10 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors mt-1 flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />

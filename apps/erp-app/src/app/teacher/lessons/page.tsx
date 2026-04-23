@@ -80,7 +80,7 @@ export default async function TeacherLessonsPage({
       {/* Breadcrumb / Back to Teaching Studio */}
       <div className="flex items-center justify-between gap-3">
         <Link
-          href="/teacher/teaching-studio"
+          href="/teacher"
           className="inline-flex items-center gap-2 text-xs font-medium text-blue-700 hover:text-blue-800"
         >
           <ArrowLeft className="h-3.5 w-3.5" />

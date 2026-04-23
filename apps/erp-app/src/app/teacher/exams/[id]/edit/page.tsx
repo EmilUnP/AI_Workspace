@@ -89,7 +89,7 @@ interface PageProps {
 
 export default async function EditExamPage({ params, searchParams }: PageProps) {
   const { id: examId } = await params
-  const { fromCourse, fromRun } = await searchParams
+  const { fromCourse: _fromCourse, fromRun: _fromRun } = await searchParams
   const teacherData = await getTeacherInfo()
   
   if (!teacherData) {
@@ -132,12 +132,8 @@ export default async function EditExamPage({ params, searchParams }: PageProps) 
     },
   }
 
-  const backHref = fromCourse
-    ? fromRun === '1'
-      ? `/teacher/courses/${fromCourse}/run`
-      : `/teacher/courses/${fromCourse}`
-    : '/teacher/exams'
-  const backLabel = fromCourse ? t('backToCourse') : t('backToExams')
+  const backHref = '/teacher/exams'
+  const backLabel = t('backToExams')
 
   return (
     <div className="space-y-6 sm:space-y-8">

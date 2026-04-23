@@ -5,9 +5,6 @@
 // Teacher classes utilities
 export * from './teacher-classes'
 
-// Teacher courses utilities
-export * from './teacher-courses'
-
 // Teacher exams list utilities
 export * from './teacher-exams'
 

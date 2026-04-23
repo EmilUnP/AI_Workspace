@@ -25,15 +25,12 @@ export default async function TeacherLayout({
 
   const baseNavigation = [
     { name: nav('dashboard'), href: '/teacher', icon: 'LayoutDashboard' },
-    { name: nav('teachingStudio'), href: '/teacher/teaching-studio', icon: 'Sparkles' },
     { name: nav('documents'), href: '/teacher/documents', icon: 'FolderOpen' },
     { name: nav('exams'), href: '/teacher/exams', icon: 'FileText' },
     { name: nav('lessons'), href: '/teacher/lessons', icon: 'GraduationCap' },
-    { name: nav('courses'), href: '/teacher/courses', icon: 'Sparkles' },
     { name: nav('aiTutor'), href: '/teacher/chat', icon: 'MessageSquare' },
     { name: nav('educationPlans'), href: '/teacher/education-plans', icon: 'CalendarRange' },
     { name: nav('tokens'), href: '/teacher/tokens', icon: 'Coins' },
-    { name: nav('settings'), href: '/teacher/settings', icon: 'Settings' },
   ]
 
   const displayProfile = profile || {
@@ -56,9 +53,8 @@ export default async function TeacherLayout({
   )
   const navigationWithApiToggle = apiIntegrationEnabled
     ? [
-        ...baseNavigation.slice(0, -1),
+        ...baseNavigation,
         { name: nav('apiIntegration'), href: '/teacher/api-integration', icon: 'Key' },
-        ...baseNavigation.slice(-1),
       ]
     : baseNavigation
 

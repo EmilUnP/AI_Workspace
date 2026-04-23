@@ -101,10 +101,11 @@ async function buildServer() {
     openapi: {
       info: {
         title: 'Eduator AI API',
-        description: `AI-Powered Educational Platform API v${API_VERSION}
+        description: `Eduator ERP API v${API_VERSION}
 
 ## Overview
-This API provides comprehensive endpoints for managing educational institutions, users, classes, exams, lessons, documents, courses, and AI-powered features including exam generation, lesson creation, course creation (5-step wizard), and AI tutoring.
+Lightweight ERP-focused API for platform owner, school admin, and teacher workflows.
+Current surface emphasizes core management and AI content generation.
 
 ## Authentication
 All protected endpoints require a JWT token in the Authorization header:
@@ -117,8 +118,7 @@ Tokens are obtained from Supabase Auth. See authentication endpoints in your fro
 ## User Roles
 - **Platform Owner**: Full platform access, manages all organizations and users across the platform
 - **School Admin**: Manages organization users, classes, and settings within their organization
-- **Teacher**: Creates exams, lessons, courses (5-step wizard), manages classes, uses Smart Calendar Hub, AI Teaching Assistant (EduBot)
-- **Student**: Takes exams, uses AI tutor (EduBot), tracks progress, joins classes
+- **Teacher**: Creates exams, lessons, courses, manages class data, and uses AI generation tools
 
 ## Current Version (${API_VERSION})
 This version includes:
@@ -135,23 +135,14 @@ This version includes:
 - Reports and analytics (organization-level statistics)
 
 ### ✅ Teacher Endpoints
-- Dashboard with classes, exams, lessons, courses, and student overview
+- Dashboard with exams, lessons, courses, and token overview
 - **Exam Management** (CRUD operations, publish/unpublish)
 - **AI-Powered Exam Generation** (5-step wizard: Generate → Translate → Edit → Assign → Publish)
 - **Course Creation** (5-step wizard: Documents → Blueprint → Options → Generation → Summary)
 - **Lesson Management** (CRUD, AI generation with images/audio, regenerate audio)
 - **Document Management** (upload, CRUD, assign to classes)
-- **Smart Calendar Hub** (schedule lessons and exams, drag-and-drop, class filtering)
 - Class management (list, create, view students, share content)
-- **AI Teaching Assistant (EduBot)** (chat, document-based RAG)
 - Analytics and reporting
-
-### ✅ Student Endpoints
-- Dashboard with enrolled classes and available exams
-- Class management (list, join by code)
-- Exam taking (view, start, submit)
-- **AI Tutor (EduBot)** (interactive learning assistant)
-- Progress tracking
 
 ### ✅ Profile Management
 - Get current user profile
@@ -224,11 +215,7 @@ Error responses:
         },
         {
           name: 'Teacher',
-          description: 'Teacher endpoints for exam creation, AI generation, class management, and analytics',
-        },
-        {
-          name: 'Student',
-          description: 'Student endpoints for taking exams, using AI tutor chatbot, and progress tracking',
+          description: 'Teacher endpoints for exam/lesson/course creation, document workflows, classes, and analytics',
         },
         {
           name: 'Organizations',
@@ -252,7 +239,7 @@ Error responses:
         },
         {
           name: 'Chatbot',
-          description: 'AI teaching assistant endpoints',
+          description: 'AI interaction endpoints',
         },
         {
           name: 'AI',
@@ -264,7 +251,7 @@ Error responses:
         },
         {
           name: 'Progress',
-          description: 'Student progress tracking endpoints',
+          description: 'Progress and analytics endpoints',
         },
       ],
       components: {

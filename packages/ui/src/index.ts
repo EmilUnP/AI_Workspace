@@ -127,10 +127,6 @@ export { AudioPlayer, type AudioPlayerProps } from './components/lessons/audio-p
 export { LessonActions, type LessonActionsProps } from './components/lessons/lesson-actions'
 export { LessonRowActions, type LessonRowActionsProps } from './components/lessons/lesson-row-actions'
 
-// Course Components
-export { CoursesList } from './components/courses/courses-list'
-export type { CoursesListProps } from './components/courses/courses-list'
-
 // AI Tutor Components
 export { AITutor } from './components/chat/teacher-chat'
 export { AITutor as TeacherChat } from './components/chat/teacher-chat' // Backward compatibility
@@ -177,11 +173,3 @@ export {
   type EducationPlanEditFormProps,
   type EducationPlanEditFormLabels,
 } from './components/teacher/education-plan-edit-form'
-
-// Teaching Studio Components
-export {
-  TeachingStudioHub,
-  type TeachingStudioHubProps,
-  type TeachingStudioAccentColor,
-  type TeachingStudioTranslations,
-} from './components/teacher/teaching-studio/teaching-studio-hub'

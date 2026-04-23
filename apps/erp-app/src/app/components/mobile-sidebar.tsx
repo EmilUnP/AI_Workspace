@@ -118,19 +118,6 @@ export function MobileSidebar({
       ? hrefPath.slice(0, -1) 
       : hrefPath
 
-    // Teacher: when viewing a lesson or exam from within a course (fromCourse), highlight Courses instead of Lessons/Exams
-    const fromCourse = searchParams.get('fromCourse')
-    if (fromCourse && pathname.startsWith('/teacher/')) {
-      if (pathname.startsWith('/teacher/lessons/')) {
-        if (hrefPathNormalized === '/teacher/courses') return true
-        if (hrefPathNormalized === '/teacher/lessons') return false
-      }
-      if (pathname.startsWith('/teacher/exams/')) {
-        if (hrefPathNormalized === '/teacher/courses') return true
-        if (hrefPathNormalized === '/teacher/exams') return false
-      }
-    }
-    
     // Check exact path match first
     const pathnameNormalized = pathname.endsWith('/') && pathname !== '/' 
       ? pathname.slice(0, -1) 
@@ -299,19 +286,6 @@ export function DesktopNavigation({
       ? hrefPath.slice(0, -1) 
       : hrefPath
 
-    // Teacher: when viewing a lesson or exam from within a course (fromCourse), highlight Courses instead of Lessons/Exams
-    const fromCourse = searchParams.get('fromCourse')
-    if (fromCourse && pathname.startsWith('/teacher/')) {
-      if (pathname.startsWith('/teacher/lessons/')) {
-        if (hrefPathNormalized === '/teacher/courses') return true
-        if (hrefPathNormalized === '/teacher/lessons') return false
-      }
-      if (pathname.startsWith('/teacher/exams/')) {
-        if (hrefPathNormalized === '/teacher/courses') return true
-        if (hrefPathNormalized === '/teacher/exams') return false
-      }
-    }
-    
     // Check exact path match first
     const pathnameNormalized = pathname.endsWith('/') && pathname !== '/' 
       ? pathname.slice(0, -1) 

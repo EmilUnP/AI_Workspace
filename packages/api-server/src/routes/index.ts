@@ -3,7 +3,6 @@ import { healthRoutes } from './health'
 import { platformOwnerRoutes } from './v1/platform-owner'
 import { schoolAdminRoutes } from './v1/school-admin'
 import { teacherRoutes } from './v1/teacher'
-import { studentRoutes } from './v1/student'
 import { profileRoutes } from './v1/profile'
 
 /**
@@ -23,7 +22,6 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
       await app.register(platformOwnerRoutes, { prefix: '/platform-owner' })
       await app.register(schoolAdminRoutes, { prefix: '/school-admin' })
       await app.register(teacherRoutes, { prefix: '/teacher' })
-      await app.register(studentRoutes, { prefix: '/student' })
     },
     { prefix: '/api/v1' }
   )

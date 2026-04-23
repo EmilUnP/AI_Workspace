@@ -14,7 +14,7 @@ function getDashboardAndSettings(
     case 'school_superadmin':
       return { dashboardHref: '/school-admin', settingsPath: '/school-admin/settings' }
     case 'teacher':
-      return { dashboardHref: '/teacher', settingsPath: '/teacher/settings' }
+      return { dashboardHref: '/teacher', settingsPath: '/teacher' }
     default:
       return { dashboardHref: null, settingsPath: '/platform-owner/settings' }
   }

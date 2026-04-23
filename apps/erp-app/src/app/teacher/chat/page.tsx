@@ -58,7 +58,7 @@ export default async function TeacherChatPage() {
     <div className="space-y-3 max-w-6xl mx-auto">
       <div>
         <Link
-          href="/teacher/teaching-studio"
+          href="/teacher"
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4" />
