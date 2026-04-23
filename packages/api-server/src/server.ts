@@ -21,7 +21,7 @@ import multipart from '@fastify/multipart'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import { isDevelopment, RATE_LIMITS } from '@eduator/config'
-import { API_VERSION } from './version'
+import { API_VERSION, APP_VERSION } from './version'
 import { registerRoutes } from './routes'
 import { authMiddleware } from './middleware/auth'
 import { errorHandler } from './middleware/error'
@@ -101,14 +101,18 @@ async function buildServer() {
     openapi: {
       info: {
         title: 'Eduator AI API',
-        description: `Eduator ERP API v${API_VERSION}
+        description: `Eduator ERP API documentation.
 
 ## Overview
-Lightweight ERP-focused API for platform owner, school admin, and teacher workflows.
-Current surface emphasizes core management and AI content generation.
+This API powers the Eduator platform for platform owner, school admin, and teacher workflows.
+
+## Version Information
+- **API Version:** ${API_VERSION}
+- **Workspace/App Version:** ${APP_VERSION}
+- **Environment:** ${process.env.NODE_ENV || 'development'}
 
 ## Authentication
-All protected endpoints require a JWT token in the Authorization header:
+Protected endpoints require a JWT token in the Authorization header:
 \`\`\`
 Authorization: Bearer <your-jwt-token>
 \`\`\`
@@ -120,37 +124,8 @@ Tokens are obtained from Supabase Auth. See authentication endpoints in your fro
 - **School Admin**: Manages organization users, classes, and settings within their organization
 - **Teacher**: Creates exams, lessons, courses, manages class data, and uses AI generation tools
 
-## Current Version (${API_VERSION})
-This version includes:
-
-### ✅ Platform Owner Endpoints
-- Organization management (CRUD operations, status updates)
-- User management (list, approve, reject, suspend, delete)
-- Reports and analytics (platform-wide statistics, usage metrics)
-
-### ✅ School Admin Endpoints
-- Dashboard with organization overview
-- User management (list, approve, reject within organization)
-- Class management (list all classes in organization)
-- Reports and analytics (organization-level statistics)
-
-### ✅ Teacher Endpoints
-- Dashboard with exams, lessons, courses, and token overview
-- **Exam Management** (CRUD operations, publish/unpublish)
-- **AI-Powered Exam Generation** (5-step wizard: Generate → Translate → Edit → Assign → Publish)
-- **Course Creation** (5-step wizard: Documents → Blueprint → Options → Generation → Summary)
-- **Lesson Management** (CRUD, AI generation with images/audio, regenerate audio)
-- **Document Management** (upload, CRUD, assign to classes)
-- Class management (list, create, view students, share content)
-- Analytics and reporting
-
-### ✅ Profile Management
-- Get current user profile
-- Update profile information
-
-### ✅ Health & Info
-- Health check endpoints
-- API information and version
+## Endpoint Groups
+See the **Tags** section below for the current, generated list of endpoint groups and available routes.
 
 ## Base URL
 All API endpoints are prefixed with \`/api/v1\`
@@ -305,7 +280,7 @@ Error responses:
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Eduator AI API – Swagger UI</title>
+  <title>Eduator AI API v${API_VERSION} - Swagger UI</title>
   <link rel="stylesheet" href="${swaggerUiCdn}/swagger-ui.css" />
 </head>
 <body>
