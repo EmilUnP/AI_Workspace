@@ -2,6 +2,8 @@
 
 Minimal, reset documentation for the current product baseline.
 
+Current baseline version: **0.0.8**.
+
 ## Current Scope
 
 - ERP app (`apps/erp-app`)
