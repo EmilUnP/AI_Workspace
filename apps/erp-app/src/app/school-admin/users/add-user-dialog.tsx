@@ -11,7 +11,6 @@ import {
   Lock, 
   User,
   BookOpen,
-  GraduationCap,
   Building2
 } from 'lucide-react'
 import { createUser } from './actions'
@@ -28,7 +27,7 @@ export function AddUserDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [profileType, setProfileType] = useState<'teacher' | 'student'>('teacher')
+  const [profileType, setProfileType] = useState<'teacher'>('teacher')
   const [structure, setStructure] = useState<OrganizationUnit[]>([])
   const [, setLoadingStructure] = useState(false)
 
@@ -114,7 +113,7 @@ export function AddUserDialog() {
                   </div>
                   <div>
                     <h2 className="text-lg font-bold">Add New User</h2>
-                    <p className="text-orange-100 text-sm">Create a new teacher or student</p>
+                    <p className="text-orange-100 text-sm">Create a new teacher</p>
                   </div>
                 </div>
                 <button
@@ -134,7 +133,7 @@ export function AddUserDialog() {
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   User Type
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <button
                     type="button"
                     onClick={() => setProfileType('teacher')}
@@ -154,28 +153,6 @@ export function AddUserDialog() {
                         Teacher
                       </p>
                       <p className="text-xs text-gray-500">Can create classes & exams</p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setProfileType('student')}
-                    className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
-                      profileType === 'student'
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                      profileType === 'student' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      <GraduationCap className="h-5 w-5" />
-                    </div>
-                    <div className="text-left">
-                      <p className={`font-medium ${profileType === 'student' ? 'text-blue-900' : 'text-gray-900'}`}>
-                        Student
-                      </p>
-                      <p className="text-xs text-gray-500">Can take exams & learn</p>
                     </div>
                   </button>
                 </div>

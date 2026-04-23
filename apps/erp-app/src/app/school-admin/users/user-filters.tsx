@@ -99,7 +99,6 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
         >
           <option value="all">All Roles</option>
           <option value="teacher">Teacher</option>
-          <option value="student">Student</option>
         </select>
 
         {isPending && (

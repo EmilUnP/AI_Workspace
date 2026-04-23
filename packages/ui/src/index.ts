@@ -152,10 +152,7 @@ export { formatDate, formatFileSize, getGreeting } from './utils/teacher-dashboa
 // Teacher Settings Components
 export { TeacherSettingsClient, type TeacherSettingsClientProps, type TeacherSettingsTranslations } from './components/teacher/teacher-settings-client'
 
-// Teacher Classes Components
-export { TeacherClassesList, type TeacherClassesListProps, type TeacherClassesListLabels, type ClassItem } from './components/teacher/teacher-classes-list'
 export { AddClassDialog, type AddClassDialogProps, type AddClassDialogLabels } from './components/teacher/add-class-dialog'
-export { TeacherClassesListClient, type TeacherClassesListClientProps } from './components/teacher/teacher-classes-list-client'
 export { EnrollStudentDialog, type EnrollStudentDialogProps, type EnrollStudentDialogLabels, type Student } from './components/teacher/enroll-student-dialog'
 export { ClassAITutor, type ClassAITutorLabels } from './components/teacher/class-ai-tutor'
 export { ShareExamDialog, type ShareExamDialogProps, type ShareExamDialogLabels } from './components/teacher/share-exam-dialog'
@@ -180,15 +177,6 @@ export {
   type EducationPlanEditFormProps,
   type EducationPlanEditFormLabels,
 } from './components/teacher/education-plan-edit-form'
-
-// Reports Components
-export { TeacherReportsClient, type TeacherReportsClientProps } from './components/reports/teacher-reports-client'
-
-// Calendar Components
-export { TeacherCalendarHub, type TeacherCalendarHubProps, type TeacherCalendarHubLabels } from './components/teacher/calendar/teacher-calendar-hub'
-export { SmartCalendar, type CalendarEvent, type SmartCalendarProps } from './components/teacher/calendar/smart-calendar'
-export { DraftsSidebar, type DraftMaterial, type DraftsSidebarProps } from './components/teacher/calendar/drafts-sidebar'
-export { QuickEditPanel, type QuickEditPanelProps } from './components/teacher/calendar/quick-edit-panel'
 
 // Teaching Studio Components
 export {

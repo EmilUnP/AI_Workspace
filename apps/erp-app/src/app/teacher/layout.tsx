@@ -31,10 +31,7 @@ export default async function TeacherLayout({
     { name: nav('lessons'), href: '/teacher/lessons', icon: 'GraduationCap' },
     { name: nav('courses'), href: '/teacher/courses', icon: 'Sparkles' },
     { name: nav('aiTutor'), href: '/teacher/chat', icon: 'MessageSquare' },
-    { name: nav('calendar'), href: '/teacher/calendar', icon: 'Calendar' },
-    { name: nav('classes'), href: '/teacher/classes', icon: 'BookOpen' },
     { name: nav('educationPlans'), href: '/teacher/education-plans', icon: 'CalendarRange' },
-    { name: nav('reports'), href: '/teacher/reports', icon: 'BarChart3' },
     { name: nav('tokens'), href: '/teacher/tokens', icon: 'Coins' },
     { name: nav('settings'), href: '/teacher/settings', icon: 'Settings' },
   ]

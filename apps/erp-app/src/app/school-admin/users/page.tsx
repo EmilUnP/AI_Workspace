@@ -2,7 +2,6 @@ import { createClient as createServerClient } from '@eduator/auth/supabase/serve
 import { 
   Users, 
   BookOpen, 
-  GraduationCap, 
   Clock,
   CheckCircle,
   XCircle,
@@ -138,7 +137,6 @@ async function getStats(organizationId: string) {
   return {
     total: allProfiles.length,
     teachers: allProfiles.filter(p => p.profile_type === 'teacher').length,
-    students: allProfiles.filter(p => p.profile_type === 'student').length,
     pending: allProfiles.filter(p => p.approval_status === 'pending').length,
   }
 }
@@ -150,11 +148,11 @@ const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor
     bgColor: 'bg-emerald-100',
     label: 'Teacher',
   },
-  student: {
-    icon: <GraduationCap className="h-3.5 w-3.5" />,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-    label: 'Student',
+  legacy: {
+    icon: <Users className="h-3.5 w-3.5" />,
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+    label: 'Legacy/Unknown',
   },
 }
 
@@ -193,7 +191,7 @@ export default async function UsersPage({
         <div>
           <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Users</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage teachers and students
+            Manage organization users
           </p>
         </div>
         
@@ -203,10 +201,6 @@ export default async function UsersPage({
             <div className="text-center">
               <p className="text-lg font-bold text-emerald-600">{stats.teachers}</p>
               <p className="text-xs text-gray-500">Teachers</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-blue-600">{stats.students}</p>
-              <p className="text-xs text-gray-500">Students</p>
             </div>
             {stats.pending > 0 && (
               <div className="text-center">
@@ -221,11 +215,6 @@ export default async function UsersPage({
             <div className="text-center">
               <p className="text-2xl font-bold text-emerald-600">{stats.teachers}</p>
               <p className="text-xs text-gray-500">Teachers</p>
-            </div>
-            <div className="h-8 w-px bg-gray-200" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{stats.students}</p>
-              <p className="text-xs text-gray-500">Students</p>
             </div>
             {stats.pending > 0 && (
               <>
@@ -255,7 +244,7 @@ export default async function UsersPage({
             <p className="mt-2 text-sm text-gray-500">
               {params.search || params.status || params.role
                 ? 'Try adjusting your filters'
-                : 'Add your first teacher or student'}
+                : 'Add your first teacher'}
             </p>
             <div className="mt-6">
               <AddUserDialog />
@@ -266,7 +255,7 @@ export default async function UsersPage({
             {/* Mobile Card View */}
             <div className="divide-y divide-gray-100 sm:hidden">
               {users.map((user) => {
-                const role = roleConfig[user.profile_type] || roleConfig.student
+                const role = roleConfig[user.profile_type] || roleConfig.legacy
                 
                 return (
                   <div key={user.id} className="p-4">
@@ -392,7 +381,7 @@ export default async function UsersPage({
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
                 {users.map((user) => {
-                  const role = roleConfig[user.profile_type] || roleConfig.student
+                  const role = roleConfig[user.profile_type] || roleConfig.legacy
                   
                   return (
                     <tr key={user.id} className="hover:bg-gray-50 transition-colors">

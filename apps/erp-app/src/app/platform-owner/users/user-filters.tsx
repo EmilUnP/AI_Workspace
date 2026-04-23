@@ -119,7 +119,6 @@ export function UserFilters({ currentParams, organizations }: UserFiltersProps) 
           <option value="platform_owner">Platform Owner</option>
           <option value="school_superadmin">School Admin</option>
           <option value="teacher">Teacher</option>
-          <option value="student">Student</option>
         </select>
 
         {organizations.length > 0 && (

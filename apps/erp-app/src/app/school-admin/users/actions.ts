@@ -35,8 +35,8 @@ export async function createUser(formData: FormData) {
     return { error: 'All fields are required' }
   }
 
-  if (!['teacher', 'student'].includes(profile_type)) {
-    return { error: 'Invalid role. Must be teacher or student' }
+  if (profile_type !== 'teacher') {
+    return { error: 'Only teacher role can be created in this lightweight version' }
   }
 
   if (password.length < 6) {

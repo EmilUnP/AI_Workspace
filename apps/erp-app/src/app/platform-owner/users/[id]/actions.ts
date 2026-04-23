@@ -14,6 +14,18 @@ export async function updateUser(formData: FormData) {
   const approval_status = formData.get('approval_status') as string
   const organization_id = formData.get('organization_id') as string | null
 
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('profile_type')
+    .eq('id', id)
+    .single()
+
+  const allowedRoles = new Set(['platform_owner', 'school_superadmin', 'teacher'])
+  const isLegacyStudent = existingProfile?.profile_type === 'student'
+  if (!allowedRoles.has(profile_type) && !(isLegacyStudent && profile_type === 'student')) {
+    return { error: 'Unsupported role for this lightweight version' }
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update({

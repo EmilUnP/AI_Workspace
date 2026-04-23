@@ -98,7 +98,9 @@ export function EditUserForm({ user, organizations }: EditUserFormProps) {
           <option value="platform_owner">Platform Owner</option>
           <option value="school_superadmin">School Admin</option>
           <option value="teacher">Teacher</option>
-          <option value="student">Student</option>
+          {user.profile_type === 'student' && (
+            <option value="student">Legacy Student (existing only)</option>
+          )}
         </select>
       </div>
 
@@ -121,7 +123,7 @@ export function EditUserForm({ user, organizations }: EditUserFormProps) {
           ))}
         </select>
         <p className="mt-1 text-xs text-gray-400">
-          School admins, teachers, and students should be assigned to an organization
+          School admins and teachers should be assigned to an organization
         </p>
       </div>
 

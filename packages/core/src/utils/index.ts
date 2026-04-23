@@ -2,9 +2,6 @@
  * Utility functions for Eduator AI
  */
 
-// Reports utilities
-export * from './reports'
-
 // Teacher classes utilities
 export * from './teacher-classes'
 

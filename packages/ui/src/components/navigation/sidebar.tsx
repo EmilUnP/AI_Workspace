@@ -16,7 +16,6 @@ import {
   BookOpen,
   BarChart3,
   PlusCircle,
-  Calendar,
 } from 'lucide-react'
 
 export interface SidebarItem {
@@ -183,21 +182,13 @@ export const teacherSidebarItems: SidebarSection[] = [
     title: 'Overview',
     items: [
       { title: 'Dashboard', href: '/teacher', icon: <LayoutDashboard className="h-5 w-5" /> },
-      { title: 'Calendar', href: '/teacher/calendar', icon: <Calendar className="h-5 w-5" /> },
     ],
   },
   {
     title: 'Teaching',
     items: [
-      { title: 'My Classes', href: '/teacher/classes', icon: <BookOpen className="h-5 w-5" /> },
       { title: 'Exams', href: '/teacher/exams', icon: <FileText className="h-5 w-5" /> },
       { title: 'Create Exam', href: '/teacher/exams/create', icon: <PlusCircle className="h-5 w-5" /> },
-    ],
-  },
-  {
-    title: 'Analytics',
-    items: [
-      { title: 'Class Analytics', href: '/teacher/analytics', icon: <BarChart3 className="h-5 w-5" /> },
     ],
   },
 ]

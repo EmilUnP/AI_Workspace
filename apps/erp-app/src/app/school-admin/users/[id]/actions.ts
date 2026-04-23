@@ -52,8 +52,16 @@ export async function updateUser(formData: FormData) {
     return { error: 'All fields are required' }
   }
 
-  if (!['teacher', 'student'].includes(profile_type)) {
-    return { error: 'Invalid role. Must be teacher or student' }
+  const supabase = await createServerClient()
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('profile_type')
+    .eq('id', id)
+    .single()
+
+  const isLegacyStudent = existingProfile?.profile_type === 'student'
+  if (profile_type !== 'teacher' && !(isLegacyStudent && profile_type === 'student')) {
+    return { error: 'Only teacher role can be assigned in this lightweight version' }
   }
 
   const { error: accessError, organizationId } = await verifyOrganizationAccess(id)

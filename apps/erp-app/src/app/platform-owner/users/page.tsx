@@ -5,7 +5,6 @@ import {
   Users,
   Shield,
   BookOpen,
-  GraduationCap,
   Building2,
   Clock,
   CheckCircle,
@@ -75,13 +74,12 @@ async function getUsers(
 async function getStats(supabase: Awaited<ReturnType<typeof createServerClient>>) {
   // Count-only queries: no full table scan, no row transfer
   const countOpt = { count: 'exact' as const, head: true }
-  const [totalRes, platformOwnerRes, schoolAdminRes, teacherRes, studentRes, pendingRes] =
+  const [totalRes, platformOwnerRes, schoolAdminRes, teacherRes, pendingRes] =
     await Promise.all([
       supabase.from('profiles').select('id', countOpt),
       supabase.from('profiles').select('id', countOpt).eq('profile_type', 'platform_owner'),
       supabase.from('profiles').select('id', countOpt).eq('profile_type', 'school_superadmin'),
       supabase.from('profiles').select('id', countOpt).eq('profile_type', 'teacher'),
-      supabase.from('profiles').select('id', countOpt).eq('profile_type', 'student'),
       supabase.from('profiles').select('id', countOpt).eq('approval_status', 'pending'),
     ])
   return {
@@ -89,7 +87,6 @@ async function getStats(supabase: Awaited<ReturnType<typeof createServerClient>>
     platformOwners: platformOwnerRes.count ?? 0,
     schoolAdmins: schoolAdminRes.count ?? 0,
     teachers: teacherRes.count ?? 0,
-    students: studentRes.count ?? 0,
     pending: pendingRes.count ?? 0,
   }
 }
@@ -127,10 +124,10 @@ const roleConfig: Record<string, { icon: React.ReactNode; color: string; label: 
     color: 'text-blue-600',
     label: 'Teacher',
   },
-  student: {
-    icon: <GraduationCap className="h-3.5 w-3.5" />,
-    color: 'text-green-600',
-    label: 'Student',
+  legacy: {
+    icon: <Users className="h-3.5 w-3.5" />,
+    color: 'text-gray-600',
+    label: 'Legacy/Unknown',
   },
 }
 
@@ -176,11 +173,6 @@ export default async function UsersPage({
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600">{stats.teachers}</p>
             <p className="text-xs text-gray-500">Teachers</p>
-          </div>
-          <div className="h-8 w-px bg-gray-200" />
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{stats.students}</p>
-            <p className="text-xs text-gray-500">Students</p>
           </div>
           {stats.pending > 0 && (
             <>
@@ -249,7 +241,7 @@ export default async function UsersPage({
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {users.map((user) => {
-                const role = roleConfig[user.profile_type] || roleConfig.student
+                const role = roleConfig[user.profile_type] || roleConfig.legacy
                 const tokenBalance = tokenBalances.get(user.id) ?? 0
 
                 return (

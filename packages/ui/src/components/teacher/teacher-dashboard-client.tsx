@@ -3,10 +3,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
-  BookOpen, 
   FileText, 
   GraduationCap, 
-  Users, 
   FolderOpen, 
   Clock, 
   CheckCircle, 
@@ -268,18 +266,7 @@ export function TeacherDashboardClient({
       />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <DashboardStatCard
-          href="/teacher/classes"
-          label={t.classes}
-          value={stats.classes}
-          icon={BookOpen}
-          iconBgColor="bg-blue-100"
-          iconColor="text-blue-600"
-          borderHoverColor="blue-200"
-          bgHoverColor="bg-blue-50"
-        />
-
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <DashboardStatCard
           href="/teacher/exams"
           label={t.exams}
@@ -313,29 +300,15 @@ export function TeacherDashboardClient({
           borderHoverColor="emerald-200"
           bgHoverColor="bg-emerald-50"
         />
-
-        <DashboardStatCard
-          href="/teacher/classes"
-          label={t.students}
-          value={stats.students}
-          subtitle={stats.classes > 0 ? plural(t.inNClasses, stats.classes) : undefined}
-          icon={Users}
-          iconBgColor="bg-cyan-100"
-          iconColor="text-cyan-600"
-          borderHoverColor="cyan-200"
-          bgHoverColor="bg-cyan-50"
-        />
       </div>
 
       {/* At a glance */}
       <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-3 text-sm text-gray-600">
         <span className="font-medium text-gray-700">{t.atAGlance}</span>{' '}
         {stats.publishedExams > 0 && <span>{plural(t.publishedExamsReady, stats.publishedExams)}</span>}
-        {stats.publishedExams > 0 && stats.students > 0 && ' • '}
-        {stats.students > 0 && <span>{plural(t.activeStudents, stats.students)}</span>}
-        {stats.documents > 0 && (stats.publishedExams > 0 || stats.students > 0) && ' • '}
+        {stats.documents > 0 && stats.publishedExams > 0 && ' • '}
         {stats.documents > 0 && <span>{plural(t.documentsInLibrary, stats.documents)}</span>}
-        {stats.publishedExams === 0 && stats.students === 0 && stats.documents === 0 && (
+        {stats.publishedExams === 0 && stats.documents === 0 && (
           <span>{t.getStarted}</span>
         )}
       </div>
@@ -525,92 +498,6 @@ export function TeacherDashboardClient({
         </div>
       </div>
 
-      {/* Recent Classes */}
-      <div className="rounded-xl sm:rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 flex-shrink-0">
-              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{t.yourClasses}</h3>
-              <p className="text-xs text-gray-500 hidden sm:block">{t.classesYouTeach}</p>
-            </div>
-          </div>
-          <Link 
-            href="/teacher/classes" 
-            className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 flex-shrink-0 ml-2"
-          >
-            <span className="hidden sm:inline">{t.viewAll}</span>
-            <span className="sm:hidden">{t.all}</span>
-            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
-          </Link>
-        </div>
-        
-        {recentClasses.length === 0 ? (
-          <div className="p-8 text-center">
-            <BookOpen className="h-10 w-10 text-gray-300 mx-auto" />
-            <p className="mt-2 text-sm text-gray-500">{t.noClassesYet}</p>
-            {isERP ? (
-              <p className="mt-1 text-xs text-gray-400">{t.contactAdmin}</p>
-            ) : (
-              <Link 
-                href="/teacher/classes/new" 
-                className="mt-3 inline-flex text-sm text-blue-600 hover:text-blue-700"
-              >
-                {t.createFirstClass}
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:gap-4 p-4 sm:p-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {recentClasses.map((cls, index) => {
-              const colors = [
-                { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-100 text-blue-600', badge: 'bg-blue-100 text-blue-700' },
-                { bg: 'bg-violet-50', border: 'border-violet-200', icon: 'bg-violet-100 text-violet-600', badge: 'bg-violet-100 text-violet-700' },
-                { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'bg-emerald-100 text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
-                { bg: 'bg-amber-50', border: 'border-amber-200', icon: 'bg-amber-100 text-amber-600', badge: 'bg-amber-100 text-amber-700' },
-                { bg: 'bg-rose-50', border: 'border-rose-200', icon: 'bg-rose-100 text-rose-600', badge: 'bg-rose-100 text-rose-700' },
-              ]
-              const color = colors[index % colors.length]
-              
-              return (
-                <Link
-                  key={cls.id}
-                  href={`/teacher/classes/${cls.id}`}
-                  className={`group relative rounded-lg sm:rounded-xl ${color.bg} border ${color.border} p-3 sm:p-4 hover:shadow-md transition-all`}
-                >
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    <div className={`flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl flex-shrink-0 ${color.icon} group-hover:scale-110 transition-transform`}>
-                      <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-sm sm:text-base text-gray-900 truncate">{cls.name}</p>
-                        {!cls.is_active && (
-                          <span className="text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded whitespace-nowrap">{t.inactive}</span>
-                        )}
-                      </div>
-                      {cls.class_code && (
-                        <p className="text-xs text-gray-500 mt-0.5 font-mono truncate">{cls.class_code}</p>
-                      )}
-                      {cls.description && (
-                        <p className="text-xs text-gray-600 mt-1 line-clamp-2 hidden sm:block">{cls.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-2 sm:mt-3 flex items-center justify-between">
-                    <span className="text-xs text-gray-500 hidden sm:inline">{formatDate(cls.created_at)}</span>
-                    <span className="text-xs font-medium text-blue-600 group-hover:underline">
-                      {t.view}
-                    </span>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-      </div>
     </div>
   )
 }

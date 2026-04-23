@@ -9,7 +9,6 @@ import {
   Building2,
   Shield,
   BookOpen,
-  GraduationCap,
   CheckCircle,
   Clock,
   XCircle,
@@ -110,11 +109,11 @@ const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor
     bgColor: 'bg-emerald-100',
     label: 'Teacher',
   },
-  student: {
-    icon: <GraduationCap className="h-5 w-5" />,
-    color: 'text-amber-700',
-    bgColor: 'bg-amber-100',
-    label: 'Student',
+  legacy: {
+    icon: <Users className="h-5 w-5" />,
+    color: 'text-gray-700',
+    bgColor: 'bg-gray-100',
+    label: 'Legacy/Unknown',
   },
 }
 
@@ -134,7 +133,7 @@ export default async function UserDetailPage({
     notFound()
   }
 
-  const role = roleConfig[user.profile_type] || roleConfig.student
+  const role = roleConfig[user.profile_type] || roleConfig.legacy
 
   return (
     <div className="space-y-6">
