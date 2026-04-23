@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     case 'teacher':
       return redirectTo(new URL('/teacher', origin))
     case 'student':
-      return redirectTo(new URL('/student', origin))
+      return redirectTo(new URL('/auth/access-denied', origin))
     default:
       return redirectTo(new URL('/', origin))
   }

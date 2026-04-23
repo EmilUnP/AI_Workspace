@@ -35,7 +35,6 @@ export function useAuth() {
     isPlatformOwner: profile?.profile_type === 'platform_owner',
     isSchoolAdmin: profile?.profile_type === 'school_superadmin',
     isTeacher: profile?.profile_type === 'teacher',
-    isStudent: profile?.profile_type === 'student',
     isApproved: profile?.approval_status === 'approved',
     isPending: profile?.approval_status === 'pending',
 
@@ -140,20 +139,6 @@ export function usePermissions() {
           canTakeExams: false,
           canUseChatbot: true,
           canExportData: true,
-        }
-      case 'student':
-        return {
-          canManageOrganizations: false,
-          canManageUsers: false,
-          canApproveUsers: false,
-          canViewAnalytics: false,
-          canCreateExams: false,
-          canEditExams: false,
-          canDeleteExams: false,
-          canViewExams: true,
-          canTakeExams: true,
-          canUseChatbot: true,
-          canExportData: false,
         }
       default:
         return {

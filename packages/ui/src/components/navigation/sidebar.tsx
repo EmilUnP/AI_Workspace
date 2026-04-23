@@ -203,25 +203,3 @@ export const teacherSidebarItems: SidebarSection[] = [
   },
 ]
 
-export const studentSidebarItems: SidebarSection[] = [
-  {
-    title: 'Overview',
-    items: [
-      { title: 'Dashboard', href: '/student', icon: <LayoutDashboard className="h-5 w-5" /> },
-    ],
-  },
-  {
-    title: 'Learning',
-    items: [
-      { title: 'My Classes', href: '/student/classes', icon: <BookOpen className="h-5 w-5" /> },
-      { title: 'Exams', href: '/student/exams', icon: <FileText className="h-5 w-5" /> },
-      { title: 'AI Tutor', href: '/student/chat', icon: <MessageSquare className="h-5 w-5" /> },
-    ],
-  },
-  {
-    title: 'Progress',
-    items: [
-      { title: 'My Progress', href: '/student/progress', icon: <BarChart3 className="h-5 w-5" /> },
-    ],
-  },
-]

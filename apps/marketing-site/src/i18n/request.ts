@@ -2,7 +2,7 @@ import { getRequestConfig } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import { MESSAGES } from './messages-static'
 
-export const locales = ['en', 'az', 'ru', 'tr'] as const
+export const locales = ['en', 'az'] as const
 export type Locale = (typeof locales)[number]
 export const defaultLocale: Locale = 'az'
 

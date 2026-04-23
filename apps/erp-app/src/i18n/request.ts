@@ -4,7 +4,7 @@ import { getMessageModule } from './module-mapping'
 import { X_PATHNAME_HEADER } from './constants'
 import { MESSAGES } from './messages-static'
 
-export const locales = ['en', 'az', 'ru', 'tr'] as const
+export const locales = ['en', 'az'] as const
 export type Locale = (typeof locales)[number]
 export const defaultLocale: Locale = 'az'
 

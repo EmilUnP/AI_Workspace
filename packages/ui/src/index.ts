@@ -43,7 +43,6 @@ export {
   platformOwnerSidebarItems,
   schoolAdminSidebarItems,
   teacherSidebarItems,
-  studentSidebarItems,
   type SidebarProps,
   type SidebarItem,
   type SidebarSection,
@@ -184,82 +183,6 @@ export {
 
 // Reports Components
 export { TeacherReportsClient, type TeacherReportsClientProps } from './components/reports/teacher-reports-client'
-
-// Student Dashboard Components
-export { 
-  StudentDashboardClient, 
-  type StudentDashboardClientProps, 
-  type StudentDashboardTranslations,
-  type StudentDashboardStats,
-  type UpcomingExam,
-  type RecentActivity
-} from './components/student/student-dashboard-client'
-
-// Student Classes Components
-export { 
-  StudentClassesList, 
-  type StudentClassesListProps,
-  type StudentClassesListLabels,
-  type StudentClassItem
-} from './components/student/student-classes-list'
-
-// Student Exams Components
-export { 
-  StudentExamsList, 
-  type StudentExamsListProps,
-  type StudentExamsListTranslations,
-  type StudentExamItem
-} from './components/student/student-exams-list'
-export {
-  StudentExamTakeClient,
-  type StudentExamTakeClientProps,
-  type StudentExamTakeClientTranslations
-} from './components/student/student-exam-take-client'
-export {
-  StudentExamResultsClient,
-  type StudentExamResultsClientProps,
-  type StudentExamResultsClientTranslations
-} from './components/student/student-exam-results-client'
-
-// Student Assistant (wizard + AI)
-export {
-  StudentAssistantClient,
-  type StudentAssistantClientProps,
-  type StudentAssistantLabels,
-  type AssistantExam,
-  type AssistantLesson,
-  type TodayActivity,
-  type ClassUpdate,
-  type AssistantProgress,
-  type WizardStep,
-} from './components/student/student-assistant-client'
-export { StudentAssistantFab, type StudentAssistantFabProps } from './components/student/student-assistant-fab'
-
-// Student Lessons Components
-export { 
-  StudentLessonsList,
-  type StudentLessonsListProps,
-  type StudentLessonsListTranslations,
-  type StudentLessonItem
-} from './components/student/student-lessons-list'
-export {
-  StudentLessonProgress,
-  type StudentLessonProgressProps,
-  type StudentLessonProgressLabels,
-} from './components/student/student-lesson-progress'
-
-// Student Class Detail Components
-export { 
-  StudentClassDetailClient, 
-  type StudentClassDetailClientProps,
-  type StudentClassDetailClientTranslations,
-  type StudentClassDetailData,
-  type SharedExam,
-  type SharedDocument,
-  type SharedLesson,
-  type EnrolledStudent,
-  type ClassTeacher
-} from './components/student/student-class-detail-client'
 
 // Agent Components
 export { AIAgentWidget, type Message } from './components/agent'

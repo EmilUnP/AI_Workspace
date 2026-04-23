@@ -7,8 +7,6 @@ import { LanguageSwitcher, type LocaleOption } from '@eduator/ui'
 const LOCALE_OPTIONS: LocaleOption[] = [
   { code: 'en', label: 'English', countryCode: 'gb' },
   { code: 'az', label: 'Azərbaycan', countryCode: 'az' },
-  { code: 'ru', label: 'Русский', countryCode: 'ru' },
-  { code: 'tr', label: 'Türkçe', countryCode: 'tr' },
 ]
 
 export function LocaleSwitcher({ accent = 'violet' }: { accent?: 'green' | 'violet' }) {

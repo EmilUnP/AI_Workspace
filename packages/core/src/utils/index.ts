@@ -23,30 +23,6 @@ export * from './teacher-lessons'
 // Teacher education plans (create/insert - shared ERP + ERP)
 export * from './teacher-education-plans'
 
-// Student classes utilities
-export * from './student-classes'
-
-// Student class detail utilities
-export * from './student-class-detail'
-
-// Student exams utilities
-export * from './student-exams'
-
-// Student lessons utilities
-export * from './student-lessons'
-
-// Student exam detail utilities
-export * from './student-exam-detail'
-
-// Student exam submit (score computation)
-export * from './student-exam-submit'
-
-// Student exam results utilities
-export * from './student-exam-results'
-
-// Student calendar (scheduled lessons/exams)
-export * from './student-calendar'
-
 // Feature visibility (platform owner controls)
 export * from './feature-visibility'
 

@@ -98,7 +98,6 @@ const defaultRouteConfig: RouteConfig = {
     '/platform-owner',
     '/school-admin',
     '/teacher',
-    '/student',
     '/dashboard',
     '/settings',
   ],
@@ -106,7 +105,6 @@ const defaultRouteConfig: RouteConfig = {
     platform_owner: ['/platform-owner'],
     school_superadmin: ['/school-admin'],
     teacher: ['/teacher'],
-    student: ['/student'],
   },
 }
 
@@ -218,8 +216,6 @@ export function getRedirectUrl(profileType: string): string {
       return '/school-admin'
     case 'teacher':
       return '/teacher'
-    case 'student':
-      return '/student'
     default:
       return '/dashboard'
   }

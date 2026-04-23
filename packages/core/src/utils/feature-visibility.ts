@@ -1,5 +1,5 @@
 export type FeatureAppSource = 'erp'
-export type FeatureRole = 'teacher' | 'student'
+export type FeatureRole = 'teacher'
 
 export interface FeatureVisibilityDefinition {
   key: string
@@ -29,15 +29,6 @@ export const FEATURE_VISIBILITY_DEFINITIONS: FeatureVisibilityDefinition[] = [
   { key: 'api_integration', label: 'API Integration', appSource: 'erp', role: 'teacher', navHref: '/teacher/api-integration', routePrefixes: ['/teacher/api-integration'] },
   { key: 'settings', label: 'Settings', appSource: 'erp', role: 'teacher', navHref: '/teacher/settings', routePrefixes: ['/teacher/settings'], core: true },
 
-  // ERP student
-  { key: 'dashboard', label: 'Dashboard', appSource: 'erp', role: 'student', navHref: '/student', routePrefixes: ['/student'], core: true },
-  { key: 'calendar', label: 'Calendar', appSource: 'erp', role: 'student', navHref: '/student/calendar', routePrefixes: ['/student/calendar'] },
-  { key: 'classes', label: 'My Classes', appSource: 'erp', role: 'student', navHref: '/student/classes', routePrefixes: ['/student/classes'] },
-  { key: 'exams', label: 'Exams', appSource: 'erp', role: 'student', navHref: '/student/exams', routePrefixes: ['/student/exams'] },
-  { key: 'lessons', label: 'Lessons', appSource: 'erp', role: 'student', navHref: '/student/lessons', routePrefixes: ['/student/lessons'] },
-  { key: 'ai_tutor', label: 'AI Tutor', appSource: 'erp', role: 'student', navHref: '/student/chat', routePrefixes: ['/student/chat'] },
-  { key: 'progress', label: 'My Progress', appSource: 'erp', role: 'student', navHref: '/student/progress', routePrefixes: ['/student/progress'] },
-  { key: 'settings', label: 'Settings', appSource: 'erp', role: 'student', navHref: '/student/settings', routePrefixes: ['/student/settings'], core: true },
 ]
 
 export function getDefinitionsForRole(appSource: FeatureAppSource, role: FeatureRole): FeatureVisibilityDefinition[] {
