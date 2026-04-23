@@ -1,6 +1,6 @@
 {
   "name": "@eduator/api-server",
-  "version": "2.1.0",
+  "version": "0.0.5",
   "private": true,
   "main": "./src/server.ts",
   "types": "./src/server.ts",
