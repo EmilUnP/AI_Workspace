@@ -109,7 +109,7 @@ export const classRepository = {
   async getByTeacher(teacherId: string, options?: { isActive?: boolean; limit?: number }) {
     const supabase = getDbClient()
 
-    const classListColumns = 'id, organization_id, teacher_id, name, description, subject, grade_level, academic_year, semester, class_code, is_active, settings, created_at, updated_at'
+    const classListColumns = 'id, teacher_id, name, description, subject, grade_level, academic_year, semester, class_code, is_active, settings, created_at, updated_at'
     let query = supabase
       .from('classes')
       .select(classListColumns)
@@ -142,11 +142,12 @@ export const classRepository = {
   ) {
     const supabase = getDbClient()
     const { page = 1, perPage = 20, isActive } = options || {}
+    void organizationId
 
     let query = supabase
       .from('classes')
       .select('*, teacher:profiles!teacher_id(id, full_name)', { count: 'exact' })
-      .eq('organization_id', organizationId)
+      .neq('id', '')
 
     if (isActive !== undefined) {
       query = query.eq('is_active', isActive)
@@ -157,7 +158,7 @@ export const classRepository = {
       .range((page - 1) * perPage, page * perPage - 1)
 
     if (error) {
-      console.error('Error getting organization classes:', error)
+      console.error('Error getting classes:', error)
       return { data: [], count: 0 }
     }
 
@@ -212,6 +213,7 @@ export const classRepository = {
     const { data, error } = await supabase
       .from('classes')
       .insert({
+        // Temporary compatibility: DB may still contain organization_id before final cutover.
         organization_id: organizationId,
         teacher_id: teacherId,
         ...input,

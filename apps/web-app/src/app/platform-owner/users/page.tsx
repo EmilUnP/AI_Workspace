@@ -1,6 +1,5 @@
-import { unstable_cache } from 'next/cache'
 import { createClient as createServerClient } from '@eduator/auth/supabase/server'
-import { getDbClient, tokenRepository } from '@eduator/db'
+import { tokenRepository } from '@eduator/db'
 import {
   Users,
   Shield,
@@ -15,6 +14,7 @@ import {
 import Link from 'next/link'
 import { UserFilters } from './user-filters'
 import { UserRowActions } from './user-row-actions'
+import { CreateSchoolAdminDialog } from './create-school-admin-dialog'
 import { PaginationFooter } from '@eduator/ui'
 
 const PER_PAGE = 20
@@ -25,7 +25,6 @@ async function getUsers(
   search?: string
   status?: string
   role?: string
-  org?: string
   source?: string
   page?: string 
 }) {
@@ -34,10 +33,7 @@ async function getUsers(
   
   let query = supabase
     .from('profiles')
-    .select(`
-      *,
-      organization:organizations(id, name, slug)
-    `, { count: 'exact' })
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + PER_PAGE - 1)
   
@@ -51,10 +47,6 @@ async function getUsers(
   
   if (searchParams.role && searchParams.role !== 'all') {
     query = query.eq('profile_type', searchParams.role)
-  }
-  
-  if (searchParams.org && searchParams.org !== 'all') {
-    query = query.eq('organization_id', searchParams.org)
   }
   
   if (searchParams.source && searchParams.source !== 'all') {
@@ -91,23 +83,6 @@ async function getStats(supabase: Awaited<ReturnType<typeof createServerClient>>
   }
 }
 
-async function getOrganizationsUncached(): Promise<Array<{ id: string; name: string }>> {
-  const supabase = getDbClient()
-  const { data } = await supabase
-    .from('organizations')
-    .select('id, name')
-    .order('name')
-  return data || []
-}
-
-function getCachedOrganizations(): Promise<Array<{ id: string; name: string }>> {
-  return unstable_cache(
-    getOrganizationsUncached,
-    ['platform-owner-organizations-list'],
-    { revalidate: 120 }
-  )()
-}
-
 const roleConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   platform_owner: {
     icon: <Shield className="h-3.5 w-3.5" />,
@@ -134,16 +109,15 @@ const roleConfig: Record<string, { icon: React.ReactNode; color: string; label: 
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; status?: string; role?: string; org?: string; source?: string; page?: string }>
+  searchParams: Promise<{ search?: string; status?: string; role?: string; source?: string; page?: string }>
 }) {
   const params = await searchParams
   const supabase = await createServerClient()
   const usersResult = await getUsers(supabase, params)
   const { data: users, count: totalUsers, page: currentPage } = usersResult
   const profileIds = users.map((u) => u.id)
-  const [stats, organizations, tokenBalances] = await Promise.all([
+  const [stats, tokenBalances] = await Promise.all([
     getStats(supabase),
-    getCachedOrganizations(),
     tokenRepository.getBalancesForProfiles(profileIds),
   ])
 
@@ -157,6 +131,7 @@ export default async function UsersPage({
             {stats.total} total users across the platform
           </p>
         </div>
+        <CreateSchoolAdminDialog />
         
         {/* Quick Stats */}
         <div className="hidden items-center gap-6 lg:flex">
@@ -187,10 +162,7 @@ export default async function UsersPage({
       </div>
 
       {/* Filters */}
-      <UserFilters 
-        currentParams={params} 
-        organizations={organizations} 
-      />
+      <UserFilters currentParams={params} />
 
       {/* Users Table */}
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -199,11 +171,11 @@ export default async function UsersPage({
             <Users className="mx-auto h-12 w-12 text-gray-300" />
             <h3 className="mt-4 text-lg font-medium text-gray-900">No users found</h3>
             <p className="mt-2 text-sm text-gray-500">
-              {params.search || params.status || params.role || params.org || params.source
+              {params.search || params.status || params.role || params.source
                 ? 'Try adjusting your filters'
                 : 'Users will appear here once they register'}
             </p>
-            {(params.search || params.status || params.role || params.org || params.source) && (
+            {(params.search || params.status || params.role || params.source) && (
               <Link
                 href="/platform-owner/users"
                 className="mt-4 inline-flex items-center text-sm font-medium text-red-600 hover:text-red-700"
@@ -221,9 +193,6 @@ export default async function UsersPage({
                 </th>
                 <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">
                   Role
-                </th>
-                <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">
-                  Organization
                 </th>
                 <th scope="col" className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Tokens
@@ -283,27 +252,6 @@ export default async function UsersPage({
                         {role.icon}
                         {role.label}
                       </span>
-                    </td>
-
-                    {/* Organization */}
-                    <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
-                      <div className="flex flex-col gap-1">
-                        {user.organization ? (
-                          <Link 
-                            href={`/platform-owner/organizations/${user.organization.id}`}
-                            className="hover:text-red-600 hover:underline"
-                          >
-                            {user.organization.name}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-400">No organization</span>
-                        )}
-                        {user.source === 'api' && (
-                          <span className="inline-flex w-fit items-center gap-1 rounded bg-cyan-50 px-1.5 py-0.5 text-xs font-medium text-cyan-700">
-                            🔗 API
-                          </span>
-                        )}
-                      </div>
                     </td>
 
                     {/* Tokens */}
@@ -370,11 +318,10 @@ export default async function UsersPage({
             search: params.search,
             status: params.status,
             role: params.role,
-            org: params.org,
             source: params.source,
           }}
         />
-        {(params.search || params.status || params.role || params.org || params.source) && (
+        {(params.search || params.status || params.role || params.source) && (
           <div className="text-center">
             <Link
               href="/platform-owner/users"

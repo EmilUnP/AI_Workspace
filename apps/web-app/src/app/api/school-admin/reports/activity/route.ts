@@ -3,12 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const organizationId = searchParams.get('organizationId')
-
-    if (!organizationId) {
-      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 })
-    }
+    void request
 
     const supabase = await createServerClient()
 
@@ -20,7 +15,6 @@ export async function GET(request: NextRequest) {
     const { data: classData } = await supabase
       .from('classes')
       .select('id')
-      .eq('organization_id', organizationId)
 
     const classIds = classData?.map(c => c.id) || []
 
@@ -57,7 +51,6 @@ export async function GET(request: NextRequest) {
     const { data: examData } = await supabase
       .from('exams')
       .select('created_at')
-      .eq('organization_id', organizationId)
 
     const examsByMonth: Record<string, number> = {}
     examData?.forEach(exam => {
@@ -100,14 +93,12 @@ export async function GET(request: NextRequest) {
     const { count: recentExams } = await supabase
       .from('exams')
       .select('*', { count: 'exact', head: true })
-      .eq('organization_id', organizationId)
       .gte('created_at', thirtyDaysAgo.toISOString())
 
     // Get exam IDs for recent submissions
     const { data: recentExamData } = await supabase
       .from('exams')
       .select('id')
-      .eq('organization_id', organizationId)
 
     const recentExamIds = recentExamData?.map(e => e.id) || []
 

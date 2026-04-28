@@ -1,5 +1,4 @@
 import { FastifyInstance } from 'fastify'
-import { organizationRoutes } from './organizations'
 import { userRoutes } from './users'
 import { reportsRoutes } from './reports'
 import { requireRole } from '../../../middleware/auth'
@@ -13,7 +12,6 @@ export async function platformOwnerRoutes(fastify: FastifyInstance): Promise<voi
   fastify.addHook('preHandler', requireRole('platform_owner'))
 
   // Register sub-routes
-  await fastify.register(organizationRoutes, { prefix: '/organizations' })
   await fastify.register(userRoutes, { prefix: '/users' })
   await fastify.register(reportsRoutes, { prefix: '/reports' })
 }

@@ -33,14 +33,6 @@ export const profileEndpoints = {
  * Platform Owner endpoints
  */
 export const platformOwnerEndpoints = {
-  // Organizations
-  organizations: {
-    list: `${BASE}/platform-owner/organizations`,
-    create: `${BASE}/platform-owner/organizations`,
-    get: (id: string) => `${BASE}/platform-owner/organizations/${id}`,
-    update: (id: string) => `${BASE}/platform-owner/organizations/${id}`,
-    delete: (id: string) => `${BASE}/platform-owner/organizations/${id}`,
-  },
   // Users
   users: {
     list: `${BASE}/platform-owner/users`,

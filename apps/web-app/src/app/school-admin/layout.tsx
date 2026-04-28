@@ -30,27 +30,16 @@ export default async function SchoolAdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select(`
-      *,
-      organizations(id, name, slug, type)
-    `)
+    .select('*')
     .eq('user_id', user.id)
     .single()
-
-  if (!profile?.organization_id) {
-    redirect('/auth/access-denied')
-  }
-
-  const organization = Array.isArray(profile?.organizations)
-    ? profile?.organizations[0]
-    : profile?.organizations
 
   const displayProfile = profile || {
     full_name: user.email?.split('@')[0] || 'Admin',
     email: user.email,
   }
 
-  const organizationName = organization?.name || 'My School'
+  const organizationName = 'Global Workspace'
 
   const logo = (
     <div className="flex items-center gap-2">

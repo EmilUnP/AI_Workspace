@@ -10,13 +10,9 @@ import {
 } from './endpoints'
 import type {
   Profile,
-  Organization,
-  OrganizationWithStats,
   Exam,
   Class,
   PaginatedResponse,
-  CreateOrganizationInput,
-  UpdateOrganizationInput,
   CreateExamInput,
   UpdateExamInput,
   ExamGenerationRequest,
@@ -29,10 +25,6 @@ import type {
 export const queryKeys = {
   // Profile
   profile: ['profile'] as const,
-  
-  // Organizations
-  organizations: ['organizations'] as const,
-  organization: (id: string) => ['organizations', id] as const,
   
   // Users
   users: (filters?: Record<string, unknown>) => ['users', filters] as const,
@@ -56,7 +48,6 @@ export const queryKeys = {
   
   // Analytics
   platformAnalytics: ['analytics', 'platform'] as const,
-  organizationAnalytics: ['analytics', 'organization'] as const,
   teacherAnalytics: ['analytics', 'teacher'] as const,
 }
 
@@ -88,89 +79,7 @@ export function useUpdateProfile() {
   })
 }
 
-// ==================== Platform Owner Hooks ====================
-
-export function useOrganizations(params?: { page?: number; perPage?: number; status?: string }) {
-  return useQuery({
-    queryKey: [...queryKeys.organizations, params],
-    queryFn: async () => {
-      const response = await apiClient.get<PaginatedResponse<Organization>>(
-        platformOwnerEndpoints.organizations.list,
-        params as Record<string, string | number | boolean>
-      )
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-  })
-}
-
-export function useOrganization(id: string) {
-  return useQuery({
-    queryKey: queryKeys.organization(id),
-    queryFn: async () => {
-      const response = await apiClient.get<OrganizationWithStats>(
-        platformOwnerEndpoints.organizations.get(id)
-      )
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-    enabled: !!id,
-  })
-}
-
-export function useCreateOrganization() {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (data: CreateOrganizationInput) => {
-      const response = await apiClient.post<Organization>(
-        platformOwnerEndpoints.organizations.create,
-        data
-      )
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.organizations })
-    },
-  })
-}
-
-export function useUpdateOrganization() {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateOrganizationInput }) => {
-      const response = await apiClient.put<Organization>(
-        platformOwnerEndpoints.organizations.update(id),
-        data
-      )
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.organizations })
-      queryClient.invalidateQueries({ queryKey: queryKeys.organization(variables.id) })
-    },
-  })
-}
-
-export function useDeleteOrganization() {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiClient.delete(platformOwnerEndpoints.organizations.delete(id))
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.organizations })
-    },
-  })
-}
-
-// ==================== User Management Hooks ====================
+// ==================== Platform User Management Hooks ====================
 
 export function usePlatformUsers(params?: { page?: number; perPage?: number; status?: string }) {
   return useQuery({

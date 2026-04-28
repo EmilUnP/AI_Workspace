@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { organizationRepository, profileRepository } from '@eduator/db'
+import { profileRepository } from '@eduator/db'
 import { errorSchema, successResponse } from '../../schemas'
 
 /**
@@ -75,10 +75,6 @@ export async function reportsRoutes(fastify: FastifyInstance): Promise<void> {
       },
     },
   }, async (_request: FastifyRequest, reply: FastifyReply) => {
-    const { count: totalOrganizations } = await organizationRepository.getAll({ perPage: 1 })
-    const orgStatusCounts = await organizationRepository.getCountsByStatus()
-    const orgPlanCounts = await organizationRepository.getCountsByPlan()
-
     const { count: totalUsers } = await profileRepository.getAll({ perPage: 1 })
     const pendingApprovals = await profileRepository.getPendingCount()
 
@@ -95,13 +91,13 @@ export async function reportsRoutes(fastify: FastifyInstance): Promise<void> {
       success: true,
       data: {
         overview: {
-          total_organizations: totalOrganizations,
+          total_organizations: 0,
           total_users: totalUsers,
           pending_approvals: pendingApprovals,
         },
         organizations: {
-          by_status: orgStatusCounts,
-          by_plan: orgPlanCounts,
+          by_status: { active: 0, suspended: 0, inactive: 0 },
+          by_plan: { basic: 0, premium: 0, enterprise: 0 },
         },
         users: {
           by_type: usersByType,

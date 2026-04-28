@@ -64,10 +64,7 @@ async function getUser(id: string) {
   
   const { data, error } = await supabase
     .from('profiles')
-    .select(`
-      *,
-      organization:organizations(id, name, slug)
-    `)
+    .select('*')
     .eq('id', id)
     .single()
   
@@ -76,18 +73,6 @@ async function getUser(id: string) {
   }
   
   return data
-}
-
-async function getOrganizations() {
-  const supabase = await createServerClient()
-  
-  const { data } = await supabase
-    .from('organizations')
-    .select('id, name')
-    .eq('status', 'active')
-    .order('name')
-  
-  return data || []
 }
 
 const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor: string; label: string }> = {
@@ -123,9 +108,8 @@ export default async function UserDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [user, organizations, tokenBalance] = await Promise.all([
+  const [user, tokenBalance] = await Promise.all([
     getUser(id),
-    getOrganizations(),
     tokenRepository.getBalance(id),
   ])
 
@@ -377,22 +361,6 @@ export default async function UserDetailPage({
               </div>
               
               <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Organization</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  {user.organization ? (
-                    <Link 
-                      href={`/platform-owner/organizations/${user.organization.id}`}
-                      className="text-green-600 hover:text-green-700 hover:underline"
-                    >
-                      {user.organization.name}
-                    </Link>
-                  ) : (
-                    <span className="text-gray-400">No organization</span>
-                  )}
-                </dd>
-              </div>
-              
-              <div>
                 <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Joined</dt>
                 <dd className="mt-1 text-sm text-gray-900 flex items-center gap-1.5">
                   <Calendar className="h-4 w-4 text-gray-400" />
@@ -428,7 +396,7 @@ export default async function UserDetailPage({
               Update user details, role, and status
             </p>
             
-            <EditUserForm user={user} organizations={organizations} />
+            <EditUserForm user={user} />
           </div>
         </div>
       </div>

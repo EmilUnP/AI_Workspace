@@ -219,10 +219,9 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
       })
     }
 
-    const organizationId = request.user!.profile!.organization_id!
     const teacherId = request.user!.profile!.id
 
-    const exam = await examRepository.create(organizationId, teacherId, validation.data)
+    const exam = await examRepository.create('global', teacherId, validation.data)
 
     if (!exam) {
       return reply.code(500).send({
@@ -271,7 +270,6 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
     }
 
     const { document_text, document_id, document_ids, title, subject, grade_level, settings, custom_instructions, topics, language } = validation.data
-    const organizationId = request.user!.profile!.organization_id!
     const teacherId = request.user!.profile!.id
     const userId = request.user!.id
 
@@ -286,7 +284,7 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
         .select('id')
         .in('id', ids)
         .eq('created_by', teacherId)
-        .eq('organization_id', organizationId)
+        .neq('id', '')
       if (!docs?.length) {
         return reply.code(404).send({
           success: false,
@@ -344,7 +342,7 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
       const universalQuestions = result.questions.map(universalizeExamQuestion)
 
       // Optionally create exam in database (pass language so DB stores the same language as generated content)
-      const exam = await examRepository.create(organizationId, teacherId, {
+      const exam = await examRepository.create('global', teacherId, {
         title: title || 'Generated Exam',
         subject,
         grade_level,
@@ -521,14 +519,7 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
     Querystring: { page?: number; per_page?: number }
   }>, reply: FastifyReply) => {
     const profile = request.user!.profile!
-    const orgId = profile.organization_id
     const createdBy = profile.id
-    if (!orgId) {
-      return reply.code(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Profile has no organization' },
-      })
-    }
     const { page = 1, per_page = 20 } = request.query
     const from = (page - 1) * per_page
     const to = from + per_page - 1
@@ -537,14 +528,12 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
       adminSupabase
         .from('documents')
         .select('id, title, file_name, file_type, processing_status, created_at')
-        .eq('organization_id', orgId)
         .eq('created_by', createdBy)
         .order('created_at', { ascending: false })
         .range(from, to),
       adminSupabase
         .from('documents')
         .select('*', { count: 'exact', head: true })
-        .eq('organization_id', orgId)
         .eq('created_by', createdBy),
     ])
     const { data: items, error } = listResult
@@ -586,7 +575,7 @@ pagination: {
       .from('documents')
       .select('id, title, file_name, file_type, file_size, processing_status, created_at')
       .eq('id', id)
-      .eq('organization_id', profile.organization_id!)
+      .neq('id', '')
       .eq('created_by', profile.id)
       .single()
     if (error || !doc) {
@@ -607,15 +596,8 @@ pagination: {
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const profile = request.user!.profile!
-    const orgId = profile.organization_id
     const createdBy = profile.id
     const userId = request.user!.id
-    if (!orgId) {
-      return reply.code(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Profile has no organization' },
-      })
-    }
     const data = await (request as unknown as { file: () => Promise<{ filename: string; mimetype: string; toBuffer: () => Promise<Buffer> } | undefined> }).file()
     if (!data) {
       return reply.code(400).send({
@@ -653,7 +635,7 @@ pagination: {
     else mimeType = 'text/plain'
     const title = data.filename.replace(/\.[^/.]+$/, '')
     const safeFileName = getSafeStorageFileName(data.filename)
-    const filePath = `documents/${orgId}/${createdBy}/${safeFileName}`
+    const filePath = `documents/global/${createdBy}/${safeFileName}`
     const adminSupabase = createAdminClient()
     const { error: uploadError } = await adminSupabase.storage
       .from('documents')
@@ -669,7 +651,7 @@ pagination: {
     const { data: document, error: dbError } = await adminSupabase
       .from('documents')
       .insert({
-        organization_id: orgId,
+        organization_id: null,
         created_by: createdBy,
         class_id: null,
         title,
@@ -762,21 +744,14 @@ pagination: {
       })
     }
     const profile = request.user!.profile!
-    const orgId = profile.organization_id
     const userId = request.user!.id
-    if (!orgId) {
-      return reply.code(400).send({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Profile has no organization' },
-      })
-    }
     const adminSupabase = createAdminClient()
     const { data: document, error: docError } = await adminSupabase
       .from('documents')
       .select('id, title, organization_id, created_by')
       .eq('id', document_id)
       .single()
-    if (docError || !document || document.organization_id !== orgId || document.created_by !== profile.id) {
+    if (docError || !document || document.created_by !== profile.id) {
       return reply.code(404).send({
         success: false,
         error: { code: 'NOT_FOUND', message: 'Document not found or access denied' },
@@ -853,7 +828,6 @@ pagination: {
       const lessonImages = includeImages ? (generatedLesson.images ?? []) : []
       const savedLesson = await lessonRepository.create({
         id: lessonId,
-        organization_id: orgId,
         created_by: profile.id,
         class_id: class_id ?? null,
         document_id,
@@ -967,12 +941,11 @@ pagination: {
     Querystring: { page?: number; per_page?: number; class_id?: string }
   }>, reply: FastifyReply) => {
     const teacherId = request.user!.profile!.id
-    const organizationId = request.user!.profile!.organization_id!
     const { page = 1, per_page = 20, class_id } = request.query
     const limit = Math.min(per_page, 100)
     const offset = (page - 1) * limit
 
-    const { lessons, total } = await lessonRepository.listByTeacher(teacherId, organizationId, {
+    const { lessons, total } = await lessonRepository.listByTeacher(teacherId, 'global', {
       classId: class_id ?? null,
       includeArchived: false,
       limit,
@@ -1081,10 +1054,9 @@ pagination: {
       security: [{ bearerAuth: [] }],
     },
   }, async (request: FastifyRequest<{ Body: { name: string; description?: string; subject?: string; grade_level?: string } }>, reply: FastifyReply) => {
-    const organizationId = request.user!.profile!.organization_id!
     const teacherId = request.user!.profile!.id
 
-    const newClass = await classRepository.create(organizationId, teacherId, request.body)
+    const newClass = await classRepository.create('global', teacherId, request.body)
 
     if (!newClass) {
       return reply.code(500).send({

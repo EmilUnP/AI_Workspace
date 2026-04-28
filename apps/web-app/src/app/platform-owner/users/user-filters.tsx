@@ -9,13 +9,11 @@ interface UserFiltersProps {
     search?: string
     status?: string
     role?: string
-    org?: string
     source?: string
   }
-  organizations: Array<{ id: string; name: string }>
 }
 
-export function UserFilters({ currentParams, organizations }: UserFiltersProps) {
+export function UserFilters({ currentParams }: UserFiltersProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
@@ -27,7 +25,6 @@ export function UserFilters({ currentParams, organizations }: UserFiltersProps) 
     if (currentParams.search && key !== 'search') params.set('search', currentParams.search)
     if (currentParams.status && key !== 'status') params.set('status', currentParams.status)
     if (currentParams.role && key !== 'role') params.set('role', currentParams.role)
-    if (currentParams.org && key !== 'org') params.set('org', currentParams.org)
     if (currentParams.source && key !== 'source') params.set('source', currentParams.source)
     
     if (value && value !== 'all') {
@@ -53,7 +50,6 @@ export function UserFilters({ currentParams, organizations }: UserFiltersProps) 
   const activeFiltersCount = [
     currentParams.status,
     currentParams.role,
-    currentParams.org,
     currentParams.source
   ].filter(Boolean).length
 
@@ -120,21 +116,6 @@ export function UserFilters({ currentParams, organizations }: UserFiltersProps) 
           <option value="school_superadmin">School Admin</option>
           <option value="teacher">Teacher</option>
         </select>
-
-        {organizations.length > 0 && (
-          <select
-            value={currentParams.org || 'all'}
-            onChange={(e) => updateFilters('org', e.target.value)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-          >
-            <option value="all">All Organizations</option>
-            {organizations.map((org) => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
-        )}
 
         {isPending && (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-500 border-t-transparent" />

@@ -48,10 +48,10 @@ async function requireAuth() {
     }
   }
 
-  // Get profile with organization
+  // Get profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, organization_id, profile_type')
+    .select('id, profile_type')
     .eq('user_id', user.id)
     .single()
 
@@ -76,7 +76,7 @@ async function requireAuth() {
 }
 
 export async function POST(request: NextRequest) {
-  let profile: { id: string; organization_id: string } | null = null
+  let profile: { id: string } | null = null
   let tokenDeduct: { success: boolean; errorMessage?: string; cost?: number } | undefined
   try {
     const auth = await requireAuth()
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     for (const docId of documentIds) {
       const { data: document, error: docError } = await supabase
         .from('documents')
-        .select('id, organization_id, title')
+        .select('id, title')
         .eq('id', docId)
         .single()
 
@@ -132,12 +132,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: `Document not found: ${docId}` },
           { status: 404 }
-        )
-      }
-      if (document.organization_id !== profile!.organization_id) {
-        return NextResponse.json(
-          { error: 'Access denied to one or more documents' },
-          { status: 403 }
         )
       }
     }
@@ -157,7 +151,6 @@ export async function POST(request: NextRequest) {
         .from('classes')
         .select('id')
         .eq('id', classId)
-        .eq('organization_id', profile!.organization_id)
         .single()
 
       if (!classAccess) {
@@ -245,7 +238,6 @@ export async function POST(request: NextRequest) {
     console.log('[Lesson Generate] Saving lesson with language:', selectedLanguage)
     const savedLesson = await lessonRepository.create({
       id: lessonId,
-      organization_id: profile!.organization_id,
       created_by: profile!.id,
       class_id: classId || null,
       document_id: primaryDocumentId ?? null,

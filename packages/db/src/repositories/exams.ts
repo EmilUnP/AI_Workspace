@@ -70,7 +70,7 @@ export const examRepository = {
     const supabase = getDbClient()
     const { page = 1, perPage = 20, isPublished, classId } = options || {}
 
-    const examListColumns = 'id, organization_id, class_id, created_by, title, description, subject, grade_level, settings, duration_minutes, is_published, is_archived, start_time, end_time, course_generated, metadata, created_at, updated_at'
+    const examListColumns = 'id, class_id, created_by, title, description, subject, grade_level, settings, duration_minutes, is_published, is_archived, start_time, end_time, course_generated, metadata, created_at, updated_at'
     let query = supabase
       .from('exams')
       .select(examListColumns, { count: 'exact' })
@@ -111,11 +111,12 @@ export const examRepository = {
   ) {
     const supabase = getDbClient()
     const { page = 1, perPage = 20, isPublished } = options || {}
+    void organizationId
 
     let query = supabase
       .from('exams')
       .select('*, created_by_profile:profiles!created_by(full_name)', { count: 'exact' })
-      .eq('organization_id', organizationId)
+      .neq('id', '')
       .eq('is_archived', false)
       .or('course_generated.eq.0,course_generated.is.null')
 
@@ -128,7 +129,7 @@ export const examRepository = {
       .range((page - 1) * perPage, page * perPage - 1)
 
     if (error) {
-      console.error('Error getting organization exams:', error)
+      console.error('Error getting exams:', error)
       return { data: [], count: 0 }
     }
 

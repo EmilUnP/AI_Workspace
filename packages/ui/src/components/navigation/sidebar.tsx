@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import { cn } from '../../lib/utils'
 import {
   LayoutDashboard,
-  Building2,
   Users,
   FileText,
   Settings,
@@ -153,7 +152,6 @@ export const platformOwnerSidebarItems: SidebarSection[] = [
   {
     title: 'Management',
     items: [
-      { title: 'Organizations', href: '/platform-owner/organizations', icon: <Building2 className="h-5 w-5" /> },
       { title: 'Users', href: '/platform-owner/users', icon: <Users className="h-5 w-5" /> },
     ],
   },

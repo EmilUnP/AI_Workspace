@@ -8,7 +8,6 @@ import { getDbClient } from '../client'
 
 export interface LessonRow {
   id: string
-  organization_id: string
   class_id: string | null
   created_by: string
   document_id: string | null
@@ -96,7 +95,6 @@ export interface LessonExample {
 
 export interface CreateLessonInput {
   id?: string // Optional custom ID (generated if not provided)
-  organization_id: string
   created_by: string
   class_id?: string | null
   document_id?: string | null
@@ -160,7 +158,6 @@ export const lessonRepository = {
     
     // Build insert object, including id if provided. language column must exist (see supabase/migrations).
     const insertData: Record<string, unknown> = {
-      organization_id: input.organization_id,
       created_by: input.created_by,
       class_id: input.class_id || null,
       document_id: input.document_id || null,
@@ -331,7 +328,6 @@ export const lessonRepository = {
     let query = supabase
       .from('lessons')
       .select('*', { count: 'exact' })
-      .eq('organization_id', organizationId)
       .eq('created_by', teacherId)
       .or('course_generated.eq.0,course_generated.is.null')
       .order('created_at', { ascending: false })
@@ -339,6 +335,7 @@ export const lessonRepository = {
     if (!options?.includeArchived) {
       query = query.eq('is_archived', false)
     }
+    void organizationId
     
     if (options?.classId) {
       query = query.eq('class_id', options.classId)

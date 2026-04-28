@@ -3,12 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const organizationId = searchParams.get('organizationId')
-
-    if (!organizationId) {
-      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 })
-    }
+    void request
 
     const supabase = await createServerClient()
 
@@ -16,7 +11,6 @@ export async function GET(request: NextRequest) {
     const { data: examData } = await supabase
       .from('exams')
       .select('id')
-      .eq('organization_id', organizationId)
 
     const examIds = examData?.map(e => e.id) || []
 

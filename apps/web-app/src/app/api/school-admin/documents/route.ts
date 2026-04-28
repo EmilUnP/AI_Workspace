@@ -17,10 +17,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // Get profile with organization
+    // Get profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, organization_id, profile_type')
+      .select('id, profile_type')
       .eq('user_id', user.id)
       .single()
     
@@ -33,11 +33,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Only teachers can access documents' }, { status: 403 })
     }
     
-    // Get documents for this teacher's organization
+    // Get documents for this teacher/school admin (global scope)
     const { data: documents, error: docsError } = await supabase
       .from('documents')
       .select('id, title, file_type, file_name, description, created_at')
-      .eq('organization_id', profile.organization_id)
       .eq('is_archived', false)
       .order('created_at', { ascending: false })
     

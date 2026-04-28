@@ -14,7 +14,6 @@ import type {
 
 export interface CourseRow {
   id: string
-  organization_id: string
   created_by: string
   title: string
   description: string | null
@@ -184,7 +183,7 @@ export const courseRepository = {
   async getByOwner(ownerId: string, organizationId?: string): Promise<CourseRow[]> {
     const supabase = getDbClient()
     
-    const courseListColumns = 'id, organization_id, created_by, title, description, subject, grade_level, difficulty_level, language, course_style, access_code, lesson_ids, total_lessons, estimated_duration_minutes, is_published, is_archived, metadata, created_at, updated_at'
+    const courseListColumns = 'id, created_by, title, description, subject, grade_level, difficulty_level, language, course_style, access_code, lesson_ids, total_lessons, estimated_duration_minutes, is_published, is_archived, metadata, created_at, updated_at'
     let query = supabase
       .from('courses')
       .select(courseListColumns)
@@ -192,9 +191,7 @@ export const courseRepository = {
       .eq('is_archived', false)
       .order('created_at', { ascending: false })
     
-    if (organizationId) {
-      query = query.eq('organization_id', organizationId)
-    }
+    void organizationId
     
     const { data, error } = await query
     

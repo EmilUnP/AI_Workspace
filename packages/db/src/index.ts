@@ -4,7 +4,6 @@ export { getDbClient, executeRawQuery, batchOperations } from './client'
 // Repositories
 export {
   profileRepository,
-  organizationRepository,
   examRepository,
   classRepository,
   lessonRepository,

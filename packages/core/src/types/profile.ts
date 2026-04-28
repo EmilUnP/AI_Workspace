@@ -8,7 +8,6 @@ export interface Profile {
   id: string
   user_id: string
   profile_type: ProfileType
-  organization_id: string | null
   full_name: string
   email: string
   avatar_url: string | null
@@ -48,7 +47,6 @@ export interface ProfileMetadata {
 export interface CreateProfileInput {
   user_id: string
   profile_type: ProfileType
-  organization_id?: string | null
   full_name: string
   email: string
   avatar_url?: string | null
@@ -63,20 +61,10 @@ export interface UpdateProfileInput {
   metadata?: ProfileMetadata | null
 }
 
-export interface ProfileWithOrganization extends Profile {
-  organization?: {
-    id: string
-    name: string
-    type: string
-    subscription_plan: string
-  } | null
-}
-
 /**
  * Platform Owner specific types
  */
 export interface PlatformOwnerDashboard {
-  total_organizations: number
   total_users: number
   pending_approvals: number
   active_subscriptions: {

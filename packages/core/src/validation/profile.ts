@@ -25,7 +25,6 @@ export const createProfileSchema = z.object({
     PROFILE_TYPES.SCHOOL_SUPERADMIN,
     PROFILE_TYPES.TEACHER,
   ]),
-  organization_id: z.string().uuid().nullable().optional(),
   full_name: z.string().min(2).max(100),
   email: z.string().email(),
   avatar_url: z.string().url().nullable().optional(),

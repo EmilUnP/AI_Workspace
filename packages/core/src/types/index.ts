@@ -1,9 +1,6 @@
 // Profile Types
 export * from './profile'
 
-// Organization Types
-export * from './organization'
-
 // Exam Types
 export * from './exam'
 

@@ -1,9 +1,6 @@
 // Profile Validation
 export * from './profile'
 
-// Organization Validation
-export * from './organization'
-
 // Exam Validation
 export * from './exam'
 

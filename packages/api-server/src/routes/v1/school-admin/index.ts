@@ -38,38 +38,28 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
             pending_users: { type: 'array', items: profileSchema },
           },
         }, 'Dashboard data'),
-        400: { description: 'User not associated with organization', ...errorSchema },
         401: { description: 'Unauthorized', ...errorSchema },
         403: { description: 'School admin role required', ...errorSchema },
       },
     },
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const organizationId = request.user!.profile!.organization_id
-
-    if (!organizationId) {
-      return reply.code(400).send({
-        success: false,
-        error: { code: 'NO_ORGANIZATION', message: 'User not associated with an organization' },
-      })
-    }
-
-    const teachers = await profileRepository.getByOrganization(organizationId, { profileType: 'teacher' })
-    const learners = await profileRepository.getByOrganization(organizationId, { profileType: 'student' })
-    const pendingApprovals = await profileRepository.getByOrganization(organizationId, { approvalStatus: 'pending' })
-    const { data: classes, count: totalClasses } = await classRepository.getByOrganization(organizationId)
+  }, async (_request: FastifyRequest, reply: FastifyReply) => {
+    const teachers = await profileRepository.getAll({ profileType: 'teacher', perPage: 500 })
+    const learners = await profileRepository.getAll({ profileType: 'student', perPage: 500 })
+    const pendingApprovals = await profileRepository.getAll({ approvalStatus: 'pending', perPage: 500 })
+    const { data: classes, count: totalClasses } = await classRepository.getByOrganization('global')
 
     return reply.send({
       success: true,
       data: {
         overview: {
-          total_teachers: teachers.length,
-          total_learners: learners.length,
+          total_teachers: teachers.data.length,
+          total_learners: learners.data.length,
           total_classes: totalClasses,
-          pending_approvals: pendingApprovals.length,
+          pending_approvals: pendingApprovals.data.length,
         },
-        recent_teachers: teachers.slice(0, 5),
+        recent_teachers: teachers.data.slice(0, 5),
         recent_classes: classes.slice(0, 5),
-        pending_users: pendingApprovals.slice(0, 10),
+        pending_users: pendingApprovals.data.slice(0, 10),
       },
     })
   })
@@ -104,17 +94,17 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{
     Querystring: { profile_type?: string; approval_status?: 'pending' | 'approved' | 'rejected' }
   }>, reply: FastifyReply) => {
-    const organizationId = request.user!.profile!.organization_id!
     const { profile_type, approval_status } = request.query
 
-    const users = await profileRepository.getByOrganization(organizationId, {
+    const users = await profileRepository.getAll({
       profileType: profile_type,
-      approvalStatus: approval_status,
+      approvalStatus: approval_status as 'pending' | 'approved' | 'rejected' | undefined,
+      perPage: 500,
     })
 
     return reply.send({
       success: true,
-      data: users,
+      data: users.data,
     })
   })
 
@@ -148,10 +138,8 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
     },
   }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { id } = request.params
-    const organizationId = request.user!.profile!.organization_id!
-
     const userProfile = await profileRepository.getById(id)
-    if (!userProfile || userProfile.organization_id !== organizationId) {
+    if (!userProfile) {
       return reply.code(404).send({
         success: false,
         error: { code: 'NOT_FOUND', message: 'User not found in your organization' },
@@ -197,10 +185,8 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
     },
   }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const { id } = request.params
-    const organizationId = request.user!.profile!.organization_id!
-
     const userProfile = await profileRepository.getById(id)
-    if (!userProfile || userProfile.organization_id !== organizationId) {
+    if (!userProfile) {
       return reply.code(404).send({
         success: false,
         error: { code: 'NOT_FOUND', message: 'User not found in your organization' },
@@ -252,10 +238,9 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
   }, async (request: FastifyRequest<{
     Querystring: { page?: number; per_page?: number; is_active?: boolean }
   }>, reply: FastifyReply) => {
-    const organizationId = request.user!.profile!.organization_id!
     const { page = 1, per_page = 20, is_active } = request.query
 
-    const { data: classes, count } = await classRepository.getByOrganization(organizationId, {
+    const { data: classes, count } = await classRepository.getByOrganization('global', {
       page,
       perPage: per_page,
       isActive: is_active,
@@ -302,19 +287,17 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
         401: { description: 'Unauthorized', ...errorSchema },
       },
     },
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const organizationId = request.user!.profile!.organization_id!
-
-    const teachers = await profileRepository.getByOrganization(organizationId, { profileType: 'teacher' })
-    const learners = await profileRepository.getByOrganization(organizationId, { profileType: 'student' })
-    const { count: classCount } = await classRepository.getByOrganization(organizationId)
+  }, async (_request: FastifyRequest, reply: FastifyReply) => {
+    const teachers = await profileRepository.getAll({ profileType: 'teacher', perPage: 500 })
+    const learners = await profileRepository.getAll({ profileType: 'student', perPage: 500 })
+    const { count: classCount } = await classRepository.getByOrganization('global')
 
     return reply.send({
       success: true,
       data: {
         summary: {
-          total_teachers: teachers.length,
-          total_learners: learners.length,
+          total_teachers: teachers.data.length,
+          total_learners: learners.data.length,
           total_classes: classCount,
           total_exams: 0,
         },

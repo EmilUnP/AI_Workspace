@@ -12,23 +12,18 @@ interface User {
   full_name: string | null
   profile_type: string
   approval_status: string
-  organization_id: string | null
-  organization?: {
-    id: string
-    name: string
-  } | null
 }
 
 interface EditUserFormProps {
   user: User
-  organizations: Array<{ id: string; name: string }>
 }
 
-export function EditUserForm({ user, organizations }: EditUserFormProps) {
+export function EditUserForm({ user }: EditUserFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [selectedRole, setSelectedRole] = useState(user.profile_type)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -36,6 +31,7 @@ export function EditUserForm({ user, organizations }: EditUserFormProps) {
     setSuccess(false)
 
     const formData = new FormData(e.currentTarget)
+    void ((formData.get('profile_type') as string) || selectedRole)
     
     startTransition(async () => {
       const result = await updateUser(formData)
@@ -93,35 +89,13 @@ export function EditUserForm({ user, organizations }: EditUserFormProps) {
           id="profile_type"
           name="profile_type"
           defaultValue={user.profile_type}
+          onChange={(event) => setSelectedRole(event.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         >
           <option value="platform_owner">Platform Owner</option>
           <option value="school_superadmin">School Admin</option>
           <option value="teacher">Teacher</option>
         </select>
-      </div>
-
-      {/* Organization */}
-      <div>
-        <label htmlFor="organization_id" className="block text-sm font-medium text-gray-700">
-          Organization
-        </label>
-        <select
-          id="organization_id"
-          name="organization_id"
-          defaultValue={user.organization_id || 'none'}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-        >
-          <option value="none">No Organization</option>
-          {organizations.map((org) => (
-            <option key={org.id} value={org.id}>
-              {org.name}
-            </option>
-          ))}
-        </select>
-        <p className="mt-1 text-xs text-gray-400">
-          School admins and teachers should be assigned to an organization
-        </p>
       </div>
 
       {/* Status */}

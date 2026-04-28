@@ -46,34 +46,8 @@ export const profileRepository = {
     return data as Profile
   },
 
-  /**
-   * Get profile with organization
-   */
   async getByIdWithOrganization(id: string) {
-    const supabase = getDbClient()
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        organization:organizations(
-          id,
-          name,
-          type,
-          subscription_plan,
-          status,
-          settings
-        )
-      `)
-      .eq('id', id)
-      .single()
-
-    if (error) {
-      console.error('Error getting profile with organization:', error)
-      return null
-    }
-
-    return data
+    return this.getById(id)
   },
 
   /**
@@ -91,7 +65,7 @@ export const profileRepository = {
 
     let query = supabase
       .from('profiles')
-      .select('*, organization:organizations(id, name, type)', { count: 'exact' })
+      .select('*', { count: 'exact' })
 
     if (profileType) {
       query = query.eq('profile_type', profileType)
@@ -101,9 +75,7 @@ export const profileRepository = {
       query = query.eq('approval_status', approvalStatus)
     }
 
-    if (organizationId) {
-      query = query.eq('organization_id', organizationId)
-    }
+    void organizationId
 
     const { data, error, count } = await query
       .order('created_at', { ascending: false })
@@ -125,12 +97,13 @@ export const profileRepository = {
     options?: { profileType?: string; approvalStatus?: ApprovalStatus; limit?: number }
   ) {
     const supabase = getDbClient()
+    void organizationId
 
-    const profileListColumns = 'id, user_id, profile_type, organization_id, full_name, email, avatar_url, phone, approval_status, is_active, metadata, registration_info, source, created_at, updated_at'
+    const profileListColumns = 'id, user_id, profile_type, full_name, email, avatar_url, phone, approval_status, is_active, metadata, registration_info, source, created_at, updated_at'
     let query = supabase
       .from('profiles')
       .select(profileListColumns)
-      .eq('organization_id', organizationId)
+      .neq('id', '')
 
     if (options?.profileType) {
       query = query.eq('profile_type', options.profileType)
@@ -147,7 +120,7 @@ export const profileRepository = {
     const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error getting profiles by organization:', error)
+      console.error('Error getting profiles by scope:', error)
       return []
     }
 
@@ -281,9 +254,7 @@ export const profileRepository = {
       .select('id', { count: 'exact', head: true })
       .eq('approval_status', 'pending')
 
-    if (organizationId) {
-      query = query.eq('organization_id', organizationId)
-    }
+    void organizationId
 
     const { count, error } = await query
 
@@ -306,9 +277,7 @@ export const profileRepository = {
       .select('*')
       .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
 
-    if (organizationId) {
-      dbQuery = dbQuery.eq('organization_id', organizationId)
-    }
+    void organizationId
 
     const { data, error } = await dbQuery
       .order('full_name', { ascending: true })

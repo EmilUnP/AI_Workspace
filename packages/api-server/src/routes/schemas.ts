@@ -25,7 +25,6 @@ export const profileSchema = {
     id: { type: 'string', format: 'uuid' },
     user_id: { type: 'string', format: 'uuid' },
     profile_type: { type: 'string', enum: ['platform_owner', 'school_superadmin', 'teacher'] },
-    organization_id: { type: 'string', format: 'uuid', nullable: true },
     full_name: { type: 'string', example: 'John Doe' },
     email: { type: 'string', format: 'email', example: 'john@example.com' },
     avatar_url: { type: 'string', format: 'uri', nullable: true },
@@ -38,36 +37,11 @@ export const profileSchema = {
   },
 }
 
-// Organization schema
-export const organizationSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'string', format: 'uuid' },
-    name: { type: 'string', example: 'Springfield Elementary' },
-    slug: { type: 'string', example: 'springfield-elementary' },
-    type: { type: 'string', enum: ['school', 'university', 'institution', 'academy', 'other'] },
-    email: { type: 'string', format: 'email' },
-    phone: { type: 'string', nullable: true },
-    address: { type: 'string', nullable: true },
-    city: { type: 'string', nullable: true },
-    country: { type: 'string', nullable: true },
-    website: { type: 'string', format: 'uri', nullable: true },
-    logo_url: { type: 'string', format: 'uri', nullable: true },
-    subscription_plan: { type: 'string', enum: ['basic', 'premium', 'enterprise'] },
-    status: { type: 'string', enum: ['active', 'suspended', 'inactive'] },
-    settings: { type: 'object' },
-    metadata: { type: 'object' },
-    created_at: { type: 'string', format: 'date-time' },
-    updated_at: { type: 'string', format: 'date-time' },
-  },
-}
-
 // Class schema
 export const classSchema = {
   type: 'object',
   properties: {
     id: { type: 'string', format: 'uuid' },
-    organization_id: { type: 'string', format: 'uuid' },
     teacher_id: { type: 'string', format: 'uuid' },
     name: { type: 'string', example: 'Math 101' },
     description: { type: 'string', nullable: true },
