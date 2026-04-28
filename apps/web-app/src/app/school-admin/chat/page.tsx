@@ -20,22 +20,22 @@ async function getAdminInfo() {
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id, full_name')
+    .select('id, full_name')
     .eq('user_id', user.id)
     .single()
   
-  if (!profile?.organization_id) return null
+  if (!profile?.id) return null
   
-  return { adminId: profile.id, organizationId: profile.organization_id, name: profile.full_name }
+  return { adminId: profile.id, workspaceId: 'global', name: profile.full_name }
 }
 
-async function getAdminDocuments(adminId: string, organizationId: string) {
+async function getAdminDocuments(adminId: string, workspaceId: string) {
   const supabase = await createClient()
+  void workspaceId
   
   const { data: documents } = await supabase
     .from('documents')
     .select('id, title, file_type, file_name')
-    .eq('organization_id', organizationId)
     .eq('created_by', adminId)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
@@ -52,7 +52,7 @@ export default async function SchoolAdminChatPage() {
     redirect('/auth/login')
   }
 
-  const documents = await getAdminDocuments(adminData.adminId, adminData.organizationId)
+  const documents = await getAdminDocuments(adminData.adminId, adminData.workspaceId)
 
   return (
     <div className="space-y-3 max-w-6xl mx-auto">

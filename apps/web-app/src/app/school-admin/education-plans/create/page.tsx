@@ -28,7 +28,6 @@ export default function CreateEducationPlanPage() {
   return (
     <EducationPlanCreateForm
       generateUrl="/api/school-admin/education-plans/generate"
-      classesUrl="/api/school-admin/classes"
       documentsUrl="/api/school-admin/documents"
       createPlanAction={createEducationPlan}
       backHref="/school-admin/education-plans"

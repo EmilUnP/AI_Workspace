@@ -12,7 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  BookOpen,
   BarChart3,
   PlusCircle,
 } from 'lucide-react'
@@ -170,7 +169,6 @@ export const schoolAdminSidebarItems: SidebarSection[] = [
     items: [
       { title: 'Teachers', href: '/school-admin/teachers', icon: <Users className="h-5 w-5" /> },
       { title: 'Students', href: '/school-admin/students', icon: <Users className="h-5 w-5" /> },
-      { title: 'Classes', href: '/school-admin/classes', icon: <BookOpen className="h-5 w-5" /> },
     ],
   },
 ]

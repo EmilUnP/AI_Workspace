@@ -113,8 +113,8 @@ const DEFAULT_CREATE_FORM_LABELS: EducationPlanCreateFormLabels = {
 export interface EducationPlanCreateFormProps {
   /** e.g. "/api/teacher/education-plans/generate" */
   generateUrl: string
-  /** e.g. "/api/teacher/classes" */
-  classesUrl: string
+  /** Optional class-list endpoint, e.g. "/api/teacher/classes" */
+  classesUrl?: string
   /** e.g. "/api/teacher/documents" */
   documentsUrl: string
   /** Server action: (params) => Promise<{ planId?: string | null; error?: string | null }> */
@@ -175,8 +175,11 @@ export function EducationPlanCreateForm({
   useEffect(() => {
     async function load() {
       try {
+        const classesPromise = classesUrl
+          ? fetch(classesUrl).then((r) => (r.ok ? r.json() : { classes: [] }))
+          : Promise.resolve({ classes: [] })
         const [classesRes, docsRes] = await Promise.all([
-          fetch(classesUrl).then((r) => (r.ok ? r.json() : { classes: [] })),
+          classesPromise,
           fetch(documentsUrl).then((r) => (r.ok ? r.json() : { documents: [] })),
         ])
         setClasses(classesRes.classes || [])
@@ -232,8 +235,8 @@ export function EducationPlanCreateForm({
   }
 
   const handleStartManual = async () => {
-    if (!classId || !name.trim()) {
-      setError(L.nameAndClassRequired ?? 'Name and class are required')
+    if (!name.trim()) {
+      setError(L.planNameRequired ?? 'Plan name is required')
       return
     }
     setError(null)

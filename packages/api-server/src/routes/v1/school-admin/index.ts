@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { requireRole } from '../../../middleware/auth'
-import { profileRepository, classRepository } from '@eduator/db'
-import { profileSchema, classSchema, errorSchema, successResponse} from '../../schemas'
+import { profileRepository } from '@eduator/db'
+import { profileSchema, errorSchema, successResponse} from '../../schemas'
 
 /**
  * School Admin routes
@@ -17,7 +17,7 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
   fastify.get('/dashboard', {
     schema: {
       summary: 'School Admin Dashboard',
-      description: 'Get dashboard data for the school including user counts, classes, and pending approvals',
+      description: 'Get dashboard data for the school including user counts and pending approvals',
       tags: ['School Admin'],
       security: [{ bearerAuth: [] }],
       response: {
@@ -29,12 +29,10 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
               properties: {
                 total_teachers: { type: 'integer', example: 25 },
                 total_learners: { type: 'integer', example: 500 },
-                total_classes: { type: 'integer', example: 30 },
                 pending_approvals: { type: 'integer', example: 5 },
               },
             },
             recent_teachers: { type: 'array', items: profileSchema },
-            recent_classes: { type: 'array', items: classSchema },
             pending_users: { type: 'array', items: profileSchema },
           },
         }, 'Dashboard data'),
@@ -46,7 +44,6 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
     const teachers = await profileRepository.getAll({ profileType: 'teacher', perPage: 500 })
     const learners = await profileRepository.getAll({ profileType: 'student', perPage: 500 })
     const pendingApprovals = await profileRepository.getAll({ approvalStatus: 'pending', perPage: 500 })
-    const { data: classes, count: totalClasses } = await classRepository.getByOrganization('global')
 
     return reply.send({
       success: true,
@@ -54,11 +51,9 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
         overview: {
           total_teachers: teachers.data.length,
           total_learners: learners.data.length,
-          total_classes: totalClasses,
           pending_approvals: pendingApprovals.data.length,
         },
         recent_teachers: teachers.data.slice(0, 5),
-        recent_classes: classes.slice(0, 5),
         pending_users: pendingApprovals.data.slice(0, 10),
       },
     })
@@ -202,59 +197,6 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
     })
   })
 
-  // Classes overview
-  fastify.get('/classes', {
-    schema: {
-      summary: 'List Organization Classes',
-      description: 'List all classes in the organization with teacher information',
-      tags: ['School Admin', 'Classes'],
-      security: [{ bearerAuth: [] }],
-      querystring: {
-        type: 'object',
-        properties: {
-          page: { type: 'integer', default: 1 },
-          per_page: { type: 'integer', default: 20 },
-          is_active: { type: 'boolean', description: 'Filter by active status' },
-        },
-      },
-      response: {
-        200: {
-          description: 'List of classes',
-          type: 'object',
-          properties: {
-            success: { type: 'boolean' },
-            data: {
-              type: 'object',
-              properties: {
-                items: { type: 'array', items: classSchema },
-                total: { type: 'integer' },
-              },
-            },
-          },
-        },
-        401: { description: 'Unauthorized', ...errorSchema },
-      },
-    },
-  }, async (request: FastifyRequest<{
-    Querystring: { page?: number; per_page?: number; is_active?: boolean }
-  }>, reply: FastifyReply) => {
-    const { page = 1, per_page = 20, is_active } = request.query
-
-    const { data: classes, count } = await classRepository.getByOrganization('global', {
-      page,
-      perPage: per_page,
-      isActive: is_active,
-    })
-
-    return reply.send({
-      success: true,
-      data: {
-        items: classes,
-        total: count,
-      },
-    })
-  })
-
   // Reports
   fastify.get('/reports', {
     schema: {
@@ -271,7 +213,6 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
               properties: {
                 total_teachers: { type: 'integer' },
                 total_learners: { type: 'integer' },
-                total_classes: { type: 'integer' },
                 total_exams: { type: 'integer' },
               },
             },
@@ -290,7 +231,6 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
   }, async (_request: FastifyRequest, reply: FastifyReply) => {
     const teachers = await profileRepository.getAll({ profileType: 'teacher', perPage: 500 })
     const learners = await profileRepository.getAll({ profileType: 'student', perPage: 500 })
-    const { count: classCount } = await classRepository.getByOrganization('global')
 
     return reply.send({
       success: true,
@@ -298,7 +238,6 @@ export async function schoolAdminRoutes(fastify: FastifyInstance): Promise<void>
         summary: {
           total_teachers: teachers.data.length,
           total_learners: learners.data.length,
-          total_classes: classCount,
           total_exams: 0,
         },
         performance: {

@@ -8,20 +8,9 @@ import { revalidatePath } from 'next/cache'
 export async function createUser(formData: FormData) {
   const supabase = await createServerClient()
   
-  // Get current user's organization
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: 'Not authenticated' }
-  }
-  
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!currentProfile?.organization_id) {
-    return { error: 'No organization found' }
   }
   
   const email = formData.get('email') as string
@@ -79,14 +68,13 @@ export async function createUser(formData: FormData) {
     metadata.organization_unit_id = organization_unit_id
   }
 
-  // Update the profile with organization and approved status
+  // Update the profile with approved status
   // The trigger already created the profile, we just need to update it
   const { error: updateError } = await adminClient
     .from('profiles')
     .update({
       full_name,
       profile_type,
-      organization_id: currentProfile.organization_id,
       approval_status: 'approved', // Auto-approve users created by school admin
       metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       updated_at: new Date().toISOString(),
@@ -121,23 +109,11 @@ export async function createUser(formData: FormData) {
 export async function updateUserStatus(userId: string, status: 'approved' | 'rejected') {
   const supabase = await createServerClient()
   
-  // Get current user's organization
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: 'Not authenticated' }
   }
-  
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!currentProfile?.organization_id) {
-    return { error: 'No organization found' }
-  }
 
-  // Only update users in the same organization
   const { error } = await supabase
     .from('profiles')
     .update({ 
@@ -145,7 +121,6 @@ export async function updateUserStatus(userId: string, status: 'approved' | 'rej
       updated_at: new Date().toISOString(),
     })
     .eq('id', userId)
-    .eq('organization_id', currentProfile.organization_id)
 
   if (error) {
     console.error('Error updating user status:', error)
@@ -159,32 +134,20 @@ export async function updateUserStatus(userId: string, status: 'approved' | 'rej
 export async function deleteUser(userId: string) {
   const supabase = await createServerClient()
   
-  // Get current user's organization
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: 'Not authenticated' }
   }
-  
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!currentProfile?.organization_id) {
-    return { error: 'No organization found' }
-  }
 
-  // Get the user to delete (must be in same organization)
+  // Get the user to delete
   const { data: targetProfile, error: fetchError } = await supabase
     .from('profiles')
     .select('user_id')
     .eq('id', userId)
-    .eq('organization_id', currentProfile.organization_id)
     .single()
 
   if (fetchError || !targetProfile) {
-    return { error: 'User not found or not in your organization' }
+    return { error: 'User not found' }
   }
 
   // Delete the profile

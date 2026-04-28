@@ -5,38 +5,26 @@ import { createAdminClient } from '@eduator/auth/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-async function verifyOrganizationAccess(targetUserId: string) {
+async function verifyUserAccess(targetUserId: string) {
   const supabase = await createServerClient()
   
-  // Get current user's organization
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return { error: 'Not authenticated', organizationId: null }
+    return { error: 'Not authenticated', scopeId: null }
   }
-  
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!currentProfile?.organization_id) {
-    return { error: 'No organization found', organizationId: null }
-  }
-
-  // Verify target user is in the same organization
+ 
+  // Verify target user exists
   const { data: targetProfile } = await supabase
     .from('profiles')
-    .select('id, user_id, organization_id')
+    .select('id, user_id')
     .eq('id', targetUserId)
-    .eq('organization_id', currentProfile.organization_id)
     .single()
 
   if (!targetProfile) {
-    return { error: 'User not found or not in your organization', organizationId: null }
+    return { error: 'User not found', scopeId: null }
   }
 
-  return { error: null, organizationId: currentProfile.organization_id, targetProfile }
+  return { error: null, scopeId: 'global', targetProfile }
 }
 
 export async function updateUser(formData: FormData) {
@@ -63,7 +51,7 @@ export async function updateUser(formData: FormData) {
     return { error: 'Only core user role can be assigned in this lightweight version' }
   }
 
-  const { error: accessError, organizationId } = await verifyOrganizationAccess(id)
+  const { error: accessError } = await verifyUserAccess(id)
   if (accessError) {
     return { error: accessError }
   }
@@ -119,7 +107,6 @@ export async function updateUser(formData: FormData) {
     .from('profiles')
     .update(updateData)
     .eq('id', id)
-    .eq('organization_id', organizationId)
 
   if (error) {
     console.error('Error updating user:', error)
@@ -146,26 +133,14 @@ export async function changePassword(userId: string, newPassword: string) {
     return { error: 'Not authenticated' }
   }
   
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!currentProfile?.organization_id) {
-    return { error: 'No organization found' }
-  }
-
-  // Verify target user is in the same organization and get their auth user_id
   const { data: targetProfile } = await supabase
     .from('profiles')
     .select('id, user_id')
     .eq('user_id', userId)
-    .eq('organization_id', currentProfile.organization_id)
     .single()
 
   if (!targetProfile) {
-    return { error: 'User not found or not in your organization' }
+    return { error: 'User not found' }
   }
 
   // Change password using admin client
@@ -189,7 +164,7 @@ export async function changePassword(userId: string, newPassword: string) {
 }
 
 export async function deleteUser(userId: string) {
-  const { error: accessError, targetProfile } = await verifyOrganizationAccess(userId)
+  const { error: accessError, targetProfile } = await verifyUserAccess(userId)
   if (accessError || !targetProfile) {
     return { error: accessError || 'User not found' }
   }

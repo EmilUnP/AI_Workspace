@@ -21,7 +21,7 @@ interface ActivityData {
   }
 }
 
-export default function ActivityTab({ organizationId }: { organizationId: string }) {
+export default function ActivityTab({ workspaceId }: { workspaceId: string }) {
   const [data, setData] = useState<ActivityData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -29,7 +29,8 @@ export default function ActivityTab({ organizationId }: { organizationId: string
     async function fetchData() {
       setLoading(true)
       try {
-        const response = await fetch(`/api/school-admin/reports/activity?organizationId=${organizationId}`)
+        void workspaceId
+        const response = await fetch('/api/school-admin/reports/activity')
         const result = await response.json()
         setData(result)
       } catch (error) {
@@ -40,7 +41,7 @@ export default function ActivityTab({ organizationId }: { organizationId: string
     }
 
     fetchData()
-  }, [organizationId])
+  }, [workspaceId])
 
   if (loading) {
     return (

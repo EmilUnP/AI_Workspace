@@ -12,22 +12,22 @@ async function getTeacherInfo() {
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id')
+    .select('id')
     .eq('user_id', user.id)
     .single()
   
-  if (!profile?.organization_id) return null
+  if (!profile?.id) return null
   
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+  return { teacherId: profile.id, workspaceId: 'global' }
 }
 
-async function getTeacherDocuments(teacherId: string, organizationId: string) {
+async function getTeacherDocuments(teacherId: string, workspaceId: string) {
   const supabase = await createServerClient()
+  void workspaceId
   
   const { data: documents } = await supabase
     .from('documents')
     .select('id, title, file_type, file_name')
-    .eq('organization_id', organizationId)
     .eq('created_by', teacherId)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
@@ -42,9 +42,9 @@ export default async function NewExamPage() {
     redirect('/auth/login')
   }
   
-  const { teacherId, organizationId } = teacherData
+  const { teacherId, workspaceId } = teacherData
   const [documents, t] = await Promise.all([
-    getTeacherDocuments(teacherId, organizationId),
+    getTeacherDocuments(teacherId, workspaceId),
     getTranslations('teacherExamCreate'),
   ])
 
@@ -57,7 +57,7 @@ export default async function NewExamPage() {
 
       {/* Exam Creator – translations resolved on client via useTranslations('teacherExamCreator') */}
       <ExamCreatorWithIntl
-        organizationId={organizationId}
+        organizationId={workspaceId}
         documents={documents}
         onCreateExam={createExam}
         onUpdateExam={updateExam}

@@ -35,7 +35,7 @@ export async function getConversations() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id')
+    .select('id')
     .eq('user_id', user.id)
     .single()
 
@@ -121,7 +121,7 @@ export async function createConversation(input: CreateConversationInput) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id')
+    .select('id')
     .eq('user_id', user.id)
     .single()
 
@@ -133,7 +133,7 @@ export async function createConversation(input: CreateConversationInput) {
     .from('teacher_chat_conversations')
     .insert({
       teacher_id: profile.id,
-      organization_id: profile.organization_id,
+      organization_id: 'global',
       title: input.title || 'New Conversation',
       document_ids: input.document_ids || [],
       class_id: input.class_id || null,
@@ -162,7 +162,7 @@ export async function sendMessage(input: SendMessageInput) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id')
+    .select('id')
     .eq('user_id', user.id)
     .single()
 
@@ -206,7 +206,7 @@ export async function sendMessage(input: SendMessageInput) {
   const chatContext: TeacherChatContext = {
     subject: conversation.context?.subject,
     grade_level: conversation.context?.grade_level,
-    organization_id: profile.organization_id,
+    organization_id: 'global',
     document_ids: conversation.document_ids || [],
     preferences: {
       language: 'en',

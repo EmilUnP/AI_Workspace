@@ -39,7 +39,7 @@ export default async function SchoolAdminLayout({
     email: user.email,
   }
 
-  const organizationName = 'Global Workspace'
+  const workspaceName = 'Global Workspace'
 
   const logo = (
     <div className="flex items-center gap-2">
@@ -55,7 +55,7 @@ export default async function SchoolAdminLayout({
 
   const headerContent = (
     <div>
-      <p className="truncate text-sm font-medium text-gray-900">{organizationName}</p>
+      <p className="truncate text-sm font-medium text-gray-900">{workspaceName}</p>
       <p className="text-xs text-gray-500">School Admin Panel</p>
     </div>
   )

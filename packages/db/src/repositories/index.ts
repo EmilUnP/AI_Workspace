@@ -1,6 +1,5 @@
 export { profileRepository } from './profiles'
 export { examRepository } from './exams'
-export { classRepository } from './classes'
 export { lessonRepository, type LessonRow, type CreateLessonInput, type UpdateLessonInput, type LessonImage, type MiniTestQuestion, type LessonExample } from './lessons'
 export { courseRepository, type CourseRow } from './courses'
 export {

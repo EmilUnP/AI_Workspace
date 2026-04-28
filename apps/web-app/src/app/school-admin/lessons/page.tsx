@@ -20,7 +20,6 @@ import {
   getTeacherLessonStats,
   TEACHER_LESSONS_PER_PAGE,
 } from '@eduator/core/utils/teacher-lessons'
-import { getTeacherClasses } from '@eduator/core/utils/teacher-classes'
 import { LessonRowActions, PaginationFooter } from '@eduator/ui'
 import { deleteLesson } from './actions'
 
@@ -47,11 +46,11 @@ async function getAdminInfo() {
   if (!user) return null
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id')
+    .select('id')
     .eq('user_id', user.id)
     .single()
-  if (!profile?.organization_id) return null
-  return { adminId: profile.id, organizationId: profile.organization_id }
+  if (!profile?.id) return null
+  return { adminId: profile.id, workspaceId: 'global' }
 }
 
 export default async function SchoolAdminLessonsPage({
@@ -62,15 +61,14 @@ export default async function SchoolAdminLessonsPage({
   const adminData = await getAdminInfo()
   if (!adminData) redirect('/auth/login')
 
-  const { adminId, organizationId } = adminData
+  const { adminId, workspaceId } = adminData
   const params = await searchParams
   const t = await getTranslations('teacherLessons')
   const supabase = await createClient()
 
-  const [lessonsResult, stats, adminClasses] = await Promise.all([
-    getTeacherLessons(supabase, adminId, organizationId, params),
-    getTeacherLessonStats(supabase, adminId, organizationId),
-    getTeacherClasses(supabase, adminId),
+  const [lessonsResult, stats] = await Promise.all([
+    getTeacherLessons(supabase, adminId, workspaceId, params),
+    getTeacherLessonStats(supabase, adminId, workspaceId),
   ])
 
   const { data: lessons, count: totalLessons, page: currentPage } = lessonsResult
@@ -158,28 +156,6 @@ export default async function SchoolAdminLessonsPage({
         </form>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {adminClasses.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500 whitespace-nowrap">{t('classFilter')}</span>
-              <div className="flex flex-wrap gap-1">
-                <Link
-                  href={params.status ? `/school-admin/lessons?status=${params.status}` : '/school-admin/lessons'}
-                  className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${!params.classId ? 'bg-slate-100 text-slate-700' : 'text-gray-600 hover:bg-gray-100'}`}
-                >
-                  {t('allClasses')}
-                </Link>
-                {adminClasses.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/school-admin/lessons?classId=${c.id}${params.status ? `&status=${params.status}` : ''}`}
-                    className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${params.classId === c.id ? 'bg-slate-100 text-slate-700' : 'text-gray-600 hover:bg-gray-100'}`}
-                  >
-                    {c.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
           {/* Status Filter Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <Link

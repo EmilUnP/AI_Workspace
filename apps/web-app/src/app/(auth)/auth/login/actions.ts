@@ -46,7 +46,7 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
   // Get profile to determine redirect
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('profile_type, approval_status, organization_id, source')
+    .select('profile_type, approval_status, source')
     .eq('user_id', data.user.id)
     .single()
 

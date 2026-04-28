@@ -66,11 +66,6 @@ export const schoolAdminEndpoints = {
     approve: (id: string) => `${BASE}/school-admin/users/${id}/approve`,
     reject: (id: string) => `${BASE}/school-admin/users/${id}/reject`,
   },
-  // Classes
-  classes: {
-    list: `${BASE}/school-admin/classes`,
-    get: (id: string) => `${BASE}/school-admin/classes/${id}`,
-  },
   // Reports
   reports: {
     overview: `${BASE}/school-admin/reports`,
@@ -98,23 +93,6 @@ export const schoolAdminTeachingEndpoints = {
     publish: (id: string) => `${BASE}/teacher/exams/${id}/publish`,
     unpublish: (id: string) => `${BASE}/teacher/exams/${id}/unpublish`,
     submissions: (id: string) => `${BASE}/teacher/exams/${id}/submissions`,
-  },
-  // Classes
-  classes: {
-    list: `${BASE}/teacher/classes`,
-    create: `${BASE}/teacher/classes`,
-    get: (id: string) => `${BASE}/teacher/classes/${id}`,
-    update: (id: string) => `${BASE}/teacher/classes/${id}`,
-    delete: (id: string) => `${BASE}/teacher/classes/${id}`,
-    learners: (id: string) => `${BASE}/teacher/classes/${id}/students`,
-    addLearner: (id: string) => `${BASE}/teacher/classes/${id}/students`,
-    removeLearner: (classId: string, learnerId: string) =>
-      `${BASE}/teacher/classes/${classId}/students/${learnerId}`,
-    // Deprecated aliases
-    students: (id: string) => `${BASE}/teacher/classes/${id}/students`,
-    addStudent: (id: string) => `${BASE}/teacher/classes/${id}/students`,
-    removeStudent: (classId: string, studentId: string) =>
-      `${BASE}/teacher/classes/${classId}/students/${studentId}`,
   },
   // Lessons
   lessons: {
@@ -144,12 +122,6 @@ export const teacherEndpoints = schoolAdminTeachingEndpoints
 export const learnerEndpoints = {
   // Dashboard
   dashboard: `${BASE}/student/dashboard`,
-  // Classes
-  classes: {
-    list: `${BASE}/student/classes`,
-    join: `${BASE}/student/classes/join`,
-    leave: (id: string) => `${BASE}/student/classes/${id}/leave`,
-  },
   // Exams
   exams: {
     available: `${BASE}/student/exams`,

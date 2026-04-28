@@ -12,18 +12,18 @@ async function getAdminInfo() {
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id')
+    .select('id')
     .eq('user_id', user.id)
     .single()
   
-  if (!profile?.organization_id) return null
+  if (!profile?.id) return null
   
-  return { adminId: profile.id, organizationId: profile.organization_id }
+  return { adminId: profile.id }
 }
 
 // Columns needed for list view only; excludes heavy columns to avoid statement timeouts
 const DOCUMENTS_LIST_SELECT =
-  'id, title, description, file_name, file_url, file_size, file_type, tags, processing_status, processing_error_message, quality_status, quality_message, total_tokens, chunk_count, avg_chunk_size, content_language, created_at, class_id, organization_id, created_by, is_archived'
+  'id, title, description, file_name, file_url, file_size, file_type, tags, processing_status, processing_error_message, quality_status, quality_message, total_tokens, chunk_count, avg_chunk_size, content_language, created_at, class_id, created_by, is_archived'
 
 function isRetryableSupabaseError(error: unknown): boolean {
   const obj = typeof error === 'object' && error !== null ? (error as { message?: unknown; code?: unknown }) : null
@@ -41,13 +41,12 @@ function isRetryableSupabaseError(error: unknown): boolean {
   )
 }
 
-async function getDocuments(adminId: string, organizationId: string, retried = false) {
+async function getDocuments(adminId: string, retried = false) {
   const supabase = await createServerClient()
 
   const { data: documents, error: documentsError } = await supabase
     .from('documents')
     .select(DOCUMENTS_LIST_SELECT)
-    .eq('organization_id', organizationId)
     .eq('created_by', adminId)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
@@ -56,7 +55,7 @@ async function getDocuments(adminId: string, organizationId: string, retried = f
     if (isRetryableSupabaseError(documentsError) && !retried) {
       console.warn('Supabase temporarily unavailable (e.g. 520/JSON), retrying in 2s...')
       await new Promise((r) => setTimeout(r, 2000))
-      return getDocuments(adminId, organizationId, true)
+      return getDocuments(adminId, true)
     }
     const logMsg = isRetryableSupabaseError(documentsError)
       ? 'Supabase temporarily unavailable; documents list may be incomplete.'
@@ -105,8 +104,8 @@ export default async function SchoolAdminDocumentsPage() {
     redirect('/auth/login')
   }
   
-  const { adminId, organizationId } = adminData
-  const documents = await getDocuments(adminId, organizationId)
+  const { adminId } = adminData
+  const documents = await getDocuments(adminId)
 
   const uploadTranslations = {
     dropFileHere: t('uploadDropFileHere'),
@@ -249,7 +248,7 @@ export default async function SchoolAdminDocumentsPage() {
 
       {/* Upload + Explorer */}
       <DocumentsClient
-        organizationId={organizationId}
+        workspaceId="global"
         initialDocuments={documents}
         uploadTranslations={uploadTranslations}
         explorerTranslations={explorerTranslations}

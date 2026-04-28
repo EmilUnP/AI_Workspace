@@ -8,19 +8,19 @@ async function getTeacherData() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  const { data: profile } = await supabase.from('profiles').select('id, organization_id').eq('user_id', user.id).single()
-  if (!profile?.organization_id) return null
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+  const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single()
+  if (!profile?.id) return null
+  return { teacherId: profile.id, workspaceId: 'global' }
 }
 
-async function getPlan(planId: string, teacherId: string, organizationId: string) {
+async function getPlan(planId: string, teacherId: string, workspaceId: string) {
   const supabase = await createClient()
+  void workspaceId
   const { data, error } = await supabase
     .from('education_plans')
     .select('id, name, description, period_months, sessions_per_week, hours_per_session, audience, content')
     .eq('id', planId)
     .eq('teacher_id', teacherId)
-    .eq('organization_id', organizationId)
     .single()
   if (error || !data) return null
   return data
@@ -33,9 +33,9 @@ export default async function TeacherEducationPlanEditPage({
   const t = await getTranslations('teacherEducationPlans')
   const teacherData = await getTeacherData()
   if (!teacherData) redirect('/auth/login')
-  const { teacherId, organizationId } = teacherData
+  const { teacherId, workspaceId } = teacherData
 
-  const plan = await getPlan(planId, teacherId, organizationId)
+  const plan = await getPlan(planId, teacherId, workspaceId)
   if (!plan) notFound()
 
   const audienceOptions = [

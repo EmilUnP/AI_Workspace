@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { requireRole } from '../../../middleware/auth'
 import { normalizeLanguageCode } from '@eduator/config'
-import { examRepository, classRepository, lessonRepository, teacherApiKeyRepository } from '@eduator/db'
+import { examRepository, lessonRepository, teacherApiKeyRepository } from '@eduator/db'
 import { tokenRepository } from '@eduator/db/repositories/tokens'
 import { questionGenerator, generateLesson, generateLessonAudio } from '@eduator/ai'
 import { createAdminClient } from '@eduator/auth/supabase/admin'
@@ -57,7 +57,6 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
         lessons: 'GET /api/v1/teacher/lessons',
         'lessons/:id': 'GET /api/v1/teacher/lessons/:id',
         'lessons/generate': 'POST /api/v1/teacher/lessons/generate',
-        classes: 'GET/POST /api/v1/teacher/classes',
         analytics: 'GET /api/v1/teacher/analytics',
       },
     })
@@ -73,8 +72,7 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const teacherId = request.user!.profile!.id
 
-    const [classes, examResult, balance] = await Promise.all([
-      classRepository.getByTeacher(teacherId),
+    const [examResult, balance] = await Promise.all([
       examRepository.getByTeacher(teacherId),
       tokenRepository.getBalance(teacherId),
     ])
@@ -85,14 +83,14 @@ export async function teacherRoutes(fastify: FastifyInstance): Promise<void> {
       success: true,
       data: {
         overview: {
-          total_classes: classes.length,
+          total_classes: 0,
           total_exams: examCount,
           total_learners: 0, // Would calculate from enrollments
           total_students: 0, // deprecated alias
           token_balance: balance,
         },
         recent_exams: exams.slice(0, 5),
-        classes,
+        classes: [],
       },
     })
   })
@@ -1026,78 +1024,6 @@ pagination: {
     })
   })
 
-  // === CLASS ROUTES ===
-
-  // List classes
-  fastify.get('/classes', {
-    schema: {
-      description: 'List teacher classes',
-      tags: ['Teacher', 'Classes'],
-      security: [{ bearerAuth: [] }],
-    },
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const teacherId = request.user!.profile!.id
-
-    const classes = await classRepository.getByTeacher(teacherId)
-
-    return reply.send({
-      success: true,
-      data: classes,
-    })
-  })
-
-  // Create class
-  fastify.post('/classes', {
-    schema: {
-      description: 'Create new class',
-      tags: ['Teacher', 'Classes'],
-      security: [{ bearerAuth: [] }],
-    },
-  }, async (request: FastifyRequest<{ Body: { name: string; description?: string; subject?: string; grade_level?: string } }>, reply: FastifyReply) => {
-    const teacherId = request.user!.profile!.id
-
-    const newClass = await classRepository.create('global', teacherId, request.body)
-
-    if (!newClass) {
-      return reply.code(500).send({
-        success: false,
-        error: { code: 'CREATE_FAILED', message: 'Failed to create class' },
-      })
-    }
-
-    return reply.code(201).send({
-      success: true,
-      data: newClass,
-    })
-  })
-
-  // Get class learners
-  fastify.get('/classes/:id/students', {
-    schema: {
-      description: 'Get learners in class',
-      tags: ['Teacher', 'Classes'],
-      security: [{ bearerAuth: [] }],
-    },
-  }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-    const { id } = request.params
-    const teacherId = request.user!.profile!.id
-
-    const classData = await classRepository.getById(id)
-    if (!classData || classData.teacher_id !== teacherId) {
-      return reply.code(404).send({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Class not found' },
-      })
-    }
-
-    const learners = await classRepository.getLearners(id)
-
-    return reply.send({
-      success: true,
-      data: learners,
-    })
-  })
-
   // Analytics
   fastify.get('/analytics', {
     schema: {
@@ -1108,26 +1034,19 @@ pagination: {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const teacherId = request.user!.profile!.id
 
-    const classes = await classRepository.getByTeacher(teacherId)
     const { count: examCount } = await examRepository.getByTeacher(teacherId)
 
     return reply.send({
       success: true,
       data: {
         summary: {
-          total_classes: classes.length,
+          total_classes: 0,
           total_exams: examCount,
           total_learners: 0,
           total_students: 0, // deprecated alias
           average_score: 0,
         },
-        classes: classes.map((c) => ({
-          id: c.id,
-          name: c.name,
-          learner_count: 0,
-          student_count: 0, // deprecated alias
-          average_score: 0,
-        })),
+        classes: [],
       },
     })
   })

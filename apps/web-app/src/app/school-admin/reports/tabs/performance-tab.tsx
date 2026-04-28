@@ -25,7 +25,7 @@ interface PerformanceData {
   needsImprovement: number
 }
 
-export default function PerformanceTab({ organizationId }: { organizationId: string }) {
+export default function PerformanceTab({ workspaceId }: { workspaceId: string }) {
   const [data, setData] = useState<PerformanceData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -33,7 +33,8 @@ export default function PerformanceTab({ organizationId }: { organizationId: str
     async function fetchData() {
       setLoading(true)
       try {
-        const response = await fetch(`/api/school-admin/reports/performance?organizationId=${organizationId}`)
+        void workspaceId
+        const response = await fetch('/api/school-admin/reports/performance')
         const result = await response.json()
         setData(result)
       } catch (error) {
@@ -44,7 +45,7 @@ export default function PerformanceTab({ organizationId }: { organizationId: str
     }
 
     fetchData()
-  }, [organizationId])
+  }, [workspaceId])
 
   if (loading) {
     return (

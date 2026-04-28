@@ -34,26 +34,25 @@ async function getAdminData() {
   if (!user) return null
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, organization_id')
+    .select('id')
     .eq('user_id', user.id)
     .single()
-  if (!profile?.organization_id) return null
-  return { adminId: profile.id, organizationId: profile.organization_id }
+  if (!profile?.id) return null
+  return { adminId: profile.id, workspaceId: 'global' }
 }
 
-async function getPlanStats(adminId: string, organizationId: string) {
+async function getPlanStats(adminId: string, workspaceId: string) {
   const supabase = await createClient()
+  void workspaceId
   try {
     const { count: total } = await supabase
       .from('education_plans')
       .select('*', { count: 'exact', head: true })
       .eq('teacher_id', adminId)
-      .eq('organization_id', organizationId)
     const { count: shared } = await supabase
       .from('education_plans')
       .select('*', { count: 'exact', head: true })
       .eq('teacher_id', adminId)
-      .eq('organization_id', organizationId)
       .eq('is_shared_with_students', true)
     return { total: total ?? 0, shared: shared ?? 0 }
   } catch {
@@ -63,16 +62,16 @@ async function getPlanStats(adminId: string, organizationId: string) {
 
 async function getPlans(
   adminId: string,
-  organizationId: string,
+  workspaceId: string,
   params: { search?: string; classId?: string; shared?: string }
 ): Promise<PlanRow[]> {
   const supabase = await createClient()
+  void workspaceId
   try {
     const { data: plans, error } = await supabase
       .from('education_plans')
       .select('id, name, description, class_id, period_months, sessions_per_week, hours_per_session, is_shared_with_students, created_at')
       .eq('teacher_id', adminId)
-      .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
     if (error) {
       console.warn('Education plans fetch failed (table may not exist):', error.message)
@@ -102,13 +101,13 @@ async function getPlans(
   }
 }
 
-async function getClasses(adminId: string, organizationId: string) {
+async function getClasses(adminId: string, workspaceId: string) {
   const supabase = await createClient()
   const admin = createAdminClient()
+  void workspaceId
   const { data: primary } = await supabase
     .from('classes')
     .select('id, name')
-    .eq('organization_id', organizationId)
     .eq('teacher_id', adminId)
     .eq('is_active', true)
   const { data: ct } = await admin.from('class_teachers').select('class_id').eq('teacher_id', adminId)
@@ -118,7 +117,6 @@ async function getClasses(adminId: string, organizationId: string) {
     const { data: add } = await supabase
       .from('classes')
       .select('id, name')
-      .eq('organization_id', organizationId)
       .in('id', assignedIds)
     extra = (add || []).filter((c) => !primary?.some((p) => p.id === c.id)) as Array<{ id: string; name: string }>
   }
@@ -133,13 +131,13 @@ export default async function SchoolAdminEducationPlansPage({
 }) {
   const adminData = await getAdminData()
   if (!adminData) redirect('/auth/login')
-  const { adminId, organizationId } = adminData
+  const { adminId, workspaceId } = adminData
   const params = await searchParams
 
   const [plans, stats, classes, t] = await Promise.all([
-    getPlans(adminId, organizationId, params),
-    getPlanStats(adminId, organizationId),
-    getClasses(adminId, organizationId),
+    getPlans(adminId, workspaceId, params),
+    getPlanStats(adminId, workspaceId),
+    getClasses(adminId, workspaceId),
     getTranslations('teacherEducationPlans'),
   ])
   const classesMap = Object.fromEntries(classes.map((c) => [c.id, c.name]))

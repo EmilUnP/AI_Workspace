@@ -14,11 +14,11 @@ import ActivityTab from './tabs/activity-tab'
 type Tab = 'overview' | 'performance' | 'activity'
 
 interface ReportsTabsProps {
-  organizationId: string
-  organizationName: string
+  workspaceId: string
+  workspaceName: string
 }
 
-export default function ReportsTabs({ organizationId, organizationName }: ReportsTabsProps) {
+export default function ReportsTabs({ workspaceId, workspaceName }: ReportsTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
 
   return (
@@ -28,7 +28,7 @@ export default function ReportsTabs({ organizationId, organizationName }: Report
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
           <p className="mt-1 text-gray-500">
-            Comprehensive insights for {organizationName}
+            Comprehensive insights for {workspaceName}
           </p>
         </div>
         <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
@@ -79,13 +79,13 @@ export default function ReportsTabs({ organizationId, organizationName }: Report
       {/* Tab Content */}
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <OverviewTab organizationId={organizationId} />
+          <OverviewTab workspaceId={workspaceId} />
         )}
         {activeTab === 'performance' && (
-          <PerformanceTab organizationId={organizationId} />
+          <PerformanceTab workspaceId={workspaceId} />
         )}
         {activeTab === 'activity' && (
-          <ActivityTab organizationId={organizationId} />
+          <ActivityTab workspaceId={workspaceId} />
         )}
       </div>
     </div>

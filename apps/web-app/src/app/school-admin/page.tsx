@@ -1,53 +1,25 @@
 import { createClient as createServerClient } from '@eduator/auth/supabase/server'
-import { AlertCircle, Clock, FileText, Users } from 'lucide-react'
+import { Clock, FileText, Users } from 'lucide-react'
 import Link from 'next/link'
 
-async function getOrganizationInfo() {
+async function getWorkspaceInfo() {
   const supabase = await createServerClient()
   
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) return { id: 'global', name: 'Global Workspace', subscription_plan: 'global' as const }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select(`
-      organization_id,
-      organizations(
-        id,
-        name,
-        type,
-        subscription_plan,
-        settings
-      )
-    `)
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!profile?.organizations) return null
-  
-  // Handle both array and object cases from Supabase
-  const org = Array.isArray(profile.organizations) 
-    ? profile.organizations[0] 
-    : profile.organizations
-  
-  return org as {
-    id: string
-    name: string
-    type: string
-    subscription_plan: string
-    settings: Record<string, unknown>
-  } | null
+  return { id: 'global', name: 'Global Workspace', subscription_plan: 'global' as const }
 }
 
-async function getDashboardStats(organizationId: string) {
+async function getDashboardStats() {
   const supabase = await createServerClient()
   const countOpt = { count: 'exact' as const, head: true }
 
   const [teacherRes, pendingRes, pendingUsersRes] =
     await Promise.all([
-      supabase.from('profiles').select('id', countOpt).eq('organization_id', organizationId).eq('profile_type', 'teacher'),
-      supabase.from('profiles').select('id', countOpt).eq('organization_id', organizationId).eq('approval_status', 'pending'),
-      supabase.from('profiles').select('id, full_name, email, profile_type, created_at').eq('organization_id', organizationId).eq('approval_status', 'pending').order('created_at', { ascending: false }).limit(5),
+      supabase.from('profiles').select('id', countOpt).eq('profile_type', 'teacher'),
+      supabase.from('profiles').select('id', countOpt).eq('approval_status', 'pending'),
+      supabase.from('profiles').select('id, full_name, email, profile_type, created_at').eq('approval_status', 'pending').order('created_at', { ascending: false }).limit(5),
     ])
 
   return {
@@ -58,21 +30,8 @@ async function getDashboardStats(organizationId: string) {
 }
 
 export default async function SchoolAdminDashboard() {
-  const organization = await getOrganizationInfo()
-  
-  if (!organization) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-          <h2 className="mt-4 text-lg font-semibold text-gray-900">No Organization Found</h2>
-          <p className="mt-2 text-sm text-gray-500">You are not associated with any organization.</p>
-        </div>
-      </div>
-    )
-  }
-  
-  const stats = await getDashboardStats(organization.id)
+  const workspace = await getWorkspaceInfo()
+  const stats = await getDashboardStats()
 
   return (
     <div className="space-y-6">
@@ -81,18 +40,12 @@ export default async function SchoolAdminDashboard() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">School Dashboard</h1>
           <p className="mt-1 text-gray-500">
-            Overview of {organization.name}
+            Overview of {workspace.name}
           </p>
         </div>
         <div className="hidden items-center gap-3 sm:flex">
-          <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-            organization.subscription_plan === 'enterprise' 
-              ? 'bg-purple-100 text-purple-700' 
-              : organization.subscription_plan === 'premium'
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-gray-100 text-gray-700'
-          }`}>
-            {organization.subscription_plan?.charAt(0).toUpperCase() + organization.subscription_plan?.slice(1)} Plan
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+            Global Plan
           </span>
         </div>
       </div>

@@ -20,7 +20,7 @@ interface OverviewData {
   totalEnrollments: number
 }
 
-export default function OverviewTab({ organizationId }: { organizationId: string }) {
+export default function OverviewTab({ workspaceId }: { workspaceId: string }) {
   const [data, setData] = useState<OverviewData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -28,7 +28,8 @@ export default function OverviewTab({ organizationId }: { organizationId: string
     async function fetchData() {
       setLoading(true)
       try {
-        const response = await fetch(`/api/school-admin/reports/overview?organizationId=${organizationId}`)
+        void workspaceId
+        const response = await fetch('/api/school-admin/reports/overview')
         const result = await response.json()
         setData(result)
       } catch (error) {
@@ -39,7 +40,7 @@ export default function OverviewTab({ organizationId }: { organizationId: string
     }
 
     fetchData()
-  }, [organizationId])
+  }, [workspaceId])
 
   if (loading) {
     return (

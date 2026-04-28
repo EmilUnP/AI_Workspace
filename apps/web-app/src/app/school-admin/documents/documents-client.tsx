@@ -33,13 +33,13 @@ interface Document {
 }
 
 interface DocumentsClientProps {
-  organizationId: string
+  workspaceId: string
   initialDocuments: Document[]
   uploadTranslations?: Partial<DocumentUploadTranslations>
   explorerTranslations?: Partial<DocumentsExplorerTranslations>
 }
 
-export function DocumentsClient({ organizationId, initialDocuments, uploadTranslations, explorerTranslations }: DocumentsClientProps) {
+export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslations, explorerTranslations }: DocumentsClientProps) {
   const router = useRouter()
   const { documents, addDocument } = useDocumentsList(initialDocuments)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -82,7 +82,7 @@ export function DocumentsClient({ organizationId, initialDocuments, uploadTransl
     <div className="space-y-8">
       {/* Upload Zone */}
       <DocumentUploadZone
-        organizationId={organizationId}
+        organizationId={workspaceId}
         onUpload={quickUploadDocument}
         onUploadSuccess={handleUploadSuccess}
         translations={uploadTranslations}

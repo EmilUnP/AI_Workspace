@@ -20,11 +20,11 @@ export async function createEducationPlan(params: {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized', planId: null }
-  const { data: profile } = await supabase.from('profiles').select('id, organization_id').eq('user_id', user.id).single()
-  if (!profile?.organization_id) return { error: 'Profile or organization not found', planId: null }
+  const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single()
+  if (!profile?.id) return { error: 'Profile not found', planId: null }
 
   const { data, error } = await insertEducationPlan(supabase, {
-    organization_id: profile.organization_id,
+    organization_id: 'global',
     teacher_id: profile.id,
     class_id: params.class_id,
     name: params.name,

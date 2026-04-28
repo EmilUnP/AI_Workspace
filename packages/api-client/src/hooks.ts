@@ -11,7 +11,6 @@ import {
 import type {
   Profile,
   Exam,
-  Class,
   PaginatedResponse,
   CreateExamInput,
   UpdateExamInput,
@@ -35,11 +34,6 @@ export const queryKeys = {
   exams: (filters?: Record<string, unknown>) => ['exams', filters] as const,
   exam: (id: string) => ['exams', id] as const,
   examSubmissions: (examId: string) => ['exams', examId, 'submissions'] as const,
-  
-  // Classes
-  classes: (filters?: Record<string, unknown>) => ['classes', filters] as const,
-  class: (id: string) => ['classes', id] as const,
-  classLearners: (classId: string) => ['classes', classId, 'learners'] as const,
   
   // Learner
   availableExams: ['learner', 'exams'] as const,
@@ -235,31 +229,6 @@ export function usePublishExam() {
   })
 }
 
-// ==================== Class Hooks ====================
-
-export function useTeacherClasses() {
-  return useQuery({
-    queryKey: queryKeys.classes(),
-    queryFn: async () => {
-      const response = await apiClient.get<Class[]>(schoolAdminTeachingEndpoints.classes.list)
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-  })
-}
-
-export function useClass(id: string) {
-  return useQuery({
-    queryKey: queryKeys.class(id),
-    queryFn: async () => {
-      const response = await apiClient.get<Class>(schoolAdminTeachingEndpoints.classes.get(id))
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-    enabled: !!id,
-  })
-}
-
 // ==================== Learner Hooks ====================
 
 export function useAvailableExams() {
@@ -299,21 +268,6 @@ export function useLearnerProgress() {
       const response = await apiClient.get(learnerEndpoints.progress.overview)
       if (!isSuccess(response)) throw new Error(response.error?.message)
       return response.data
-    },
-  })
-}
-
-export function useJoinClass() {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (classCode: string) => {
-      const response = await apiClient.post(learnerEndpoints.classes.join, { code: classCode })
-      if (!isSuccess(response)) throw new Error(response.error?.message)
-      return response.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['classes'] })
     },
   })
 }
