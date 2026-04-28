@@ -3,7 +3,6 @@ const sharedPublicEnv = {
   NEXT_PUBLIC_ERP_URL: 'https://erp.eduator.ai',
   // Legacy fallback kept for compatibility with older code paths
   NEXT_PUBLIC_APP_URL: 'https://erp.eduator.ai',
-  NEXT_PUBLIC_MARKETING_URL: 'https://eduator.ai',
   NEXT_PUBLIC_API_URL: 'https://api.eduator.ai',
 }
 
@@ -20,22 +19,12 @@ module.exports = {
       },
     },
     {
-      name: 'edu-erp',
+      name: 'edu-web',
       script: 'npm',
-      args: 'run start -w erp-app',
+      args: 'run start -w web-app',
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
-        ...sharedPublicEnv,
-      },
-    },
-    {
-      name: 'edu-marketing',
-      script: 'npm',
-      args: 'run start -w marketing-site',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3000,
         ...sharedPublicEnv,
       },
     },

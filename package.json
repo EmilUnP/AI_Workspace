@@ -7,19 +7,17 @@
   "license": "MIT",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/web-app"
   ],
   "scripts": {
     "dev:api": "npm run dev -w @eduator/api-server",
-    "dev:erp": "npm run dev -w erp-app",
-    "dev:marketing": "npm run dev -w marketing-site",
-    "dev:all": "concurrently \"npm run dev:api\" \"npm run dev:erp\" \"npm run dev:marketing\"",
+    "dev:web": "npm run dev -w web-app",
+    "dev:all": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
     "build": "npm run build:packages && npm run build:apps",
     "build:packages": "npm run build -w @eduator/config && npm run build -w @eduator/db",
     "build:api": "npm run build:packages && npm run build -w @eduator/api-server",
-    "build:erp": "npm run build:packages && npm run build -w erp-app",
-    "build:marketing": "npm run build -w marketing-site",
-    "build:apps": "npm run build -w erp-app && npm run build -w marketing-site",
+    "build:web": "npm run build:packages && npm run build -w web-app",
+    "build:apps": "npm run build -w web-app",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",

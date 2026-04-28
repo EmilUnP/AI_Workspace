@@ -45,11 +45,11 @@ module.exports = [
   // Next.js apps: apply next/core-web-vitals
   ...compat.extends('next/core-web-vitals').map((config) => ({
     ...config,
-    files: ['apps/erp-app/**/*.{js,jsx,ts,tsx}'],
+    files: ['apps/web-app/**/*.{js,jsx,ts,tsx}'],
     settings: {
       ...(config.settings || {}),
       next: {
-        rootDir: ['apps/erp-app'],
+        rootDir: ['apps/web-app'],
       },
     },
   })),

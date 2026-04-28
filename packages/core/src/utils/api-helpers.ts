@@ -1,17 +1,17 @@
 /**
  * Shared API route helpers
- * Works for both ERP and ERP apps
+ * Works for both web application surfaces
  */
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@eduator/auth/supabase/server'
 
-// Demo organization ID for ERP users
+// Demo organization ID for web users
 export const DEMO_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001'
 
 /**
  * Require auth helper for course API routes
- * Returns teacher context with organization ID (handles both ERP and ERP)
+ * Returns teacher context with organization ID
  */
 export async function requireCourseAuth() {
   const supabase = await createClient()
@@ -50,11 +50,10 @@ export async function requireCourseAuth() {
     }
   }
 
-  // For ERP: use demo org if no org assigned
-  // For ERP: use actual org (will be validated)
+  // Use demo org if no org is assigned
   const organizationId = profile.organization_id || DEMO_ORGANIZATION_ID
 
-  // For ERP: verify organization exists
+  // Verify organization exists
   if (!profile.organization_id && !organizationId) {
     return {
       user: null,

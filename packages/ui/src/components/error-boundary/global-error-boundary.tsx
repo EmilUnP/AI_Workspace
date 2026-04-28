@@ -16,7 +16,7 @@ export interface GlobalErrorBoundaryProps {
 /**
  * Shared global error content for Next.js global-error.tsx.
  * Renders minimal inline styles (no Tailwind) so it works when the root layout fails.
- * Use in both ERP and ERP apps.
+ * Use in both web application surfaces.
  */
 export function GlobalErrorBoundary({ error, reset, variant = 'violet' }: GlobalErrorBoundaryProps) {
   void error

@@ -2,8 +2,7 @@
 
 ## Apps
 
-- ERP app deployment target
-- Marketing site deployment target
+- Web app deployment target
 - API server deployment target
 
 ## Required Environment
@@ -11,7 +10,7 @@
 - Supabase URL and anon key
 - Service role key for server-side admin operations
 - AI provider key (if AI features are enabled)
-- Public app URLs for ERP/API/marketing routing
+- Public app URLs for Web/API routing
 
 ## Build Commands
 
@@ -21,6 +20,5 @@ npm run build:apps
 
 ## Validation
 
-- Confirm ERP app routes build
-- Confirm marketing app routes build
+- Confirm Web app routes build
 - Confirm auth callback/login flow works

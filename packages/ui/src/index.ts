@@ -79,7 +79,7 @@ export { QuestionPreview, type QuestionPreviewProps } from './components/exam/qu
 export { QuestionEditor, type QuestionEditorProps } from './components/exam/question-editor'
 export { exportQuestionsToCsv, type ExportQuestion, type ExportQuestionsCsvOptions } from './components/exam/export-questions-csv'
 
-// Error boundary (shared by ERP and ERP apps)
+// Error boundary (shared by web interfaces)
 export {
   AppErrorBoundary,
   type AppErrorBoundaryProps,

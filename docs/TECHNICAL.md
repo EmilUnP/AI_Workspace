@@ -2,8 +2,7 @@
 
 ## Monorepo Structure
 
-- `apps/erp-app` - main Next.js product UI
-- `apps/marketing-site` - minimal public site
+- `apps/web-app` - main Next.js product UI
 - `packages/api-server` - Fastify API
 - `packages/*` - shared auth, db, core, ui, ai, config modules
 

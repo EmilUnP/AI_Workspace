@@ -16,6 +16,6 @@ coverage
 **/.eslintcache
 **/tsconfig.tsbuildinfo
 
-# When building erp-app, ignore non-target app build output
+# When building web-app, ignore non-target app build output
 # Uncomment if you deploy from repo root and want to trim payload:
-# apps/erp-app/.next
+# apps/web-app/.next

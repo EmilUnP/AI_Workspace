@@ -1,16 +1,16 @@
 /**
  * Shared utility to get teacher context
- * Works for both ERP and ERP apps
+ * Works for both web application surfaces
  */
 
 import { createClient } from '@eduator/auth/supabase/server'
 
-// Demo organization ID for ERP users
+// Demo organization ID for web users
 const DEMO_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001'
 
 /**
  * Get teacher info and organization ID
- * Handles both ERP (real org) and ERP (demo org) cases
+ * Handles both real-org and demo-org cases
  */
 export async function getTeacherContext() {
   const supabase = await createClient()
@@ -30,8 +30,7 @@ export async function getTeacherContext() {
     return { error: 'Profile not found', teacherId: null, organizationId: null }
   }
 
-  // For ERP: use demo org if no org assigned
-  // For ERP: use actual org
+  // Use demo org if no org assigned
   const organizationId = profile.organization_id || DEMO_ORGANIZATION_ID
 
   return {

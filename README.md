@@ -6,8 +6,7 @@ Current baseline version: **0.0.8**.
 
 ## Current Scope
 
-- ERP app (`apps/erp-app`)
-- Marketing site (`apps/marketing-site`)
+- Web app (`apps/web-app`)
 - API server and shared packages (`packages/*`)
 - SaaS app is removed
 - Student portal UI is removed and blocked
@@ -17,14 +16,13 @@ Current baseline version: **0.0.8**.
 ```bash
 npm install
 npm run dev:api
-npm run dev:erp
-npm run dev:marketing
+npm run dev:web
 ```
 
 ## Main Scripts
 
-- `npm run dev:all` - Start API, ERP, and marketing together
-- `npm run build:apps` - Build ERP and marketing
+- `npm run dev:all` - Start API and Web app together
+- `npm run build:apps` - Build Web app
 - `npm run lint` - Lint workspace
 - `npm run type-check` - TypeScript check
 

@@ -8,7 +8,7 @@ dist/
 build/
 .next/
 out/
-/erp-app/
+/web-app/
 
 # Environment variables
 .env
