@@ -1,0 +1,21 @@
+### Health
+GET http://localhost:3010/health
+
+### Register
+POST http://localhost:3010/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@clean.local",
+  "password": "admin12345",
+  "role": "admin"
+}
+
+### Login
+POST http://localhost:3010/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@clean.local",
+  "password": "admin12345"
+}
