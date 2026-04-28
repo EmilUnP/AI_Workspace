@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { LogOut, Settings, ChevronDown } from 'lucide-react'
+import { LogOut, ChevronDown } from 'lucide-react'
 import { signOut } from '@eduator/auth/supabase/client'
 
 interface UserNavProps {
@@ -12,11 +12,9 @@ interface UserNavProps {
     email: string
     avatar_url?: string | null
   }
-  /** When provided (e.g. from public header), Settings links here instead of platform-owner */
-  settingsPath?: string
 }
 
-export function UserNav({ profile, settingsPath = '/platform-owner/settings' }: UserNavProps) {
+export function UserNav({ profile }: UserNavProps) {
   const t = useTranslations('common')
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -66,18 +64,6 @@ export function UserNav({ profile, settingsPath = '/platform-owner/settings' }: 
           <div className="border-b border-gray-100 px-4 py-3">
             <p className="text-sm font-medium text-gray-900">{profile.full_name}</p>
             <p className="truncate text-xs text-gray-500">{profile.email}</p>
-          </div>
-          <div className="py-1">
-            <button
-              onClick={() => {
-                setIsOpen(false)
-                router.push(settingsPath)
-              }}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <Settings className="h-4 w-4" />
-              {t('settings')}
-            </button>
           </div>
           <div className="border-t border-gray-100 py-1">
             <button

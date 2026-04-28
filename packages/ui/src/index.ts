@@ -56,12 +56,7 @@ export {
 export {
   PublicPageShell,
   PublicContainer,
-  PublicSectionHeading,
 } from './components/public/public-layout'
-export { PublicFooter } from './components/public/public-footer'
-export { PublicProcessFlow, type PublicProcessStep } from './components/public/public-process-flow'
-export { PublicMetricCards, type PublicMetricItem } from './components/public/public-metric-cards'
-export { PublicSpotlightStrip } from './components/public/public-spotlight-strip'
 export {
   LanguageSwitcher,
   type LanguageSwitcherProps,

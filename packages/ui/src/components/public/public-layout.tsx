@@ -39,29 +39,3 @@ interface PublicContainerProps {
 export function PublicContainer({ children, className }: PublicContainerProps) {
   return <div className={cn('relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8', className)}>{children}</div>
 }
-
-interface PublicSectionHeadingProps {
-  kicker?: string
-  title: string
-  description?: string
-  align?: 'left' | 'center'
-  className?: string
-}
-
-export function PublicSectionHeading({
-  kicker,
-  title,
-  description,
-  align = 'center',
-  className,
-}: PublicSectionHeadingProps) {
-  return (
-    <div className={cn(align === 'center' ? 'text-center' : 'text-left', className)}>
-      {kicker ? (
-        <span className="mb-2 block text-sm font-semibold uppercase tracking-widest text-violet-600">{kicker}</span>
-      ) : null}
-      <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">{title}</h2>
-      {description ? <p className={cn('mt-3 text-gray-600', align === 'center' ? 'mx-auto max-w-2xl' : 'max-w-2xl')}>{description}</p> : null}
-    </div>
-  )
-}

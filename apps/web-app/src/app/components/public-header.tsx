@@ -7,22 +7,22 @@ import { LocaleSwitcher } from './locale-switcher'
 
 function getDashboardAndSettings(
   profileType: string | null | undefined
-): { dashboardHref: string | null; settingsPath: string } {
+): { dashboardHref: string | null } {
   switch (profileType) {
     case 'platform_owner':
-      return { dashboardHref: '/platform-owner', settingsPath: '/platform-owner/settings' }
+      return { dashboardHref: '/platform-owner' }
     case 'school_superadmin':
-      return { dashboardHref: '/school-admin', settingsPath: '/school-admin' }
+      return { dashboardHref: '/school-admin' }
     case 'teacher':
-      return { dashboardHref: '/school-admin', settingsPath: '/school-admin' }
+      return { dashboardHref: '/school-admin' }
     default:
-      return { dashboardHref: null, settingsPath: '/platform-owner/settings' }
+      return { dashboardHref: null }
   }
 }
 
 export async function PublicHeader() {
   const profile = await getUserProfile()
-  const { dashboardHref, settingsPath } = getDashboardAndSettings(profile?.profile_type)
+  const { dashboardHref } = getDashboardAndSettings(profile?.profile_type)
   const tc = await getTranslations('common')
 
   const authContent = profile ? (
@@ -41,7 +41,6 @@ export async function PublicHeader() {
           email: profile.email ?? '',
           avatar_url: profile.avatar_url ?? null,
         }}
-        settingsPath={settingsPath}
       />
     </>
   ) : (

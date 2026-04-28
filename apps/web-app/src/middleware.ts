@@ -7,7 +7,6 @@ export { X_PATHNAME_HEADER }
 const baseMiddleware = createAuthMiddleware({
   public: [
     '/',
-    '/org',
     '/auth/login',
     '/api/auth/login',
     '/auth/signup',

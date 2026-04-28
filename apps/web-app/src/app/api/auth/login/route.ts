@@ -39,7 +39,7 @@ function getRequestOrigin(request: NextRequest) {
  * POST /api/auth/login – form login handler.
  * Primary login POST endpoint for ERP authentication.
  */
-/** Allow redirect only to same-origin paths (e.g. /org/slug) */
+/** Allow redirect only to same-origin paths */
 function isSafeRedirect(path: string | null): path is string {
   if (!path || typeof path !== 'string') return false
   const trimmed = path.trim()
@@ -53,12 +53,9 @@ export async function POST(request: NextRequest) {
   const redirectToParam = (formData.get('redirectTo') as string) || ''
   const origin = getRequestOrigin(request)
 
-  const orgParam = (formData.get('org') as string) || ''
-
   if (!email || !password) {
     const loginUrl = new URL('/auth/login', origin)
     loginUrl.searchParams.set('error', 'Email and password are required')
-    if (orgParam) loginUrl.searchParams.set('org', orgParam)
     return redirectTo(loginUrl)
   }
 
@@ -94,14 +91,12 @@ export async function POST(request: NextRequest) {
   if (error) {
     const loginUrl = new URL('/auth/login', origin)
     loginUrl.searchParams.set('error', error.message)
-    if (orgParam) loginUrl.searchParams.set('org', orgParam)
     return redirectTo(loginUrl)
   }
 
   if (!data.user) {
     const loginUrl = new URL('/auth/login', origin)
     loginUrl.searchParams.set('error', 'Login failed')
-    if (orgParam) loginUrl.searchParams.set('org', orgParam)
     return redirectTo(loginUrl)
   }
 
@@ -114,7 +109,6 @@ export async function POST(request: NextRequest) {
   if (profileError || !profile) {
     const loginUrl = new URL('/auth/login', origin)
     loginUrl.searchParams.set('error', 'Could not fetch user profile')
-    if (orgParam) loginUrl.searchParams.set('org', orgParam)
     return redirectTo(loginUrl)
   }
 
