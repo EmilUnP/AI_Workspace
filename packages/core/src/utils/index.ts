@@ -14,9 +14,6 @@ export * from './teacher-lessons'
 // Teacher education plans (create/insert - shared ERP + ERP)
 export * from './teacher-education-plans'
 
-// Feature visibility (platform owner controls)
-export * from './feature-visibility'
-
 // Exam utilities
 export * from './exam-question-normalize'
 

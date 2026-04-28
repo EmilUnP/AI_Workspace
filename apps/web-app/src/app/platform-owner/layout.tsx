@@ -10,9 +10,7 @@ const navigation = [
   { name: 'Usage & payments', href: '/platform-owner/usage-payments', icon: 'Activity' },
   { name: 'Real token usage', href: '/platform-owner/real-token-usage', icon: 'BarChart3' },
   { name: 'Token settings', href: '/platform-owner/token-settings', icon: 'Coins' },
-  { name: 'Feature visibility', href: '/platform-owner/feature-visibility', icon: 'Eye' },
   { name: 'Reports', href: '/platform-owner/reports', icon: 'BarChart3' },
-  { name: 'Settings', href: '/platform-owner/settings', icon: 'Settings' },
 ]
 
 export default async function PlatformOwnerLayout({

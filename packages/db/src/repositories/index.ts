@@ -14,4 +14,3 @@ export {
 } from './teacher-api-keys'
 export { tokenRepository, TOKEN_ACTION_TYPES } from './tokens'
 export { paymentsRepository, type PaymentWithProfile, type CreatePaymentInput } from './payments'
-export { featureVisibilityRepository } from './feature-visibility'
