@@ -6,27 +6,18 @@
   "author": "Eduator Team",
   "license": "MIT",
   "workspaces": [
-    "packages/*",
-    "apps/web-app",
-    "apps/clean-backend"
+    "apps/backend"
   ],
   "scripts": {
-    "dev:api": "npm run dev -w @eduator/api-server",
-    "dev:web": "npm run dev -w web-app",
     "dev:clean-backend": "npm run dev -w @eduator/clean-backend",
-    "dev:all": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
     "dev:clean": "npm run dev:clean-backend",
-    "build": "npm run build:packages && npm run build:apps",
-    "build:packages": "npm run build -w @eduator/config && npm run build -w @eduator/db",
-    "build:api": "npm run build:packages && npm run build -w @eduator/api-server",
-    "build:web": "npm run build:packages && npm run build -w web-app",
-    "build:apps": "npm run build -w web-app",
+    "build": "npm run build:clean-backend",
     "build:clean-backend": "npm run build -w @eduator/clean-backend",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf apps/*/node_modules && rm -rf packages/*/dist && rm -rf apps/*/.next",
+    "clean": "rm -rf node_modules && rm -rf apps/*/node_modules && rm -rf apps/*/.next",
     "prepare": "node -e \"if (!process.env.CI) { require('child_process').execSync('npx husky install', {stdio:'inherit'}) }\""
   },
   "overrides": {
