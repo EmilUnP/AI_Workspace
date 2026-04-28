@@ -1,8 +1,5 @@
 import { createAuthMiddleware } from '@eduator/auth/supabase/middleware'
 import { type NextRequest } from 'next/server'
-import { X_PATHNAME_HEADER } from './i18n/constants'
-
-export { X_PATHNAME_HEADER }
 
 const baseMiddleware = createAuthMiddleware({
   public: [
@@ -30,12 +27,8 @@ const baseMiddleware = createAuthMiddleware({
 })
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
-
   const response = await baseMiddleware(request)
   if (response.status >= 300 && response.status < 400) return response
-
-  response.headers.set(X_PATHNAME_HEADER, pathname)
   return response
 }
 

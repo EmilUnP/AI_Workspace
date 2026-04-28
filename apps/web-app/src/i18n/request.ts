@@ -1,7 +1,5 @@
 import { getRequestConfig } from 'next-intl/server'
-import { cookies, headers } from 'next/headers'
-import { getMessageModule } from './module-mapping'
-import { X_PATHNAME_HEADER } from './constants'
+import { cookies } from 'next/headers'
 import { MESSAGES } from './messages-static'
 
 export const locales = ['en', 'az'] as const
@@ -13,19 +11,8 @@ export default getRequestConfig(async () => {
   const raw = cookieStore.get('NEXT_LOCALE')?.value
   const locale = locales.includes(raw as Locale) ? (raw as Locale) : defaultLocale
 
-  const headerStore = await headers()
-  const pathname = headerStore.get(X_PATHNAME_HEADER) ?? '/'
-  const messageModule = getMessageModule(pathname)
-
-  const publicMessages = MESSAGES.public[locale]
-  const moduleMessages = MESSAGES[messageModule][locale]
-  const messages =
-    messageModule === 'public'
-      ? publicMessages
-      : { ...publicMessages, ...moduleMessages }
-
   return {
     locale,
-    messages,
+    messages: MESSAGES[locale],
   }
 })
