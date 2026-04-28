@@ -2,7 +2,7 @@
 
 ## Immediate Priorities
 
-- Stabilize ERP-only flows
+- Stabilize web-app + API flows
 - Keep docs and architecture aligned with current scope
 - Remove or archive leftover legacy references
 

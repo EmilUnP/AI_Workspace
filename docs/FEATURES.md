@@ -2,13 +2,13 @@
 
 ## Platform Direction
 
-- ERP-first product
+- Web app + API product
 - SaaS product removed
 - Student portal UI removed
 
 ## Role Experience
 
-- Platform Owner: global settings, organizations, users, visibility controls
+- Platform Owner: organizations, users, token settings, usage/payments, reports
 - School Admin: school users, classes, reports
 - Teacher: classes, teaching studio, lessons, exams, AI tutor, reports
 - Student: data can exist, but direct portal access is blocked

@@ -20,4 +20,5 @@
 ## Internationalization
 
 - Active interface locales: `en`, `az`
+- Messages are consolidated per locale in `apps/web-app/src/messages/en.json` and `apps/web-app/src/messages/az.json`
 - Russian and Turkish UI locales removed
