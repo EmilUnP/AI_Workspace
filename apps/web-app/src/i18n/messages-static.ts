@@ -1,6 +1,6 @@
 /**
  * Static message imports for i18n.
- * Avoids dynamic import() so Vercel deployment can package the output reliably.
+ * Avoids dynamic import() so server/runtime bundlers can package output reliably.
  * See: MESSAGE_MODULES in module-mapping.ts (public, platform-owner, school-admin).
  */
 

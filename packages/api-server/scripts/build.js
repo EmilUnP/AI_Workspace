@@ -1,5 +1,5 @@
 /**
- * Bundle the API server with esbuild for Vercel (and other Node runtimes).
+ * Bundle the API server with esbuild for Node runtimes.
  * Bundles all workspace packages (@eduator/db, etc.) so the runtime does not need to resolve .ts sources.
  * Optionally builds @eduator/db first so that dist/ exists when runtime loads the package without bundling.
  */
@@ -8,7 +8,6 @@ const path = require('path')
 const { execSync } = require('child_process')
 const fs = require('fs')
 
-const isVercel = process.env.VERCEL === '1'
 const rootDir = path.join(__dirname, '..')
 const dbDir = path.join(rootDir, '..', 'db')
 
@@ -32,14 +31,14 @@ async function build() {
     platform: 'node',
     format: 'cjs',
     target: 'node18',
-    sourcemap: !isVercel,
-    minify: isVercel,
+    sourcemap: true,
+    minify: false,
     metafile: true,
     // Resolve workspace packages from source so they are bundled (no runtime .ts resolution)
     packages: 'bundle',
     // Node built-ins are externalized by default on platform: 'node'
   }).then((result) => {
-    if (result.metafile && !isVercel) {
+    if (result.metafile) {
       const size = (result.metafile.outputs[outfile]?.bytes ?? 0) / 1024
       console.log(`Built ${outfile} (${size.toFixed(1)} KB)`)
     }

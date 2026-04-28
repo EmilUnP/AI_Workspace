@@ -1,8 +1,0 @@
-{
-  "installCommand": "cd ../.. && npm install",
-  "buildCommand": "cd ../.. && npm run build:api",
-  "outputDirectory": "public",
-  "framework": null,
-  "rewrites": [{"source": "/(.*)", "destination": "/api/[[...slug]]"}],
-  "functions": {"api/[[...slug]].js": {"memory": 1024, "maxDuration": 300}}
-}

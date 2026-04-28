@@ -67,6 +67,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Exclude /api so API routes (e.g. POST /api/auth/login) are not touched by middleware (fixes 405 on Vercel)
+  // Exclude /api so API routes (e.g. POST /api/auth/login) are not touched by web middleware.
   matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|.*\\..*).*)'],
 }

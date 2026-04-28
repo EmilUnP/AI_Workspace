@@ -6,9 +6,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   compress: true,
-  // NOTE: outputFileTracingRoot removed - causes path doubling in monorepo on Vercel
-  // ("Deploying outputs" internal error). Rely on "Include source files outside of the Root Directory"
-  // in Vercel project settings + default tracing. See docs/DEPLOYMENT-VERCEL-ANALYSIS.md
+  // NOTE: Keep default output file tracing settings for local/server deployments.
   transpilePackages: [
     '@eduator/ai',
     '@eduator/api-client',

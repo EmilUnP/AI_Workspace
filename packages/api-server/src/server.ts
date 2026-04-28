@@ -270,7 +270,7 @@ Error responses:
     },
   })
 
-  // Docs UI: serve from CDN so static assets work on Vercel (plugin static files are not in the serverless bundle)
+  // Docs UI: serve from CDN so static assets work consistently across deployments.
   const swaggerUiCdn = 'https://unpkg.com/swagger-ui-dist@5.9.0'
   fastify.get('/docs/json', async (_request, reply) => {
     const spec = await fastify.swagger()
@@ -359,17 +359,4 @@ async function start() {
   }
 }
 
-// Vercel serverless: export handler so api/[[...path]].js can use the bundle
-let appPromise: ReturnType<typeof buildServer> | null = null
-export default async function vercelHandler(
-  req: import('http').IncomingMessage,
-  res: import('http').ServerResponse
-) {
-  const app = await (appPromise ??= buildServer())
-  await app.ready()
-  app.server.emit('request', req, res)
-}
-
-if (process.env.VERCEL !== '1') {
-  start()
-}
+start()
