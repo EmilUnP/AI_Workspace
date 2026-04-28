@@ -106,29 +106,6 @@ export { LessonRowActions, type LessonRowActionsProps } from './components/lesso
 // AI Tutor Components
 export { AITutor } from './components/chat/teacher-chat'
 
-// Teacher Dashboard Components
-export { DashboardHeader } from './components/teacher/dashboard-header'
-export { DashboardStatCard } from './components/teacher/dashboard-stat-card'
-export { 
-  TeacherDashboardClient, 
-  type TeacherDashboardClientProps, 
-  type TeacherDashboardStats,
-  type TeacherDashboardTranslations,
-  type Exam,
-  type Document,
-  type ClassData
-} from './components/teacher/teacher-dashboard-client'
-export { formatDate, formatFileSize, getGreeting } from './utils/teacher-dashboard'
-
-// Teacher Settings Components
-export { TeacherSettingsClient, type TeacherSettingsClientProps, type TeacherSettingsTranslations } from './components/teacher/teacher-settings-client'
-
-export { AddClassDialog, type AddClassDialogProps, type AddClassDialogLabels } from './components/teacher/add-class-dialog'
-export { ClassAITutor, type ClassAITutorLabels } from './components/teacher/class-ai-tutor'
-export { ShareExamDialog, type ShareExamDialogProps, type ShareExamDialogLabels } from './components/teacher/share-exam-dialog'
-export { ShareDocumentDialog, type ShareDocumentDialogProps, type ShareDocumentDialogLabels, type Document as ShareDocument } from './components/teacher/share-document-dialog'
-export { ShareLessonDialog, type ShareLessonDialogProps, type ShareLessonDialogLabels, type Lesson } from './components/teacher/share-lesson-dialog'
-export { SharedContentList, type SharedContentListProps, type SharedContentListLabels } from './components/teacher/shared-content-list'
 export {
   EducationPlanCreateForm,
   EDUCATION_PLAN_LANGUAGES,
