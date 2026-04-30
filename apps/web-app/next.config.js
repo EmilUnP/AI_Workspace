@@ -1,21 +1,10 @@
 const path = require('path')
-const createNextIntlPlugin = require('next-intl/plugin')
-
-const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   compress: true,
   // NOTE: Keep default output file tracing settings for local/server deployments.
-  transpilePackages: [
-    '@eduator/ai',
-    '@eduator/api-client',
-    '@eduator/auth',
-    '@eduator/config',
-    '@eduator/core',
-    '@eduator/db',
-    '@eduator/ui',
-  ],
+  transpilePackages: [],
   images: {
     remotePatterns: [
       {
@@ -84,4 +73,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withNextIntl(nextConfig)
+module.exports = nextConfig

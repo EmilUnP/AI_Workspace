@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { GraduationCap, Bell, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { UserNav } from './user-nav'
 import { MobileSidebar, DesktopNavigation } from '../components/mobile-sidebar'
-import { LocaleSwitcher } from '../components/locale-switcher'
 
 interface NavItem {
   name: string
@@ -123,7 +122,6 @@ export function SchoolAdminLayoutClient({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <LocaleSwitcher accent="green" />
             <button
               type="button"
               className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"

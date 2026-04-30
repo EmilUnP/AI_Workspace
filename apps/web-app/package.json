@@ -9,17 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@eduator/ai": "*",
-    "@eduator/api-client": "*",
-    "@eduator/auth": "*",
-    "@eduator/config": "*",
-    "@eduator/core": "*",
-    "@eduator/db": "*",
-    "@eduator/ui": "*",
+    "@supabase/ssr": "^0.10.2",
     "@tanstack/react-query": "^5.17.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
-    "next-intl": "^4.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

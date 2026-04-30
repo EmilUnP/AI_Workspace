@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { GraduationCap, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { LocaleSwitcher } from '../../../components/locale-switcher'
 
 export interface LoginFormProps {
   error: string
@@ -13,9 +12,6 @@ export function LoginForm({ error }: LoginFormProps) {
   const t = useTranslations('login')
   return (
     <div className="relative flex min-h-screen overflow-hidden bg-[#f8fdf9]">
-      <div className="absolute right-4 top-4 z-10">
-        <LocaleSwitcher accent="green" />
-      </div>
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_0%_20%,rgba(16,185,129,0.1),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_100%_80%,rgba(5,150,105,0.06),transparent_50%)]" />
@@ -114,7 +110,7 @@ export function LoginForm({ error }: LoginFormProps) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-start">
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     id="remember-me"
@@ -124,9 +120,6 @@ export function LoginForm({ error }: LoginFormProps) {
                   />
                   {t('rememberMe')}
                 </label>
-                <Link href="/auth/forgot-password" className="text-sm font-medium text-emerald-600 hover:text-emerald-500">
-                  {t('forgotPassword')}
-                </Link>
               </div>
 
               <button

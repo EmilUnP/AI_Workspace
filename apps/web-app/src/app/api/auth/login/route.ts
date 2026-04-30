@@ -1,6 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -35,23 +33,12 @@ function getRequestOrigin(request: NextRequest) {
   return `${proto}://${host}`
 }
 
-/**
- * POST /api/auth/login – form login handler.
- * Primary login POST endpoint for ERP authentication.
- */
-/** Allow redirect only to same-origin paths */
-function isSafeRedirect(path: string | null): path is string {
-  if (!path || typeof path !== 'string') return false
-  const trimmed = path.trim()
-  return trimmed.startsWith('/') && !trimmed.startsWith('//') && !/^https?:\/\//i.test(trimmed)
-}
-
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const email = (formData.get('email') as string) || ''
   const password = (formData.get('password') as string) || ''
-  const redirectToParam = (formData.get('redirectTo') as string) || ''
   const origin = getRequestOrigin(request)
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
 
   if (!email || !password) {
     const loginUrl = new URL('/auth/login', origin)
@@ -59,76 +46,53 @@ export async function POST(request: NextRequest) {
     return redirectTo(loginUrl)
   }
 
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: Record<string, unknown>) {
-          try {
-            cookieStore.set(name, value, options)
-          } catch {
-            // Route handler
-          }
-        },
-        remove(name: string, options: Record<string, unknown>) {
-          try {
-            cookieStore.delete(name)
-          } catch {
-            // Route handler
-          }
-        },
-      },
+  const response = await fetch(`${backendBase}/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    let errorMessage = 'Login failed'
+    try {
+      const body = (await response.json()) as { error?: string }
+      if (body?.error) errorMessage = body.error
+    } catch {
+      // ignore parse issue
     }
-  )
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-  if (error) {
     const loginUrl = new URL('/auth/login', origin)
-    loginUrl.searchParams.set('error', error.message)
+    loginUrl.searchParams.set('error', errorMessage)
     return redirectTo(loginUrl)
   }
 
-  if (!data.user) {
+  const data = (await response.json()) as {
+    user?: { id: string; email: string; role: string }
+    tokens?: { accessToken: string; refreshToken: string; tokenType: string }
+  }
+
+  if (!data.user || !data.tokens?.accessToken || !data.tokens.refreshToken) {
     const loginUrl = new URL('/auth/login', origin)
     loginUrl.searchParams.set('error', 'Login failed')
     return redirectTo(loginUrl)
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('profile_type, approval_status, source')
-    .eq('user_id', data.user.id)
-    .single()
-
-  if (profileError || !profile) {
-    const loginUrl = new URL('/auth/login', origin)
-    loginUrl.searchParams.set('error', 'Could not fetch user profile')
-    return redirectTo(loginUrl)
-  }
-
-  if (profile.approval_status === 'pending') {
-    return redirectTo(new URL('/auth/pending-approval', origin))
-  }
-  if (profile.approval_status === 'rejected') {
-    return redirectTo(new URL('/auth/access-denied', origin))
-  }
-
-  const safeRedirect = isSafeRedirect(redirectToParam) ? redirectToParam : null
-
-  switch (profile.profile_type) {
-    case 'platform_owner':
-      return redirectTo(new URL('/platform-owner', origin))
-    case 'school_superadmin':
-      return redirectTo(new URL('/school-admin', origin))
-    case 'teacher':
-      return redirectTo(new URL(safeRedirect || '/school-admin', origin))
-    default:
-      return redirectTo(new URL('/auth/access-denied', origin))
-  }
+  const appUrl = new URL('/app', origin)
+  const redirectResponse = redirectTo(appUrl)
+  const secure = request.nextUrl.protocol === 'https:'
+  redirectResponse.cookies.set('access_token', data.tokens.accessToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure,
+    path: '/',
+    maxAge: 60 * 15,
+  })
+  redirectResponse.cookies.set('refresh_token', data.tokens.refreshToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  })
+  return redirectResponse
 }

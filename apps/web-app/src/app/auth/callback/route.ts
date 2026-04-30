@@ -61,14 +61,6 @@ export async function GET(request: NextRequest) {
           .single()
 
         if (profile) {
-          // Check approval status
-          if (profile.approval_status === 'pending') {
-            return NextResponse.redirect(`${origin}/auth/pending-approval`)
-          }
-          if (profile.approval_status === 'rejected') {
-            return NextResponse.redirect(`${origin}/auth/access-denied`)
-          }
-
           if (profile.profile_type === 'platform_owner') {
             return NextResponse.redirect(`${origin}/platform-owner`)
           }
@@ -76,7 +68,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(`${origin}/school-admin`)
           }
           if (profile.profile_type === 'teacher') return NextResponse.redirect(`${origin}/school-admin`)
-          return NextResponse.redirect(`${origin}/auth/access-denied`)
+          return NextResponse.redirect(`${origin}/auth/login?error=Access%20denied`)
         }
       }
 
