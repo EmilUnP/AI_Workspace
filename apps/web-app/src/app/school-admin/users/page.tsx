@@ -1,6 +1,8 @@
 import { listUsers } from '@/lib/backend-auth'
+import { getCurrentUser } from '@/lib/backend-auth'
 import { Users, Shield, Mail } from 'lucide-react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 const roleConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   admin: {
@@ -25,6 +27,10 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<{ search?: string; role?: string }>
 }) {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) redirect('/auth/login')
+  if (currentUser.role !== 'admin') redirect('/school-admin')
+
   const params = await searchParams
   const allUsers = await listUsers({ limit: 200, offset: 0 })
   const users = allUsers.filter((u) => {

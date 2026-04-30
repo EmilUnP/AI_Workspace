@@ -1,51 +1,26 @@
-/**
- * Teacher Documents API Route
- * Returns list of documents for the authenticated teacher
- */
-
 import { NextResponse } from 'next/server'
-import { createClient } from '@eduator/auth/supabase/server'
+import { cookies } from 'next/headers'
 
 export async function GET() {
   try {
-    const supabase = await createClient()
-    
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
+    const token = (await cookies()).get('access_token')?.value
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
-    // Get profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, profile_type')
-      .eq('user_id', user.id)
-      .single()
-    
-    if (profileError || !profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 401 })
+
+    const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+    const response = await fetch(`${backendBase}/v1/documents`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: string }
+      return NextResponse.json({ error: payload.error || 'Failed to fetch documents' }, { status: response.status })
     }
-    
-    // Check if teacher
-    if (profile.profile_type !== 'teacher' && profile.profile_type !== 'school_superadmin') {
-      return NextResponse.json({ error: 'Only teachers can access documents' }, { status: 403 })
-    }
-    
-    // Get documents for this teacher/school admin (global scope)
-    const { data: documents, error: docsError } = await supabase
-      .from('documents')
-      .select('id, title, file_type, file_name, description, created_at')
-      .eq('is_archived', false)
-      .order('created_at', { ascending: false })
-    
-    if (docsError) {
-      console.error('Error fetching documents:', docsError)
-      return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
-    }
-    
-    return NextResponse.json({ documents: documents || [] })
+
+    const payload = (await response.json()) as { items?: Array<Record<string, unknown>> }
+    return NextResponse.json({ items: payload.items || [] })
   } catch (error) {
     console.error('Documents API error:', error)
     return NextResponse.json(

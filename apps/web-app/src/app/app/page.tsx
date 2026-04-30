@@ -1,41 +1,50 @@
-import { cookies } from 'next/headers'
+import Link from 'next/link'
+import { getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 
 export default async function AppPage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('access_token')?.value
-  if (!token) {
+  const user = await getCurrentUser()
+  if (!user) {
     redirect('/auth/login')
   }
 
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
-  try {
-    const response = await fetch(`${backendBase}/v1/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-    })
-    if (response.ok) {
-      const payload = (await response.json()) as { user?: { role?: string } }
-      if (payload.user?.role === 'admin') {
-        redirect('/platform-owner')
-      }
-    }
-  } catch {
-    // Keep fallback shell rendering when backend is unavailable.
-  }
+  if (user.role === 'admin') redirect('/platform-owner')
+  if (user.role === 'operator') redirect('/school-admin')
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      <h1 className="text-2xl font-semibold">Logged in</h1>
-      <p className="mt-2 text-gray-600">Basic frontend shell is connected to clean backend auth.</p>
-      <form action="/api/auth/logout" method="post" className="mt-6">
-        <button
-          type="submit"
-          className="rounded bg-black px-4 py-2 text-white hover:opacity-90"
-        >
-          Logout
-        </button>
-      </form>
+    <main className="mx-auto max-w-3xl p-6 sm:p-8">
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Welcome</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          You are signed in as <span className="font-medium text-gray-900">{user.email}</span>.
+        </p>
+        <p className="mt-1 text-sm text-gray-600">
+          Your role is <span className="font-medium text-gray-900">{user.role}</span>.
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/platform-owner"
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+          >
+            Open Platform Owner
+          </Link>
+          <Link
+            href="/school-admin"
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+          >
+            Open School Admin
+          </Link>
+          <form action="/api/auth/logout" method="post">
+            <button
+              type="submit"
+              className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              Logout
+            </button>
+          </form>
+        </div>
+      </div>
     </main>
   )
 }

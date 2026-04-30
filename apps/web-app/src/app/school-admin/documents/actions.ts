@@ -1,75 +1,169 @@
 'use server'
 
-import {
-  quickUploadDocument as coreQuickUpload,
-  updateDocument as coreUpdate,
-  deleteDocument as coreDelete,
-} from '@eduator/core/documents/actions'
-import type { QuickUploadInput, UpdateDocumentInput } from '@eduator/core/documents'
-import { createClient } from '@eduator/auth/supabase/server'
-import { processDocumentOnUpload } from '@eduator/ai/services/document-rag'
-import { tokenRepository } from '@eduator/db/repositories/tokens'
+import { getAccessToken } from '@/lib/backend-auth'
 
-export async function quickUploadDocument(input: QuickUploadInput) {
-  await tokenRepository.ensureRagIndexingSetting()
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Not authenticated' }
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-  if (!profile) return { success: false, error: 'Profile not found' }
-
-  const tokenDeduct = await tokenRepository.deductTokensForAction(profile.id, 'rag_indexing', {
-    document_count: 1,
-  })
-  if (!tokenDeduct.success) {
-    return { success: false, error: tokenDeduct.errorMessage ?? 'Insufficient tokens' }
-  }
-
-  const result = await coreQuickUpload(input)
-  if (!result.success) {
-    if ((tokenDeduct.cost ?? 0) > 0) {
-      await tokenRepository
-        .addTokens(profile.id, tokenDeduct.cost!, 'refund', undefined, { reason: 'upload_failed' })
-        .catch(() => {})
-    }
-    return result
-  }
-
-  if (result.data) {
-    processDocumentOnUpload(result.data.id, user.id)
-      .then(async () => {
-        const { data: doc } = await supabase
-          .from('documents')
-          .select('total_tokens, chunk_count, content_language')
-          .eq('id', result.data!.id)
-          .eq('created_by', profile.id)
-          .single()
-        await tokenRepository
-          .attachMetadataToLatestUsageTransaction(profile.id, 'rag_indexing', {
-            input_tokens: doc?.total_tokens ?? 0,
-            output_tokens: 0,
-            total_tokens: doc?.total_tokens ?? 0,
-            chunk_count: doc?.chunk_count ?? 0,
-            content_language: doc?.content_language ?? null,
-            model_used: 'gemini_embedding',
-          })
-          .catch(() => {})
-      })
-      .catch((err: unknown) => {
-        console.error('Background document processing failed:', err)
-      })
-  }
-  return result
+type QuickUploadInput = {
+  organizationId?: string
+  file?: File
+  title?: string
+  description?: string
 }
 
-export async function updateDocument(input: UpdateDocumentInput) {
-  return coreUpdate(input)
+type UpdateDocumentInput = {
+  documentId: string
+  title?: string
+  description?: string | null
+  tags?: string[] | null
+}
+
+const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+
+type NormalizedFileType = 'pdf' | 'markdown' | 'text' | 'doc' | 'docx'
+
+function normalizeFileType(fileName: string, mimeType?: string): NormalizedFileType {
+  const extension = fileName.split('.').pop()?.toLowerCase()
+  if (extension === 'pdf' || mimeType?.includes('pdf')) return 'pdf'
+  if (extension === 'md' || extension === 'markdown' || mimeType?.includes('markdown')) return 'markdown'
+  if (extension === 'docx' || mimeType?.includes('officedocument.wordprocessingml.document')) return 'docx'
+  if (extension === 'doc' || mimeType?.includes('msword')) return 'doc'
+  return 'text'
+}
+
+function fallbackMimeType(fileType: NormalizedFileType): string {
+  if (fileType === 'pdf') return 'application/pdf'
+  if (fileType === 'markdown') return 'text/markdown'
+  if (fileType === 'docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  if (fileType === 'doc') return 'application/msword'
+  return 'text/plain'
+}
+
+function normalizeTitle(inputTitle?: string, fileName?: string): string {
+  const raw = (inputTitle || '').trim()
+  if (raw) return raw
+  const fallback = (fileName || 'Untitled document').trim()
+  return fallback.replace(/\.[^/.]+$/, '')
+}
+
+export async function quickUploadDocument(input: QuickUploadInput) {
+  const token = await getAccessToken()
+  if (!token) return { success: false, error: 'Not authenticated' }
+
+  const fileName = (input.file?.name || input.title || 'untitled.txt').trim()
+  const fileType = normalizeFileType(fileName, input.file?.type)
+  const mimeType = input.file?.type || fallbackMimeType(fileType)
+  const title = normalizeTitle(input.title, fileName)
+  const fileSize = input.file?.size || 0
+  const contentBase64 = input.file
+    ? Buffer.from(await input.file.arrayBuffer()).toString('base64')
+    : undefined
+
+  try {
+    const response = await fetch(`${getBackendBase()}/v1/documents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title,
+        fileName,
+        fileType: mimeType,
+        fileSize,
+        contentBase64,
+        metadata: {
+          description: input.description || '',
+          detectedFileType: fileType,
+          originalMimeType: mimeType,
+          organizationId: input.organizationId || null,
+          source: 'web-app-legacy-documents-screen',
+        },
+      }),
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: string }
+      return { success: false, error: payload.error || 'Failed to create document record' }
+    }
+
+    const payload = (await response.json()) as { document?: Record<string, unknown> }
+    if (!payload.document) {
+      return { success: false, error: 'Document created but backend returned empty payload.' }
+    }
+
+    return {
+      success: true,
+      data: {
+        id: String(payload.document.id || ''),
+        title: String(payload.document.title || title),
+        description: String((payload.document.metadata as Record<string, unknown> | undefined)?.description || ''),
+        file_name: String(payload.document.file_name || payload.document.fileName || fileName),
+        file_size: Number(payload.document.file_size || payload.document.fileSize || fileSize),
+        file_type: normalizeFileType(
+          String(payload.document.file_name || payload.document.fileName || fileName),
+          String(payload.document.file_type || payload.document.fileType || mimeType)
+        ),
+        file_url: String(payload.document.local_path || payload.document.localPath || ''),
+        processing_status:
+          String(payload.document.status || '').toLowerCase() === 'ready'
+            ? 'completed'
+            : String(payload.document.status || '').toLowerCase(),
+        quality_status: payload.document.quality_status || null,
+        quality_message: payload.document.quality_message || null,
+        total_tokens: Number(payload.document.total_tokens || 0),
+        chunk_count: Number(payload.document.chunk_count || 0),
+        avg_chunk_size: Number(payload.document.avg_chunk_size || 0),
+        content_language: String(payload.document.content_language || ''),
+        created_at: String(payload.document.created_at || payload.document.createdAt || new Date().toISOString()),
+      },
+    }
+  } catch {
+    return { success: false, error: 'Backend unavailable. Start backend and try again.' }
+  }
+}
+
+export async function updateDocument(_input: UpdateDocumentInput) {
+  const token = await getAccessToken()
+  if (!token) return { success: false, error: 'Not authenticated' }
+  try {
+    const response = await fetch(`${getBackendBase()}/v1/documents/${_input.documentId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        title: (_input.title || '').trim(),
+        description: _input.description ?? null,
+        tags: _input.tags ?? [],
+      }),
+      cache: 'no-store',
+    })
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: string }
+      return { success: false, error: payload.error || 'Failed to update document' }
+    }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Backend unavailable. Start backend and try again.' }
+  }
 }
 
 export async function deleteDocument(documentId: string) {
-  return coreDelete(documentId)
+  const token = await getAccessToken()
+  if (!token) return { success: false, error: 'Not authenticated' }
+  try {
+    const response = await fetch(`${getBackendBase()}/v1/documents/${documentId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: string }
+      return { success: false, error: payload.error || 'Failed to delete document' }
+    }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Backend unavailable. Start backend and try again.' }
+  }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GraduationCap, Bell, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { GraduationCap, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { UserNav } from './user-nav'
 import { MobileSidebar, DesktopNavigation } from '../components/mobile-sidebar'
 
@@ -15,8 +15,6 @@ interface NavItem {
 interface SchoolAdminLayoutClientProps {
   navigation: NavItem[]
   logo: React.ReactNode
-  userSection: React.ReactNode
-  headerContent: React.ReactNode
   profile: { full_name?: string | null; email?: string | null }
   children: React.ReactNode
 }
@@ -24,8 +22,6 @@ interface SchoolAdminLayoutClientProps {
 export function SchoolAdminLayoutClient({
   navigation,
   logo,
-  userSection,
-  headerContent,
   profile,
   children,
 }: SchoolAdminLayoutClientProps) {
@@ -57,27 +53,11 @@ export function SchoolAdminLayoutClient({
             {!sidebarCollapsed && (
               <div className="min-w-0 flex-1">
                 <span className="text-lg font-bold text-gray-900">Eduator</span>
-                <span className="ml-1 rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
-                  School Admin
-                </span>
               </div>
             )}
           </div>
 
-          {/* Organization name - hidden when collapsed */}
-          {!sidebarCollapsed && (
-            <div className="border-b border-gray-200 px-6 py-3">
-              {headerContent}
-            </div>
-          )}
-
           <DesktopNavigation navigation={navigation} accentColor="orange" collapsed={sidebarCollapsed} />
-
-          {!sidebarCollapsed && (
-            <div className="border-t border-gray-200 p-4">
-              {userSection}
-            </div>
-          )}
         </div>
       </aside>
 
@@ -92,7 +72,6 @@ export function SchoolAdminLayoutClient({
             <MobileSidebar
               navigation={navigation}
               logo={logo}
-              headerContent={headerContent}
               accentColor="orange"
             />
 
@@ -120,13 +99,6 @@ export function SchoolAdminLayoutClient({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              type="button"
-              className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-            </button>
             <UserNav profile={displayProfile} />
           </div>
         </header>

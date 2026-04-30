@@ -2,14 +2,10 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  DocumentUploadZone,
-  DocumentsExplorer,
-  useDocumentsList,
-  type DocumentUploadTranslations,
-  type DocumentsExplorerTranslations,
-} from '@eduator/ui'
-import { quickUploadDocument, updateDocument, deleteDocument } from './actions'
+import { DocumentUploadZone } from './document-upload-zone'
+import { DocumentsExplorer } from './documents-explorer'
+import { useDocumentsList } from './documents-list-state'
+import { quickUploadDocument, updateDocument, deleteDocument } from '@/app/school-admin/documents/actions'
 
 interface Document {
   id: string
@@ -35,18 +31,41 @@ interface Document {
 interface DocumentsClientProps {
   workspaceId: string
   initialDocuments: Document[]
-  uploadTranslations?: Partial<DocumentUploadTranslations>
-  explorerTranslations?: Partial<DocumentsExplorerTranslations>
+  uploadTranslations?: Record<string, string>
+  explorerTranslations?: Record<string, string>
 }
 
 export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslations, explorerTranslations }: DocumentsClientProps) {
+  void uploadTranslations
+  void explorerTranslations
   const router = useRouter()
   const { documents, addDocument } = useDocumentsList(initialDocuments)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const handleUploadSuccess = (uploadedDocument: Document) => {
+  const handleUploadSuccess = (uploadedDocument: Record<string, unknown>) => {
+    if (
+      typeof uploadedDocument.id !== 'string' ||
+      typeof uploadedDocument.title !== 'string' ||
+      typeof uploadedDocument.file_name !== 'string' ||
+      typeof uploadedDocument.file_url !== 'string' ||
+      typeof uploadedDocument.file_size !== 'number' ||
+      typeof uploadedDocument.file_type !== 'string' ||
+      typeof uploadedDocument.created_at !== 'string'
+    ) {
+      return
+    }
+
     // Add document optimistically to the list immediately
-    addDocument(uploadedDocument)
+    addDocument({
+      ...uploadedDocument,
+      id: uploadedDocument.id,
+      title: uploadedDocument.title,
+      file_name: uploadedDocument.file_name,
+      file_url: uploadedDocument.file_url,
+      file_size: uploadedDocument.file_size,
+      file_type: uploadedDocument.file_type as Document['file_type'],
+      created_at: uploadedDocument.created_at,
+    } as Document)
     // Router refresh is already called in DocumentUploadZone
     // This will update the list when server data comes back
   }
@@ -82,18 +101,16 @@ export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslati
     <div className="space-y-8">
       {/* Upload Zone */}
       <DocumentUploadZone
-        organizationId={workspaceId}
+        workspaceId={workspaceId}
         onUpload={quickUploadDocument}
         onUploadSuccess={handleUploadSuccess}
-        translations={uploadTranslations}
       />
 
-      {/* Documents Explorer (file-explorer style with grouping & sorting) */}
+      {/* Documents Explorer */}
       <DocumentsExplorer
-        initialDocuments={documents}
+        documents={documents}
         onUpdate={updateDocument}
         onDelete={deleteDocument}
-        translations={explorerTranslations}
       />
     </div>
   )

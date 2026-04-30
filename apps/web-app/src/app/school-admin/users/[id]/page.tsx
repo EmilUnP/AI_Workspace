@@ -1,5 +1,6 @@
 import { getUserById } from '@/lib/backend-auth'
-import { notFound } from 'next/navigation'
+import { getCurrentUser } from '@/lib/backend-auth'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
@@ -35,6 +36,10 @@ export default async function UserDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) redirect('/auth/login')
+  if (currentUser.role !== 'admin') redirect('/school-admin')
+
   const { id } = await params
   const user = await getUserById(id)
 
