@@ -29,19 +29,19 @@ export default async function PlatformOwnerLayout({
 
   const logo = (
     <div className="flex items-center gap-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-800">
         <GraduationCap className="h-5 w-5 text-white" />
       </div>
       <div>
         <span className="text-lg font-bold text-gray-900">Eduator</span>
-        <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">Platform Owner</span>
+        <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">Platform Owner</span>
       </div>
     </div>
   )
 
   const userSection = (
     <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-700">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-700">
         <span className="text-sm font-medium">
           {displayProfile.full_name?.charAt(0).toUpperCase() || 'A'}
         </span>

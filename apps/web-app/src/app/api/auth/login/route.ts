@@ -46,12 +46,19 @@ export async function POST(request: NextRequest) {
     return redirectTo(loginUrl)
   }
 
-  const response = await fetch(`${backendBase}/v1/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-    cache: 'no-store',
-  })
+  let response: Response
+  try {
+    response = await fetch(`${backendBase}/v1/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      cache: 'no-store',
+    })
+  } catch {
+    const loginUrl = new URL('/auth/login', origin)
+    loginUrl.searchParams.set('error', 'Backend unavailable. Start backend and try again.')
+    return redirectTo(loginUrl)
+  }
 
   if (!response.ok) {
     let errorMessage = 'Login failed'

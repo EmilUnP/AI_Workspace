@@ -50,20 +50,20 @@ export function PlatformOwnerLayoutClient({
               sidebarCollapsed ? 'justify-center px-0' : 'gap-2 px-6'
             }`}
           >
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-red-600">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-800">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             {!sidebarCollapsed && (
               <div className="min-w-0">
                 <span className="text-lg font-bold text-gray-900">Eduator</span>
-                <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">
                   Platform Owner
                 </span>
               </div>
             )}
           </div>
 
-          <DesktopNavigation navigation={navigation} accentColor="red" collapsed={sidebarCollapsed} />
+          <DesktopNavigation navigation={navigation} accentColor="blue" collapsed={sidebarCollapsed} />
 
           {!sidebarCollapsed && (
             <div className="border-t border-gray-200 p-4">
@@ -85,7 +85,7 @@ export function PlatformOwnerLayoutClient({
               navigation={navigation}
               logo={logo}
               userSection={userSection}
-              accentColor="red"
+              accentColor="blue"
             />
 
             {/* Desktop: collapse/expand sidebar button */}
@@ -104,7 +104,7 @@ export function PlatformOwnerLayoutClient({
             </button>
 
             <div className="flex items-center gap-2 lg:hidden">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-800">
                 <GraduationCap className="h-4 w-4 text-white" />
               </div>
               <span className="font-semibold text-gray-900">Eduator</span>
@@ -117,7 +117,7 @@ export function PlatformOwnerLayoutClient({
               className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-gray-500" />
             </button>
             <UserNav profile={displayProfile} />
           </div>

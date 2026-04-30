@@ -1,5 +1,5 @@
 import { createClient as createServerClient } from '@eduator/auth/supabase/server'
-import { Users, Clock, Sparkles, FileText, Plus } from 'lucide-react'
+import { Users, Clock, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
 
 async function getDashboardStats() {
@@ -35,7 +35,6 @@ export default async function PlatformOwnerDashboard() {
   
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Platform Dashboard</h1>
@@ -43,14 +42,13 @@ export default async function PlatformOwnerDashboard() {
             Overview of your educational platform
           </p>
         </div>
-        <Link href="/platform-owner/users" className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700"><Plus className="h-4 w-4" />Manage Users</Link>
+        <Link href="/platform-owner/users" className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"><Plus className="h-4 w-4" />Manage Users</Link>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-gray-700">
               <Users className="h-6 w-6" />
             </div>
           </div>
@@ -62,14 +60,14 @@ export default async function PlatformOwnerDashboard() {
 
         <Link
           href="/platform-owner/users?status=pending"
-          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+          className="rounded-lg border border-gray-200 bg-white p-6 hover:bg-gray-50"
         >
           <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-gray-700">
               <Clock className="h-6 w-6" />
             </div>
             {stats.pendingApprovals > 0 && (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500 text-xs font-bold text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-700 text-xs font-bold text-white">
                 {stats.pendingApprovals}
               </span>
             )}
@@ -80,11 +78,9 @@ export default async function PlatformOwnerDashboard() {
           </div>
         </Link>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
-              <Sparkles className="h-6 w-6" />
-            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-gray-700">AI</div>
           </div>
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-500">AI Requests Today</p>
@@ -93,7 +89,7 @@ export default async function PlatformOwnerDashboard() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Recent Users</h3>
@@ -101,7 +97,7 @@ export default async function PlatformOwnerDashboard() {
             </div>
             <Link
               href="/platform-owner/users"
-              className="text-sm font-medium text-green-600 hover:text-green-700"
+              className="text-sm font-medium text-gray-700 hover:text-gray-900"
             >
               View all
             </Link>
@@ -114,13 +110,13 @@ export default async function PlatformOwnerDashboard() {
                 <p className="mt-2 text-sm text-gray-500">No users yet</p>
               </div>
             ) : (
-              stats.recentUsers.map((user) => (
+              stats.recentUsers.map((user: any) => (
                 <Link
                   key={user.id}
                   href={`/platform-owner/users/${user.id}`}
                   className="flex items-start gap-4 rounded-lg p-2 transition-colors hover:bg-gray-50"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-700">
                     <Users className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -133,8 +129,7 @@ export default async function PlatformOwnerDashboard() {
           </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
         <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
         <div className="mt-4 flex flex-wrap gap-4">
           <Link
