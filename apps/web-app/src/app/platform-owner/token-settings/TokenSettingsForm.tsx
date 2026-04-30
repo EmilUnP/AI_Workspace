@@ -13,11 +13,6 @@ interface TokenSettingsFormProps {
 const GROUP_CONFIG: Record<string, { label: string; icon: React.ElementType; description: string }> = {
   exam: { label: 'Exam generation', icon: FileText, description: 'Cost per exam or per N questions' },
   lesson: { label: 'Lesson generation', icon: BookOpen, description: 'Base lesson, images, and audio' },
-  course: {
-    label: 'Course generation',
-    icon: Sparkles,
-    description: 'Base + all lessons + final exam (one course = many AI operations)',
-  },
   education_plan: {
     label: 'Education plans',
     icon: Sparkles,
@@ -37,7 +32,7 @@ function getGroup(key: string): string {
   if (key.startsWith('rag')) return 'rag'
   if (key.startsWith('exam')) return 'exam'
   if (key.startsWith('education_plan')) return 'education_plan'
-  if (key.startsWith('lesson') || key.startsWith('course_base')) return key.startsWith('course') ? 'course' : 'lesson'
+  if (key.startsWith('lesson')) return 'lesson'
   if (key.includes('chat')) return 'chat'
   return 'other'
 }
@@ -105,7 +100,7 @@ export function TokenSettingsForm({ settings: initialSettings }: TokenSettingsFo
     return acc
   }, {})
 
-  const order = ['exam', 'lesson', 'course', 'education_plan', 'chat', 'rag', 'onboarding', 'other']
+  const order = ['exam', 'lesson', 'education_plan', 'chat', 'rag', 'onboarding', 'other']
 
   return (
     <div className="space-y-8">

@@ -20,8 +20,29 @@ type PaymentRecord = {
   profile?: { id: string; full_name: string; email: string } | null
 }
 
+type TokenUsageSettingRecord = {
+  id: string
+  key: string
+  label: string
+  tokens: number
+  extra?: Record<string, unknown> | null
+}
+
 const emptyList = <T,>() => ({ data: [] as T[], count: 0 })
 const defaultPricingSource = 'https://ai.google.dev/gemini-api/docs/pricing'
+const defaultUsageSettings: TokenUsageSettingRecord[] = [
+  { id: 'setting-initial-tokens', key: 'initial_tokens_for_new_users', label: 'Initial tokens for new users', tokens: 100 },
+  { id: 'setting-exam-generation', key: 'exam_generation', label: 'Exam generation', tokens: 1, extra: { per_questions: 10 } },
+  { id: 'setting-exam-translation', key: 'exam_translation', label: 'Exam translation', tokens: 1 },
+  { id: 'setting-lesson-generation', key: 'lesson_generation', label: 'Lesson generation', tokens: 2 },
+  { id: 'setting-lesson-images', key: 'lesson_images', label: 'Lesson images', tokens: 1, extra: { batch_size: 4 } },
+  { id: 'setting-lesson-audio', key: 'lesson_audio', label: 'Lesson audio', tokens: 1 },
+  { id: 'setting-education-plan', key: 'education_plan_generation', label: 'Education plan generation', tokens: 2 },
+  { id: 'setting-teacher-chat', key: 'teacher_chat', label: 'Teacher AI chat', tokens: 1 },
+  { id: 'setting-learner-chat', key: 'learner_chat', label: 'Learner AI chat', tokens: 1 },
+  { id: 'setting-rag-indexing', key: 'rag_indexing', label: 'RAG indexing', tokens: 2 },
+]
+
 const defaultModelPricing = [
   {
     id: 'pricing-gemini-25-flash',
@@ -76,8 +97,19 @@ export const tokenRepository = {
   async ensureExamTranslationSetting() {},
   async ensureRagIndexingSetting() {},
 
-  async getUsageSettings() { return [] },
-  async updateUsageSetting(_key: string, _payload: unknown) { return { data: null, error: null } },
+  async getUsageSettings() { return defaultUsageSettings },
+  async updateUsageSetting(key: string, payload: { tokens?: number; label?: string }) {
+    const index = defaultUsageSettings.findIndex((row) => row.key === key)
+    if (index === -1) return null
+    const current = defaultUsageSettings[index]
+    const updated: TokenUsageSettingRecord = {
+      ...current,
+      tokens: typeof payload.tokens === 'number' ? payload.tokens : current.tokens,
+      label: payload.label || current.label,
+    }
+    defaultUsageSettings[index] = updated
+    return updated
+  },
   async updateModelPricingSetting(_payload: unknown) { return true },
   async getModelPricingSettings(_provider: string) { return defaultModelPricing },
 

@@ -295,13 +295,13 @@ export default async function SchoolAdminExamsPage({
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-medium text-gray-900">{exam.title}</p>
                             </div>
-                            {/* Hide long auto-generated descriptions for course-based exams */}
+                            {/* Hide long auto-generated descriptions for generated exams */}
                             {exam.description && (
                               <p className="text-sm text-gray-500 truncate max-w-xs">
                                 {exam.description}
                               </p>
                             )}
-                            {/* Course relation is shown via the clickable badge */}
+                            {/* Relation is shown via the clickable badge */}
                             {exam.topics && exam.topics.length > 0 && (
                               <div className="flex items-center gap-1 mt-1 flex-wrap">
                                 {exam.topics.slice(0, 2).map((topic: string, idx: number) => (

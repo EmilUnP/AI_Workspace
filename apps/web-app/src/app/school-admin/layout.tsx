@@ -1,4 +1,4 @@
-import { createClient } from '@eduator/auth/supabase/server'
+import { getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 import { GraduationCap } from 'lucide-react'
 import { SchoolAdminLayoutClient } from './school-admin-layout-client'
@@ -20,22 +20,12 @@ export default async function SchoolAdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  const user = await getCurrentUser()
+  if (!user) redirect('/auth/login')
+  if (user.role !== 'operator' && user.role !== 'admin') redirect('/app')
 
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/auth/login')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  const displayProfile = profile || {
-    full_name: user.email?.split('@')[0] || 'Admin',
+  const displayProfile = {
+    full_name: user.email?.split('@')[0] || 'Operator',
     email: user.email,
   }
 
@@ -48,7 +38,7 @@ export default async function SchoolAdminLayout({
       </div>
       <div>
         <span className="text-lg font-bold text-gray-900">Eduator</span>
-        <span className="ml-1 rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">School Admin</span>
+        <span className="ml-1 rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">Operator</span>
       </div>
     </div>
   )
@@ -56,7 +46,7 @@ export default async function SchoolAdminLayout({
   const headerContent = (
     <div>
       <p className="truncate text-sm font-medium text-gray-900">{workspaceName}</p>
-      <p className="text-xs text-gray-500">School Admin Panel</p>
+      <p className="text-xs text-gray-500">Operator Panel</p>
     </div>
   )
 
@@ -69,9 +59,9 @@ export default async function SchoolAdminLayout({
       </div>
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-medium text-gray-900">
-          {displayProfile.full_name || 'Admin'}
+          {displayProfile.full_name || 'Operator'}
         </p>
-        <p className="truncate text-xs text-gray-500">School Admin</p>
+        <p className="truncate text-xs text-gray-500">Operator</p>
       </div>
     </div>
   )

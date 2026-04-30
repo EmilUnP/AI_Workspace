@@ -25,7 +25,7 @@ export default async function TokenSettingsPage() {
             Token usage settings
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-gray-600">
-            Set how many tokens each AI action costs and how many tokens new users receive automatically (e.g. 100 for testing). These values apply across the platform. Users spend tokens when generating exams, lessons, courses, or using the AI tutor.
+            Set how many tokens each AI action costs and how many tokens new users receive automatically (e.g. 100 for testing). These values apply across the platform. Users spend tokens when generating exams, lessons, education plans, or using the AI tutor.
           </p>
         </div>
       </div>

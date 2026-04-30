@@ -31,7 +31,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
         <div className="text-sm text-amber-900 flex-1">
           <p className="font-semibold">Token balance (AI features)</p>
           <p className="mt-1 text-amber-800">
-            Exam generation, lesson generation, course generation, and teacher chat consume <strong>tokens</strong> from your balance. Check balance before calling generate endpoints and handle <strong>402 Payment Required</strong> when balance is too low.
+            Exam generation, lesson generation, education plan generation, and teacher chat consume <strong>tokens</strong> from your balance. Check balance before calling generate endpoints and handle <strong>402 Payment Required</strong> when balance is too low.
           </p>
           <p className="mt-2 text-amber-800">
             <strong>GET /tokens</strong> — Returns <code className="rounded bg-amber-100 px-1 font-mono">&#123; success: true, data: &#123; balance: number &#125; &#125;</code>. Use this or the dashboard <code className="bg-amber-100 px-1">overview.token_balance</code> to show users their balance. On insufficient balance, generate endpoints return <strong>402</strong> with a message like: &quot;Not enough tokens. This action requires X tokens. Your balance: Y. Please buy more tokens or contact your administrator.&quot;
@@ -62,7 +62,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
           <p className="mt-2 text-violet-700">For exams you can also send raw <code className="bg-violet-100 px-1">document_text</code> instead of uploading files.</p>
           <p className="mt-2 flex items-start gap-2 text-violet-700">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
-            <span>AI operations (exams, lessons, courses) consume tokens. Check <strong>GET /tokens</strong> first and handle <strong>402</strong> responses when balance is insufficient.</span>
+            <span>AI operations (exams, lessons, education plans) consume tokens. Check <strong>GET /tokens</strong> first and handle <strong>402</strong> responses when balance is insufficient.</span>
           </p>
         </div>
       </div>

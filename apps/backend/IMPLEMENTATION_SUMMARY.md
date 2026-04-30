@@ -79,7 +79,7 @@ Service/repository split was implemented for users, documents, AI, and refresh t
 - Main runbook:
   - `README.md`
 
-### 8) AI Migration Expansion (No Course Generation)
+### 8) AI Migration Expansion
 - Added local AI stack in clean backend:
   - `src/ai/gemini.ts`
   - `src/services/document-rag.service.ts`

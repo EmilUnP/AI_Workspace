@@ -5,7 +5,6 @@ export const TOKEN_ACTION_TYPES = {
   LESSON_GENERATION: 'lesson_generation',
   LESSON_IMAGES: 'lesson_images',
   LESSON_AUDIO: 'lesson_audio',
-  COURSE_GENERATION: 'course_generation',
   EDUCATION_PLAN_GENERATION: 'education_plan_generation',
   RAG_INDEXING: 'rag_indexing',
   PURCHASE: 'purchase',

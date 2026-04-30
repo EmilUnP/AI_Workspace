@@ -8,7 +8,6 @@ const navigation = [
   { name: 'Users', href: '/platform-owner/users', icon: 'Users' },
   { name: 'Real token usage', href: '/platform-owner/real-token-usage', icon: 'BarChart3' },
   { name: 'Token settings', href: '/platform-owner/token-settings', icon: 'Coins' },
-  { name: 'Reports', href: '/platform-owner/reports', icon: 'BarChart3' },
 ]
 
 export default async function PlatformOwnerLayout({
