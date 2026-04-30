@@ -48,6 +48,7 @@ Rules:
 - `email`: valid email
 - `password`: min 8 chars
 - `role`: `admin | operator | user`
+- Platform-owner simplified UI integration: create users as `operator` only.
 
 Response `201`:
 ```json
@@ -60,6 +61,13 @@ Response `201`:
   }
 }
 ```
+
+Notes:
+- Returns access and refresh tokens for the newly created user.
+- Current web platform-owner "Add Operator" form uses this endpoint with:
+  - `email`
+  - `password`
+  - `role: "operator"`
 
 ---
 

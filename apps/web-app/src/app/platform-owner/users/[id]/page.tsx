@@ -1,5 +1,6 @@
-import { listUsers } from '@/lib/backend-auth'
-import { notFound } from 'next/navigation'
+import { getUserById } from '@/lib/backend-auth'
+import { getAccessToken } from '@/lib/backend-auth'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -30,17 +31,72 @@ const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor
   },
 }
 
+const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+
+const buildRedirectUrl = (id: string, status: 'success' | 'error', message: string) => {
+  const query = new URLSearchParams({ status, message })
+  return `/platform-owner/users/${id}?${query.toString()}`
+}
+
 export default async function UserDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ status?: string; message?: string }>
 }) {
   const { id } = await params
-  const users = await listUsers({ limit: 500, offset: 0 })
-  const user = users.find((u) => u.id === id) ?? null
+  const query = await searchParams
+  const user = await getUserById(id)
 
   if (!user) {
     notFound()
+  }
+
+  const updatePasswordAction = async (formData: FormData) => {
+    'use server'
+
+    const password = String(formData.get('password') || '').trim()
+    const accessToken = await getAccessToken()
+
+    if (!password) {
+      redirect(buildRedirectUrl(id, 'error', 'Password is required.'))
+    }
+
+    if (password.length < 8) {
+      redirect(buildRedirectUrl(id, 'error', 'Password must be at least 8 characters.'))
+    }
+
+    if (!accessToken) {
+      redirect(buildRedirectUrl(id, 'error', 'Session expired. Please login again.'))
+    }
+
+    try {
+      const response = await fetch(`${getBackendBase()}/v1/users/${id}/password`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ password }),
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to update password.'
+        try {
+          const payload = (await response.json()) as { error?: string; message?: string }
+          errorMessage = payload.error || payload.message || errorMessage
+        } catch {
+          // keep fallback
+        }
+        redirect(buildRedirectUrl(id, 'error', errorMessage))
+      }
+
+      redirect(buildRedirectUrl(id, 'success', 'Password updated successfully.'))
+    } catch {
+      redirect(buildRedirectUrl(id, 'error', 'Backend unavailable. Start backend and try again.'))
+    }
   }
 
   const role = roleConfig[user.role] || roleConfig.user
@@ -62,7 +118,7 @@ export default async function UserDetailPage({
           {/* Initial badge */}
           <div className={`flex h-16 w-16 items-center justify-center rounded-full ${role.bgColor} ${role.color}`}>
             <span className="text-2xl font-bold">
-              {user.full_name?.charAt(0).toUpperCase() || '?'}
+              {user.email?.charAt(0).toUpperCase() || '?'}
             </span>
           </div>
           
@@ -85,13 +141,41 @@ export default async function UserDetailPage({
           </div>
         </div>
 
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          User editing/approval actions are disabled in clean-backend mode.
-        </div>
       </div>
 
       {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-1">
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <h2 className="text-sm font-semibold text-gray-900">Update Password</h2>
+          <form action={updatePasswordAction} className="mt-4 flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="password" className="text-xs font-medium text-gray-500">New password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                minLength={8}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">
+              Update password
+            </button>
+          </form>
+          {query.message ? (
+            <div
+              className={`mt-3 rounded-md border px-3 py-2 text-sm ${
+                query.status === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-700'
+                  : 'border-red-200 bg-red-50 text-red-700'
+              }`}
+            >
+              {query.message}
+            </div>
+          ) : null}
+        </div>
+
         {/* User Info */}
         <div className="lg:col-span-1">
           <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -118,6 +202,11 @@ export default async function UserDetailPage({
                     day: 'numeric',
                   })}
                 </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Manual Note</dt>
+                <dd className="mt-1 text-sm text-gray-900">{user.manual_note || '-'}</dd>
               </div>
               
               {user.updated_at ? (

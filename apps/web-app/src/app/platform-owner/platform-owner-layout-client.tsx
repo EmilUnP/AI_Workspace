@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GraduationCap, Bell, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { GraduationCap, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { UserNav } from './user-nav'
 import { MobileSidebar, DesktopNavigation } from '../components/mobile-sidebar'
 
@@ -64,11 +64,6 @@ export function PlatformOwnerLayoutClient({
 
           <DesktopNavigation navigation={navigation} accentColor="blue" collapsed={sidebarCollapsed} />
 
-          {!sidebarCollapsed && (
-            <div className="border-t border-gray-200 p-4">
-              {userSection}
-            </div>
-          )}
         </div>
       </aside>
 
@@ -110,13 +105,6 @@ export function PlatformOwnerLayoutClient({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              type="button"
-              className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-gray-500" />
-            </button>
             <UserNav profile={displayProfile} />
           </div>
         </header>

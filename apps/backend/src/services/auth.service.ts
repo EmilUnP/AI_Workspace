@@ -16,7 +16,8 @@ import { env } from '../config/env.js'
 const registerSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
-  role: z.enum(['admin', 'operator', 'user']).default('user')
+  role: z.enum(['admin', 'operator', 'user']).default('user'),
+  manual_note: z.string().max(1000).optional()
 })
 
 const loginSchema = z.object({
@@ -43,7 +44,7 @@ export class AuthService {
     }
 
     const passwordHash = await hashPassword(data.password)
-    const user = await this.usersRepo.create(data.email, passwordHash, data.role)
+    const user = await this.usersRepo.create(data.email, passwordHash, data.role, data.manual_note)
     return this.issueTokens({ id: user.id, email: user.email, role: user.role })
   }
 
