@@ -135,19 +135,11 @@ export default async function UserDetailPage({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          {/* Avatar */}
+          {/* Initial badge */}
           <div className={`flex h-16 w-16 items-center justify-center rounded-full ${role.bgColor} ${role.color}`}>
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={user.full_name}
-                className="h-16 w-16 rounded-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold">
-                {user.full_name?.charAt(0).toUpperCase() || '?'}
-              </span>
-            )}
+            <span className="text-2xl font-bold">
+              {user.full_name?.charAt(0).toUpperCase() || '?'}
+            </span>
           </div>
           
           <div>

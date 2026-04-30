@@ -261,18 +261,8 @@ export default async function UsersPage({
                   <div key={user.id} className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          {user.avatar_url ? (
-                            <img
-                              src={user.avatar_url}
-                              alt=""
-                              className="h-10 w-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium ${role.bgColor} ${role.color}`}>
-                              {user.full_name?.charAt(0).toUpperCase() || '?'}
-                            </div>
-                          )}
+                        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${role.bgColor} ${role.color}`}>
+                          {user.full_name?.charAt(0).toUpperCase() || '?'}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-gray-900 truncate">
@@ -388,18 +378,8 @@ export default async function UsersPage({
                       {/* User */}
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 sm:pl-6">
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 flex-shrink-0">
-                            {user.avatar_url ? (
-                              <img
-                                src={user.avatar_url}
-                                alt=""
-                                className="h-9 w-9 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium ${role.bgColor} ${role.color}`}>
-                                {user.full_name?.charAt(0).toUpperCase() || '?'}
-                              </div>
-                            )}
+                          <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${role.bgColor} ${role.color}`}>
+                            {user.full_name?.charAt(0).toUpperCase() || '?'}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900 truncate">

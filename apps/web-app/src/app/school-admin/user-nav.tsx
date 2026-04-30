@@ -10,7 +10,6 @@ interface UserNavProps {
   profile: {
     full_name: string
     email: string
-    avatar_url?: string | null
   }
 }
 
@@ -44,17 +43,9 @@ export function UserNav({ profile }: UserNavProps) {
         className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100"
       >
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-          {profile.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt={profile.full_name}
-              className="h-8 w-8 rounded-full object-cover"
-            />
-          ) : (
-            <span className="text-sm font-medium">
-              {profile.full_name?.charAt(0).toUpperCase() || 'A'}
-            </span>
-          )}
+          <span className="text-sm font-medium">
+            {profile.full_name?.charAt(0).toUpperCase() || 'A'}
+          </span>
         </div>
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>

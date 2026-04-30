@@ -16,7 +16,7 @@ interface PlatformOwnerLayoutClientProps {
   navigation: NavItem[]
   logo: React.ReactNode
   userSection: React.ReactNode
-  profile: { full_name?: string | null; email?: string | null; avatar_url?: string | null }
+  profile: { full_name?: string | null; email?: string | null }
   children: React.ReactNode
 }
 
@@ -32,7 +32,6 @@ export function PlatformOwnerLayoutClient({
   const displayProfile = {
     full_name: profile?.full_name || profile?.email?.split('@')[0] || 'Admin',
     email: profile?.email ?? '',
-    avatar_url: profile?.avatar_url,
   }
 
   return (
@@ -84,7 +83,6 @@ export function PlatformOwnerLayoutClient({
             <MobileSidebar
               navigation={navigation}
               logo={logo}
-              userSection={userSection}
               accentColor="blue"
             />
 

@@ -1,4 +1,4 @@
-import { getSessionWithProfile } from '@eduator/auth/supabase/server'
+import { getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 import { GraduationCap } from 'lucide-react'
 import { PlatformOwnerLayoutClient } from './platform-owner-layout-client'
@@ -17,12 +17,11 @@ export default async function PlatformOwnerLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await getSessionWithProfile()
-  if (!session?.user) redirect('/auth/login')
+  const user = await getCurrentUser()
+  if (!user) redirect('/auth/login')
+  if (user.role !== 'admin') redirect('/app')
 
-  const { user, profile } = session
-
-  const displayProfile = profile || {
+  const displayProfile = {
     full_name: user.email?.split('@')[0] || 'Admin',
     email: user.email,
   }

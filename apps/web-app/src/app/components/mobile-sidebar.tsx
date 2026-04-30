@@ -62,7 +62,6 @@ interface NavItem {
 interface MobileSidebarProps {
   navigation: NavItem[]
   logo: React.ReactNode
-  userSection: React.ReactNode
   headerContent?: React.ReactNode
   accentColor?: 'red' | 'orange' | 'blue' | 'green'
 }
@@ -70,7 +69,6 @@ interface MobileSidebarProps {
 export function MobileSidebar({ 
   navigation, 
   logo, 
-  userSection,
   headerContent,
   accentColor = 'blue' 
 }: MobileSidebarProps) {
@@ -238,10 +236,6 @@ export function MobileSidebar({
                 })}
               </nav>
 
-              {/* User section */}
-              <div className="border-t border-gray-200 p-4">
-                {userSection}
-              </div>
             </div>
           </div>
         </div>

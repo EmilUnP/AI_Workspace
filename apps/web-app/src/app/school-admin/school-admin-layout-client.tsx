@@ -17,7 +17,7 @@ interface SchoolAdminLayoutClientProps {
   logo: React.ReactNode
   userSection: React.ReactNode
   headerContent: React.ReactNode
-  profile: { full_name?: string | null; email?: string | null; avatar_url?: string | null }
+  profile: { full_name?: string | null; email?: string | null }
   children: React.ReactNode
 }
 
@@ -34,7 +34,6 @@ export function SchoolAdminLayoutClient({
   const displayProfile = {
     full_name: profile?.full_name || profile?.email?.split('@')[0] || 'Admin',
     email: profile?.email ?? '',
-    avatar_url: profile?.avatar_url,
   }
 
   return (
@@ -93,7 +92,6 @@ export function SchoolAdminLayoutClient({
             <MobileSidebar
               navigation={navigation}
               logo={logo}
-              userSection={userSection}
               headerContent={headerContent}
               accentColor="orange"
             />

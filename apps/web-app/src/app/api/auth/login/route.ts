@@ -84,8 +84,9 @@ export async function POST(request: NextRequest) {
     return redirectTo(loginUrl)
   }
 
-  const appUrl = new URL('/app', origin)
-  const redirectResponse = redirectTo(appUrl)
+  const destinationPath = data.user.role === 'admin' ? '/platform-owner' : '/app'
+  const destinationUrl = new URL(destinationPath, origin)
+  const redirectResponse = redirectTo(destinationUrl)
   const secure = request.nextUrl.protocol === 'https:'
   redirectResponse.cookies.set('access_token', data.tokens.accessToken, {
     httpOnly: true,

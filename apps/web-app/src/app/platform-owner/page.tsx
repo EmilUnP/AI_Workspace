@@ -1,32 +1,17 @@
-import { createClient as createServerClient } from '@eduator/auth/supabase/server'
-import { Users, Clock, FileText, Plus } from 'lucide-react'
+import { listUsers } from '@/lib/backend-auth'
+import { Users, Plus } from 'lucide-react'
 import Link from 'next/link'
 
 async function getDashboardStats() {
-  const supabase = await createServerClient()
-
-  // Get users count
-  const { count: userCount } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-  
-  // Get pending approvals
-  const { count: pendingCount } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('approval_status', 'pending')
-  
-  // Get recent users
-  const { data: recentUsers } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, profile_type, created_at')
-    .order('created_at', { ascending: false })
-    .limit(5)
-  
+  const users = await listUsers({ limit: 200, offset: 0 })
+  const recentUsers = users.slice(0, 5)
+  const adminCount = users.filter((u) => u.role === 'admin').length
+  const operatorCount = users.filter((u) => u.role === 'operator').length
   return {
-    totalUsers: userCount || 0,
-    pendingApprovals: pendingCount || 0,
-    recentUsers: recentUsers || [],
+    totalUsers: users.length,
+    adminCount,
+    operatorCount,
+    recentUsers,
   }
 }
 
@@ -58,33 +43,15 @@ export default async function PlatformOwnerDashboard() {
           </div>
         </div>
 
-        <Link
-          href="/platform-owner/users?status=pending"
-          className="rounded-lg border border-gray-200 bg-white p-6 hover:bg-gray-50"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-gray-700">
-              <Clock className="h-6 w-6" />
-            </div>
-            {stats.pendingApprovals > 0 && (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-700 text-xs font-bold text-white">
-                {stats.pendingApprovals}
-              </span>
-            )}
-          </div>
-          <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Pending Approvals</p>
-            <p className="mt-1 text-3xl font-bold text-gray-900">{stats.pendingApprovals}</p>
-          </div>
-        </Link>
-
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="flex items-center justify-between">
             <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-gray-700">AI</div>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">AI Requests Today</p>
-            <p className="mt-1 text-3xl font-bold text-gray-900">-</p>
+            <p className="text-sm font-medium text-gray-500">Admins / Operators</p>
+            <p className="mt-1 text-3xl font-bold text-gray-900">
+              {stats.adminCount} / {stats.operatorCount}
+            </p>
           </div>
         </div>
       </div>
@@ -120,8 +87,8 @@ export default async function PlatformOwnerDashboard() {
                     <Users className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{user.full_name || user.email}</p>
-                    <p className="text-xs text-gray-500 capitalize">{user.profile_type}</p>
+                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                    <p className="text-xs text-gray-500 capitalize">{user.role}</p>
                   </div>
                 </Link>
               ))
@@ -129,25 +96,6 @@ export default async function PlatformOwnerDashboard() {
           </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-        <div className="mt-4 flex flex-wrap gap-4">
-          <Link
-            href="/platform-owner/users?status=pending"
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <Users className="h-4 w-4" />
-            Review Approvals {stats.pendingApprovals > 0 && `(${stats.pendingApprovals})`}
-          </Link>
-          <Link
-            href="/platform-owner/reports"
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <FileText className="h-4 w-4" />
-            Generate Report
-          </Link>
-        </div>
-      </div>
     </div>
   )
 }
