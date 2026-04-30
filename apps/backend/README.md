@@ -1,36 +1,108 @@
-# Clean Backend
+# Backend API (Clean Version)
 
-Backend-only clean service with local PostgreSQL and JWT authentication.
+Backend-only service with local PostgreSQL and JWT authentication.
 
 ## Scope
-- No Supabase
-- No organization/class/calendar/course domain coupling
-- APIs: auth, users, documents, ai requests
+- No Supabase dependency
+- No organization/class/calendar legacy coupling
+- Single clean API under `/v1/*`
+- Core domains: auth, users, documents, AI
 
-## Setup
-1. Copy `.env.example` to `.env`.
+## Local Setup
+1. Create `apps/backend/.env.local` from `apps/backend/.env.example`.
 2. Ensure PostgreSQL is running and `DATABASE_URL` is valid.
 3. Install dependencies from repo root:
    - `npm install`
 
-## Run
-- Dev: `npm run dev -w @eduator/clean-backend`
-- Build: `npm run build -w @eduator/clean-backend`
-- Start: `npm run start -w @eduator/clean-backend`
+## Run Commands
+From `apps/backend`:
+- Dev: `npm run dev`
+- Build: `npm run build`
+- Start (prod build): `npm run start`
+- Migrate: `npm run db:migrate`
+- Seed: `npm run db:seed`
+- Test: `npm run test`
+- Legacy boundary check: `npm run lint:forbidden-imports`
 
-## Database
-- Migrate: `npm run db:migrate -w @eduator/clean-backend`
-- Seed: `npm run db:seed -w @eduator/clean-backend`
+## Base URLs
+- Health: `GET /health`
+- API base: `/v1`
 
-## Test
-- `npm run test -w @eduator/clean-backend`
+Default local host/port come from env (`HOST`, `PORT`), typically:
+- `http://localhost:4000` (or configured port)
 
-## Quick API checks
-Use `requests.http` or curl:
+## Authentication
+JWT Bearer token required for protected endpoints.
+
+- Add header:
+  - `Authorization: Bearer <access_token>`
+
+### Auth Endpoints
 - `POST /v1/auth/register`
 - `POST /v1/auth/login`
-- `GET /v1/auth/me`
-- `POST /v1/documents`
-- `GET /v1/documents`
-- `POST /v1/ai/requests`
-- `GET /v1/ai/requests/:id`
+- `POST /v1/auth/refresh`
+- `GET /v1/auth/me` (protected)
+
+## Endpoint Reference
+
+### Health
+- `GET /health`
+  - Response: `{ "ok": true }`
+
+### Auth
+- `POST /v1/auth/register`
+  - Body: `{ "email": "...", "password": "...", "role": "admin|teacher|student" }`
+- `POST /v1/auth/login`
+  - Body: `{ "email": "...", "password": "..." }`
+- `POST /v1/auth/refresh`
+  - Body: `{ "refreshToken": "..." }`
+- `GET /v1/auth/me` (protected)
+
+### Users
+- `GET /v1/users` (protected)
+  - Response: `{ "items": [...] }`
+
+### Documents
+- `POST /v1/documents` (protected)
+  - Creates a document record for the authenticated user.
+- `GET /v1/documents` (protected)
+  - Lists documents for authenticated user.
+- `GET /v1/documents/:id` (protected)
+  - Gets one document by id (owner scoped).
+
+### AI - Generic Request Tracking
+- `POST /v1/ai/requests` (protected)
+- `GET /v1/ai/requests/:id` (protected)
+
+### AI - RAG
+- `POST /v1/ai/rag/retrieve` (protected)
+
+### AI - Teacher Chat
+- `GET /v1/ai/chat/conversations` (protected)
+- `POST /v1/ai/chat/conversations` (protected)
+- `POST /v1/ai/chat/conversations/:id/messages` (protected)
+
+### AI - Generation
+- `POST /v1/ai/lessons/generate` (protected)
+- `POST /v1/ai/exams/generate` (protected)
+- `POST /v1/ai/exams/translate` (protected)
+- `POST /v1/ai/education-plans/generate` (protected)
+- `POST /v1/ai/translate` (protected)
+- `POST /v1/ai/tts` (protected)
+- `POST /v1/ai/stt` (protected)
+- `POST /v1/ai/image/generate` (protected)
+
+## Quick Validation Flow
+1. `GET /health`
+2. `POST /v1/auth/register`
+3. `POST /v1/auth/login`
+4. Use returned access token with `Authorization: Bearer ...`
+5. `GET /v1/auth/me`
+6. `GET /v1/documents`
+
+## Request Collection
+Use `apps/backend/requests.http` for quick local calls and adapt port if needed.
+
+## Full API Docs
+- Detailed human-readable docs: `apps/backend/API_DOCUMENTATION.md`
+- OpenAPI spec (Swagger/Postman import): `apps/backend/openapi.yaml`

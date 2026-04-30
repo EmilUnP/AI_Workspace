@@ -1,7 +1,7 @@
 import { config as loadDotenv } from 'dotenv'
 import { z } from 'zod'
 
-loadDotenv()
+loadDotenv({ path: '.env.local' })
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -13,7 +13,7 @@ const envSchema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   GOOGLE_GEMINI_API_KEY: z.string().min(1, 'GOOGLE_GEMINI_API_KEY is required'),
-  AI_STORAGE_DIR: z.string().default('./apps/clean-backend/storage')
+  AI_STORAGE_DIR: z.string().default('./apps/backend/storage')
 })
 
 const parsed = envSchema.safeParse(process.env)
