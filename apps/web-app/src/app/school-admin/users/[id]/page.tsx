@@ -1,98 +1,32 @@
-import { createClient as createServerClient } from '@eduator/auth/supabase/server'
-import { notFound, redirect } from 'next/navigation'
+import { getUserById } from '@/lib/backend-auth'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
   Mail, 
   Calendar, 
-  BookOpen, 
-  CheckCircle,
-  Clock,
-  XCircle,
-  Building2
+  Shield,
+  Users,
 } from 'lucide-react'
-import { EditUserForm } from './edit-user-form'
-import { ChangePasswordForm } from './change-password-form'
-import { DeleteUserButton } from './delete-user-button'
-
-async function getOrganizationId() {
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('user_id', user.id)
-    .single()
-  
-  return profile?.organization_id
-}
-
-async function getUser(id: string, organizationId: string) {
-  const supabase = await createServerClient()
-  
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', id)
-    .eq('organization_id', organizationId)
-    .eq('profile_type', 'teacher')
-    .single()
-  
-  if (error || !data) {
-    return null
-  }
-  
-  return data
-}
-
-async function getOrganizationStructure(organizationId: string) {
-  const { createAdminClient } = await import('@eduator/auth/supabase/admin')
-  
-  const adminClient = createAdminClient()
-  const { data: org } = await adminClient
-    .from('organizations')
-    .select('settings')
-    .eq('id', organizationId)
-    .single()
-  
-  return org?.settings?.structure || []
-}
-
-interface StructureUnit { id: string; name: string; parent_id?: string | null }
-function getUnitName(unitId: string | undefined, structure: StructureUnit[]): string | null {
-  if (!unitId || !structure || structure.length === 0) return null
-  
-  const findUnit = (units: StructureUnit[], id: string): StructureUnit | null => {
-    for (const unit of units) {
-      if (unit.id === id) return unit
-      const children = structure.filter((u: StructureUnit) => u.parent_id === unit.id)
-      if (children.length > 0) {
-        const found = findUnit(children, id)
-        if (found) return found
-      }
-    }
-    return null
-  }
-  
-  const rootUnits = structure.filter((u: StructureUnit) => !u.parent_id)
-  const unit = findUnit(rootUnits, unitId)
-  return unit?.name || null
-}
 
 const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor: string; label: string }> = {
-  teacher: {
-    icon: <BookOpen className="h-5 w-5" />,
-    color: 'text-emerald-700',
-    bgColor: 'bg-emerald-100',
-    label: 'Teacher',
+  admin: {
+    icon: <Shield className="h-5 w-5" />,
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+    label: 'Admin',
   },
-  legacy: {
-    icon: <Building2 className="h-5 w-5" />,
+  operator: {
+    icon: <Users className="h-5 w-5" />,
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
+    label: 'Operator',
+  },
+  user: {
+    icon: <Users className="h-5 w-5" />,
     color: 'text-gray-700',
     bgColor: 'bg-gray-100',
-    label: 'Legacy/Unknown',
+    label: 'User',
   },
 }
 
@@ -101,25 +35,14 @@ export default async function UserDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const organizationId = await getOrganizationId()
-  
-  if (!organizationId) {
-    redirect('/school-admin/users')
-  }
-  
   const { id } = await params
-  const [user, structure] = await Promise.all([
-    getUser(id, organizationId),
-    getOrganizationStructure(organizationId),
-  ])
+  const user = await getUserById(id)
 
   if (!user) {
     notFound()
   }
 
-  const role = roleConfig[user.profile_type] || roleConfig.legacy
-  const unitId = (user.metadata as { organization_unit_id?: string } | null)?.organization_unit_id
-  const unitName = getUnitName(unitId, structure)
+  const role = roleConfig[user.role] || roleConfig.user
 
   return (
     <div className="space-y-6">
@@ -144,7 +67,7 @@ export default async function UserDetailPage({
           
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {user.full_name || 'Unnamed User'}
+              {user.email}
             </h1>
             <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
               <span className="flex items-center gap-1">
@@ -157,80 +80,37 @@ export default async function UserDetailPage({
                 {role.icon}
                 {role.label}
               </span>
-              {user.approval_status === 'approved' && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Approved
-                </span>
-              )}
-              {user.approval_status === 'pending' && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-700">
-                  <Clock className="h-3.5 w-3.5" />
-                  Pending
-                </span>
-              )}
-              {user.approval_status === 'rejected' && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
-                  <XCircle className="h-3.5 w-3.5" />
-                  Rejected
-                </span>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Delete Button */}
-        <DeleteUserButton userId={user.id} userName={user.full_name || user.email} />
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          User editing actions are disabled in clean-backend mode.
+        </div>
       </div>
 
       {/* Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Edit User Info */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Edit User</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Update user details and role
-          </p>
-          
-          <EditUserForm user={user} />
-        </div>
-
-        {/* Change Password */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Set a new password for this user
-          </p>
-          
-          <ChangePasswordForm userId={user.user_id} userName={user.full_name || user.email} />
-        </div>
-      </div>
-
-      {/* User Info */}
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-gray-900">User Information</h2>
+        <h2 className="text-sm font-semibold text-gray-900">User Information</h2>
         
-        <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+        <dl className="mt-4 space-y-4">
           <div>
             <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">User ID</dt>
-            <dd className="mt-1 text-sm text-gray-900 font-mono truncate">{user.id}</dd>
+            <dd className="mt-1 text-sm text-gray-900 font-mono">{user.id}</dd>
           </div>
-          
-          {unitName && (
+
+          {user.manual_note ? (
             <div>
-              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Organization Unit</dt>
-              <dd className="mt-1 text-sm text-gray-900 flex items-center gap-1.5">
-                <Building2 className="h-4 w-4 text-gray-400" />
-                {unitName}
-              </dd>
+              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Manual Note</dt>
+              <dd className="mt-1 text-sm text-gray-900">{user.manual_note}</dd>
             </div>
-          )}
+          ) : null}
           
           <div>
             <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Joined</dt>
             <dd className="mt-1 text-sm text-gray-900 flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-gray-400" />
-              {new Date(user.created_at).toLocaleDateString('en-US', {
+              {new Date(user.created_at || Date.now()).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -238,7 +118,7 @@ export default async function UserDetailPage({
             </dd>
           </div>
           
-          {user.updated_at && (
+          {user.updated_at ? (
             <div>
               <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Updated</dt>
               <dd className="mt-1 text-sm text-gray-900">
@@ -249,7 +129,7 @@ export default async function UserDetailPage({
                 })}
               </dd>
             </div>
-          )}
+          ) : null}
         </dl>
       </div>
     </div>

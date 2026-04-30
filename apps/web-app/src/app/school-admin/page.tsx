@@ -93,12 +93,6 @@ export default async function SchoolAdminDashboard() {
               <h3 className="text-lg font-semibold text-gray-900">Pending Approvals</h3>
               <p className="mt-1 text-sm text-gray-500">Users awaiting your approval</p>
             </div>
-            <Link
-              href="/school-admin/users?status=pending"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
-            >
-              View all
-            </Link>
           </div>
           
           <div className="mt-6 space-y-4">

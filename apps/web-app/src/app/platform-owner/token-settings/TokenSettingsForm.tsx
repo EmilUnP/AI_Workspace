@@ -90,7 +90,7 @@ export function TokenSettingsForm({ settings: initialSettings }: TokenSettingsFo
     }
     if (result.data) {
       setSettings((prev) =>
-        prev.map((s) => (s.key === editingKey ? result.data! : s))
+        prev.map((s) => (s.key === editingKey ? { ...s, tokens } : s))
       )
       setMessage({ type: 'success', text: 'Setting saved.' })
       setEditingKey(null)
@@ -218,7 +218,7 @@ export function TokenSettingsForm({ settings: initialSettings }: TokenSettingsFo
       })}
 
       <p className="text-sm text-gray-500">
-        Changes take effect immediately. View <Link href="/platform-owner/usage-payments" className="font-medium text-red-600 hover:text-red-700 underline">Usage & payments</Link> to see how tokens are consumed.
+        Changes take effect immediately. View <Link href="/platform-owner/real-token-usage" className="font-medium text-red-600 hover:text-red-700 underline">Real token usage</Link> to see how tokens are consumed.
       </p>
     </div>
   )

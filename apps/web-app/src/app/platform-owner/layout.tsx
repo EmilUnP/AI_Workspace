@@ -6,7 +6,6 @@ import { PlatformOwnerLayoutClient } from './platform-owner-layout-client'
 const navigation = [
   { name: 'Dashboard', href: '/platform-owner', icon: 'LayoutDashboard' },
   { name: 'Users', href: '/platform-owner/users', icon: 'Users' },
-  { name: 'Usage & payments', href: '/platform-owner/usage-payments', icon: 'Activity' },
   { name: 'Real token usage', href: '/platform-owner/real-token-usage', icon: 'BarChart3' },
   { name: 'Token settings', href: '/platform-owner/token-settings', icon: 'Coins' },
   { name: 'Reports', href: '/platform-owner/reports', icon: 'BarChart3' },

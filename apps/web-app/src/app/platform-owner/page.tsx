@@ -62,12 +62,6 @@ export default async function PlatformOwnerDashboard() {
               <h3 className="text-lg font-semibold text-gray-900">Recent Users</h3>
               <p className="mt-1 text-sm text-gray-500">Latest registrations across the platform</p>
             </div>
-            <Link
-              href="/platform-owner/users"
-              className="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              View all
-            </Link>
           </div>
           
           <div className="mt-6 space-y-4">

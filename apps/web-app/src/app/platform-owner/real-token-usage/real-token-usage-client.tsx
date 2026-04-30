@@ -182,12 +182,12 @@ export function RealTokenUsageClient({
       const modelKey = normalizeModelKey(modelKeyRaw)
       if (modelFilter !== 'all' && modelKey !== modelFilter) return
       const pricing = pricingByModel.get(modelKey)
-      const inputRate = Number(pricing?.input_cost_per_1m_tokens_usd ?? 0)
-      const outputRate = Number(pricing?.output_cost_per_1m_tokens_usd ?? 0)
+      const inputRate = Number(pricing?.input_cost_per_million ?? 0)
+      const outputRate = Number(pricing?.output_cost_per_million ?? 0)
       const cost = inputTokens * (inputRate / 1_000_000) + outputTokens * (outputRate / 1_000_000)
       const current = rows.get(modelKey) ?? {
         modelKey,
-        displayName: pricing?.display_name ?? modelKey,
+        displayName: pricing?.model_label ?? modelKey,
         inputTokens: 0,
         outputTokens: 0,
         totalTokens: 0,
@@ -358,13 +358,13 @@ export function RealTokenUsageClient({
 
   const handlePricingChange = (
     id: string,
-    field: 'display_name' | 'input_cost_per_1m_tokens_usd' | 'output_cost_per_1m_tokens_usd',
+    field: 'model_label' | 'input_cost_per_million' | 'output_cost_per_million',
     value: string
   ) => {
     setPricingRows((prev) =>
       prev.map((row) => {
         if (row.id !== id) return row
-        if (field === 'input_cost_per_1m_tokens_usd' || field === 'output_cost_per_1m_tokens_usd') {
+        if (field === 'input_cost_per_million' || field === 'output_cost_per_million') {
           return { ...row, [field]: Number(value || 0) }
         }
         return { ...row, [field]: value }
@@ -380,10 +380,10 @@ export function RealTokenUsageClient({
       pricingRows.map((row) =>
         updateModelPricing({
           id: row.id,
-          displayName: row.display_name,
+          displayName: row.model_label,
           sourceUrl,
-          inputCostPer1M: Number(row.input_cost_per_1m_tokens_usd),
-          outputCostPer1M: Number(row.output_cost_per_1m_tokens_usd),
+          inputCostPer1M: Number(row.input_cost_per_million),
+          outputCostPer1M: Number(row.output_cost_per_million),
         })
       )
     )
@@ -419,13 +419,10 @@ export function RealTokenUsageClient({
             Real token usage analytics
           </h1>
           <p className="mt-1.5 max-w-3xl text-sm text-gray-600">
-            Platform Owner view for real user usage across ERP. Data is loaded from token
+            Platform Owner view for real user usage across app. Data is loaded from token
             transactions for the last {defaultDays} days.
           </p>
         </div>
-        <Link href="/platform-owner/usage-payments">
-          <Button variant="outline">Open usage & payments</Button>
-        </Link>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-sm sm:p-3">
@@ -740,8 +737,8 @@ export function RealTokenUsageClient({
               <div key={row.id} className="rounded-lg border p-3">
                 <div className="grid gap-2 md:grid-cols-4">
                   <input
-                    value={row.display_name}
-                    onChange={(e) => handlePricingChange(row.id, 'display_name', e.target.value)}
+                    value={row.model_label}
+                    onChange={(e) => handlePricingChange(row.id, 'model_label', e.target.value)}
                     className="rounded border px-2 py-1 text-sm md:col-span-2"
                   />
                   <label className="text-xs text-gray-600">
@@ -750,9 +747,9 @@ export function RealTokenUsageClient({
                       type="number"
                       step="0.000001"
                       min={0}
-                      value={row.input_cost_per_1m_tokens_usd}
+                      value={row.input_cost_per_million}
                       onChange={(e) =>
-                        handlePricingChange(row.id, 'input_cost_per_1m_tokens_usd', e.target.value)
+                        handlePricingChange(row.id, 'input_cost_per_million', e.target.value)
                       }
                       className="mt-1 w-full rounded border px-2 py-1 text-sm"
                     />
@@ -763,9 +760,9 @@ export function RealTokenUsageClient({
                       type="number"
                       step="0.000001"
                       min={0}
-                      value={row.output_cost_per_1m_tokens_usd}
+                      value={row.output_cost_per_million}
                       onChange={(e) =>
-                        handlePricingChange(row.id, 'output_cost_per_1m_tokens_usd', e.target.value)
+                        handlePricingChange(row.id, 'output_cost_per_million', e.target.value)
                       }
                       className="mt-1 w-full rounded border px-2 py-1 text-sm"
                     />

@@ -25,6 +25,7 @@
       "@eduator/auth/supabase/server": ["./src/lib/eduator-auth-server-shim.ts"],
       "@eduator/auth/supabase/client": ["./src/lib/eduator-auth-client-shim.ts"],
       "@eduator/core/types/token": ["./src/lib/eduator-core-token-shim.ts"],
+      "@eduator/db/repositories/tokens": ["./src/lib/eduator-db-tokens-shim.ts"],
       "next-intl": ["./src/lib/no-intl-client.ts"],
       "next-intl/server": ["./src/lib/no-intl-server.ts"]
     }

@@ -1,5 +1,5 @@
 import { tokenRepository } from '@eduator/db/repositories/tokens'
-import { Coins, Settings2, Activity } from 'lucide-react'
+import { Coins, Settings2 } from 'lucide-react'
 import Link from 'next/link'
 import { TokenSettingsForm } from './TokenSettingsForm'
 
@@ -28,13 +28,6 @@ export default async function TokenSettingsPage() {
             Set how many tokens each AI action costs and how many tokens new users receive automatically (e.g. 100 for testing). These values apply across the platform. Users spend tokens when generating exams, lessons, courses, or using the AI tutor.
           </p>
         </div>
-        <Link
-          href="/platform-owner/usage-payments"
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-gray-300 hover:bg-gray-50"
-        >
-          <Activity className="h-4 w-4 text-gray-500" />
-          Usage & payments
-        </Link>
       </div>
 
       {/* How it works */}
