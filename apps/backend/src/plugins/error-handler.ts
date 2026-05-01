@@ -4,6 +4,8 @@ import { ZodError } from 'zod'
 
 async function errorHandlerPlugin(app: FastifyInstance) {
   app.setErrorHandler((error, _request, reply) => {
+    app.log.error(error)
+
     if (error instanceof ZodError) {
       reply.code(400).send({
         error: 'Validation failed',

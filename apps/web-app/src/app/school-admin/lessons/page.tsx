@@ -18,7 +18,6 @@ import {
 import Link from 'next/link'
 import {
   getTeacherLessons,
-  getTeacherLessonStats,
   TEACHER_LESSONS_PER_PAGE,
 } from '@eduator/core/utils/teacher-lessons'
 import { LessonRowActions, PaginationFooter } from '@eduator/ui'
@@ -54,7 +53,7 @@ async function getAdminInfo() {
 export default async function SchoolAdminLessonsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; status?: string; page?: string; classId?: string }>
+  searchParams: Promise<{ search?: string; page?: string; classId?: string }>
 }) {
   const adminData = await getAdminInfo()
   if (!adminData) redirect('/school-admin')
@@ -64,13 +63,9 @@ export default async function SchoolAdminLessonsPage({
   const t = await getTranslations('teacherLessons')
   const supabase = await createClient()
 
-  const [lessonsResultRaw, statsRaw] = await Promise.all([
-    getTeacherLessons(supabase, adminId, workspaceId, params),
-    getTeacherLessonStats(supabase, adminId, workspaceId),
-  ])
+  const lessonsResultRaw = await getTeacherLessons(supabase, adminId, workspaceId, params)
 
   const lessonsResult = lessonsResultRaw as any
-  const stats = statsRaw as any
   const lessons = (lessonsResult?.data || []) as any[]
   const totalLessons = Number(lessonsResult?.count || 0)
   const currentPage = Number(lessonsResult?.page || 1)
@@ -98,40 +93,6 @@ export default async function SchoolAdminLessonsPage({
         </div>
         
         <div className="flex items-center justify-between gap-4 sm:justify-end">
-          {/* Mobile Stats */}
-          <div className="flex items-center gap-4 sm:hidden">
-            <div className="text-center">
-              <p className="text-lg font-bold text-green-600">{stats.published}</p>
-              <p className="text-xs text-gray-500">{t('inClass')}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-yellow-600">{stats.draft}</p>
-              <p className="text-xs text-gray-500">{t('unused')}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-purple-600">{stats.totalDuration}</p>
-              <p className="text-xs text-gray-500">{t('minutes')}</p>
-            </div>
-          </div>
-          
-          {/* Desktop Stats */}
-          <div className="hidden items-center gap-6 lg:flex">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{stats.published}</p>
-              <p className="text-xs text-gray-500">{t('inClass')}</p>
-            </div>
-            <div className="h-8 w-px bg-gray-200" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-600">{stats.draft}</p>
-              <p className="text-xs text-gray-500">{t('unused')}</p>
-            </div>
-            <div className="h-8 w-px bg-gray-200" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-purple-600">{stats.totalDuration}</p>
-              <p className="text-xs text-gray-500">{t('totalMinutes')}</p>
-            </div>
-          </div>
-          
           {/* Create Lesson Button */}
           <Link
             href="/school-admin/lessons/generate"
@@ -156,36 +117,6 @@ export default async function SchoolAdminLessonsPage({
             className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </form>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Status Filter Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <Link
-              href={params.classId ? `/school-admin/lessons?classId=${params.classId}` : '/school-admin/lessons'}
-              className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                !params.status ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {t('all')} ({stats.total})
-            </Link>
-            <Link
-              href={params.classId ? `/school-admin/lessons?status=published&classId=${params.classId}` : '/school-admin/lessons?status=published'}
-              className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                params.status === 'published' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {t('inClass')} ({stats.published})
-            </Link>
-            <Link
-              href={params.classId ? `/school-admin/lessons?status=draft&classId=${params.classId}` : '/school-admin/lessons?status=draft'}
-              className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                params.status === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {t('unused')} ({stats.draft})
-            </Link>
-          </div>
-        </div>
       </div>
 
       {/* Lessons List */}
@@ -195,7 +126,7 @@ export default async function SchoolAdminLessonsPage({
             <GraduationCap className="mx-auto h-12 w-12 text-gray-300" />
             <h3 className="mt-4 text-lg font-medium text-gray-900">{t('noLessonsFound')}</h3>
             <p className="mt-2 text-sm text-gray-500">
-              {params.search || params.status
+              {params.search
                 ? t('adjustFilters')
                 : t('createFirstLesson')}
             </p>
@@ -492,11 +423,10 @@ export default async function SchoolAdminLessonsPage({
             baseUrl="/school-admin/lessons"
             searchParams={{
               search: params.search,
-              status: params.status,
               classId: params.classId,
             }}
           />
-          {(params.search || params.status) && (
+          {params.search && (
             <div className="text-center">
               <Link
                 href="/school-admin/lessons"

@@ -1,5 +1,5 @@
-import { createClient } from '@eduator/auth/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { getCurrentUser } from '@/lib/backend-auth'
 import Link from 'next/link'
@@ -49,41 +49,26 @@ async function getTeacherInfo() {
   return { teacherId: user.id, organizationId: 'global' }
 }
 
-async function getLesson(lessonId: string, teacherId: string): Promise<LessonRecord | null> {
-  const supabase = await createClient()
-  
-  const { data: ownLesson, error: ownError } = await supabase
-    .from('lessons')
-    .select(`
-      *,
-      classes(id, name, class_code),
-      documents(id, title, file_type)
-    `)
-    .eq('id', lessonId)
-    .eq('created_by', teacherId)
-    .single()
+async function getLesson(lessonId: string): Promise<LessonRecord | null> {
+  const token = (await cookies()).get('access_token')?.value
+  if (!token) return null
 
-  if (!ownError && ownLesson) {
-    return ownLesson as LessonRecord
-  }
-  
-  // Fallback for migrated data where created_by might not match current auth id.
-  const { data: lesson, error } = await supabase
-    .from('lessons')
-    .select(`
-      *,
-      classes(id, name, class_code),
-      documents(id, title, file_type)
-    `)
-    .eq('id', lessonId)
-    .single()
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const response = await fetch(`${backendBase}/v1/lessons/${lessonId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
 
-  if (error || !lesson) {
-    console.error('Error fetching lesson:', error || ownError)
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: string }
+    console.error('Error fetching lesson:', payload.error || `HTTP ${response.status}`)
     return null
   }
-  
-  return lesson as LessonRecord
+
+  const payload = (await response.json()) as { lesson?: LessonRecord }
+  const lesson = payload.lesson
+  if (!lesson) return null
+  return lesson
 }
 
 export default async function LessonDetailPage({ params, searchParams }: PageProps) {
@@ -93,12 +78,16 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
   if (!teacherData) {
     redirect('/school-admin/lessons')
   }
-  const { teacherId } = teacherData
   const [lesson, t, locale] = await Promise.all([
-    getLesson(id, teacherId),
+    getLesson(id),
     getTranslations('teacherLessonDetail'),
     getLocale(),
   ])
+  const tl = (key: string, fallback: string, values?: Record<string, string | number>) => {
+    const value = t(key as never, values as never)
+    return value === key ? fallback : value
+  }
+
   if (!lesson) {
     notFound()
   }
@@ -131,7 +120,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
             <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{lesson.title}</h1>
               {lesson.topic && (
-                <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('topicLabel')} {lesson.topic}</p>
+                <p className="text-gray-500 mt-1 text-sm sm:text-base">{tl('topicLabel', 'Topic:')} {lesson.topic}</p>
               )}
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 text-sm text-gray-500">
                 <span className="flex items-center gap-1.5">
@@ -147,12 +136,12 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                 {lesson.is_published ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
                     <CheckCircle className="w-3 h-3" />
-                    {t('inClass')}
+                    {tl('inClass', 'Published')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700">
                     <Clock className="w-3 h-3" />
-                    {t('unused')}
+                    {tl('unused', 'Draft')}
                   </span>
                 )}
               </div>
@@ -173,26 +162,26 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                 onRegenerateAudio={regenerateAudio}
                 onDeleteLesson={deleteLesson}
                 labels={{
-                  edit: t('edit'),
-                  generateAudio: t('generateAudio'),
-                  regenerateAudio: t('regenerateAudio'),
-                  deleteLesson: t('deleteLesson'),
-                  editLesson: t('editLesson'),
-                  cancel: t('cancel'),
-                  saveChanges: t('saveChanges'),
-                  saving: t('saving'),
-                  titleLabel: t('titleLabel'),
-                  topicLabel: t('topicLabelForm'),
-                  descriptionLabel: t('descriptionLabel'),
-                  durationLabel: t('durationLabel'),
-                  contentLabel: t('contentLabel'),
-                  titlePlaceholder: t('titlePlaceholder'),
-                  topicPlaceholder: t('topicPlaceholder'),
-                  descriptionPlaceholder: t('descriptionPlaceholder'),
-                  contentPlaceholder: t('contentPlaceholder'),
-                  deleteConfirmTitle: t('deleteConfirmTitle'),
-                  deleteConfirmMessage: t('deleteConfirmMessage', { title: lesson.title }),
-                  deleting: t('deleting'),
+                  edit: tl('edit', 'Edit'),
+                  generateAudio: tl('generateAudio', 'Generate audio'),
+                  regenerateAudio: tl('regenerateAudio', 'Regenerate audio'),
+                  deleteLesson: tl('deleteLesson', 'Delete lesson'),
+                  editLesson: tl('editLesson', 'Edit lesson'),
+                  cancel: tl('cancel', 'Cancel'),
+                  saveChanges: tl('saveChanges', 'Save changes'),
+                  saving: tl('saving', 'Saving...'),
+                  titleLabel: tl('titleLabel', 'Title'),
+                  topicLabel: tl('topicLabelForm', 'Topic'),
+                  descriptionLabel: tl('descriptionLabel', 'Description'),
+                  durationLabel: tl('durationLabel', 'Duration'),
+                  contentLabel: tl('contentLabel', 'Content'),
+                  titlePlaceholder: tl('titlePlaceholder', 'Lesson title'),
+                  topicPlaceholder: tl('topicPlaceholder', 'Lesson topic'),
+                  descriptionPlaceholder: tl('descriptionPlaceholder', 'Short description'),
+                  contentPlaceholder: tl('contentPlaceholder', 'Lesson content'),
+                  deleteConfirmTitle: tl('deleteConfirmTitle', 'Delete lesson?'),
+                  deleteConfirmMessage: tl('deleteConfirmMessage', `Are you sure you want to delete "${lesson.title}"?`, { title: lesson.title }),
+                  deleting: tl('deleting', 'Deleting...'),
                 }}
               />
           </div>
@@ -212,7 +201,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{lesson.duration_minutes || 45}</p>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">{t('minutes')}</p>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{tl('minutes', 'minutes')}</p>
               </div>
             </div>
           </div>
@@ -224,7 +213,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{images.length}</p>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">{t('images')}</p>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{tl('images', 'images')}</p>
               </div>
             </div>
           </div>
@@ -236,7 +225,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{miniTest.length}</p>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">{t('questions')}</p>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{tl('questions', 'questions')}</p>
               </div>
             </div>
           </div>
@@ -248,7 +237,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{objectives.length}</p>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">{t('objectives')}</p>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{tl('objectives', 'objectives')}</p>
               </div>
             </div>
           </div>
@@ -259,7 +248,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
           <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 sm:p-5 mb-6 border border-emerald-200">
             <h3 className="font-semibold text-emerald-800 mb-3 flex items-center gap-2">
               <Target className="w-5 h-5" />
-              {t('learningObjectives')}
+              {tl('learningObjectives', 'Learning objectives')}
             </h3>
             <ul className="space-y-2">
               {objectives.map((objective: string, index: number) => (
@@ -280,26 +269,26 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
           examples={examples}
           centerText={lesson.metadata?.generation_options?.centerText ?? false}
           labels={{
-            tabContent: t('tabContent'),
-            tabExamples: t('tabExamples'),
-            tabMiniTest: t('tabMiniTest'),
-            chooseBestAnswers: t('chooseBestAnswers'),
-            checkAnswers: t('checkAnswers'),
-            tryAgain: t('tryAgain'),
-            scoreLabel: t('scoreLabel'),
-            noExamples: t('noExamples'),
-            noTestQuestions: t('noTestQuestions'),
-            contentsLabel: t('contentsLabel'),
-            expand: t('expand'),
-            collapse: t('collapse'),
-            fullScreen: t('fullScreen'),
+            tabContent: tl('tabContent', 'Content'),
+            tabExamples: tl('tabExamples', 'Examples'),
+            tabMiniTest: tl('tabMiniTest', 'Mini test'),
+            chooseBestAnswers: tl('chooseBestAnswers', 'Choose the best answers'),
+            checkAnswers: tl('checkAnswers', 'Check answers'),
+            tryAgain: tl('tryAgain', 'Try again'),
+            scoreLabel: tl('scoreLabel', 'Score'),
+            noExamples: tl('noExamples', 'No examples'),
+            noTestQuestions: tl('noTestQuestions', 'No test questions'),
+            contentsLabel: tl('contentsLabel', 'Contents'),
+            expand: tl('expand', 'Expand'),
+            collapse: tl('collapse', 'Collapse'),
+            fullScreen: tl('fullScreen', 'Full screen'),
           }}
         />
         
         {/* Source Document */}
         {lesson.documents && (
           <div className="mt-6 bg-gray-100 rounded-xl p-4 text-sm text-gray-600">
-            <span className="font-medium">{t('sourceDocument')}</span>{' '}
+            <span className="font-medium">{tl('sourceDocument', 'Source document:')}</span>{' '}
             {Array.isArray(lesson.documents) ? lesson.documents[0]?.title : lesson.documents.title}
           </div>
         )}

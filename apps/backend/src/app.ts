@@ -12,6 +12,7 @@ import { authRoutes } from './routes/auth.js'
 import { usersRoutes } from './routes/users.js'
 import { documentsRoutes } from './routes/documents.js'
 import { aiRoutes } from './routes/ai.js'
+import { lessonsRoutes } from './routes/lessons.js'
 
 export async function buildApp() {
   const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url))
@@ -48,6 +49,7 @@ export async function buildApp() {
   await app.register(usersRoutes, { prefix: '/v1' })
   await app.register(documentsRoutes, { prefix: '/v1' })
   await app.register(aiRoutes, { prefix: '/v1' })
+  await app.register(lessonsRoutes, { prefix: '/v1' })
 
   return app
 }

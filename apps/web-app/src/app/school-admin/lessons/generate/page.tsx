@@ -23,6 +23,7 @@ import {
   BarChart2,
   GraduationCap,
   Target,
+  ChevronDown,
 } from 'lucide-react'
 import { getStepProgress } from '@eduator/core/hooks/useGenerateLesson'
 
@@ -42,6 +43,11 @@ interface Document {
   title: string
   file_type: string
   file_name: string
+}
+
+type DocumentsApiResponse = {
+  items?: Array<Partial<Document> & Record<string, unknown>>
+  documents?: Array<Partial<Document> & Record<string, unknown>>
 }
 
 interface GeneratedLesson {
@@ -144,8 +150,24 @@ export default function GenerateLessonPage() {
       try {
         const response = await fetch('/api/school-admin/documents')
         if (response.ok) {
-          const data = await response.json()
-          setDocuments(data.documents || [])
+          const data = (await response.json()) as DocumentsApiResponse
+          const list = (data.items || data.documents || []).map((doc) => {
+            const title =
+              (typeof doc.title === 'string' && doc.title.trim()) ||
+              (typeof doc.file_name === 'string' && doc.file_name.trim()) ||
+              'Untitled document'
+            const fileType = typeof doc.file_type === 'string' ? doc.file_type : 'file'
+            const fileName = typeof doc.file_name === 'string' ? doc.file_name : title
+
+            return {
+              id: String(doc.id || ''),
+              title,
+              file_type: fileType,
+              file_name: fileName,
+            }
+          }).filter((doc) => doc.id)
+
+          setDocuments(list)
         }
       } catch (err) {
         console.error('Failed to load documents:', err)
@@ -200,8 +222,21 @@ export default function GenerateLessonPage() {
       clearTimeout(stepTimer3)
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Failed to generate lesson (${response.status})`)
+        const errorData = await response.json().catch(() => ({})) as {
+          error?: string
+          message?: string
+          issues?: Array<{ message?: string }>
+        }
+        const issueText =
+          Array.isArray(errorData.issues) && errorData.issues.length > 0
+            ? errorData.issues.map((i) => i?.message).filter(Boolean).join(', ')
+            : ''
+        const message =
+          errorData.error ||
+          errorData.message ||
+          issueText ||
+          `Failed to generate lesson (${response.status})`
+        throw new Error(message)
       }
       
       const data = await response.json()
@@ -266,36 +301,50 @@ export default function GenerateLessonPage() {
             <p className="text-xs text-gray-500 mb-3">
               {t('sourceDocumentsHint')}
             </p>
-            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
-              {documents.map((doc) => (
-                <label
-                  key={doc.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-all ${
-                    selectedDocumentIds.includes(doc.id)
-                      ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-400'
-                      : 'border-transparent hover:bg-white'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedDocumentIds.includes(doc.id)}
-                    onChange={() => {
-                      setSelectedDocumentIds((prev) =>
-                        prev.includes(doc.id)
-                          ? prev.filter((id) => id !== doc.id)
-                          : [...prev, doc.id]
-                      )
-                    }}
-                    disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-900 truncate flex-1">
-                    {doc.title}
-                  </span>
-                  <span className="text-xs text-gray-500">({doc.file_type.toUpperCase()})</span>
-                </label>
-              ))}
-            </div>
+            <details className="group rounded-lg border border-gray-200 bg-gray-50">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-sm text-gray-700">
+                <span className="truncate">
+                  {selectedDocumentIds.length > 0
+                    ? `${selectedDocumentIds.length} document(s) selected`
+                    : documents.length > 0
+                      ? `Select from ${documents.length} available document(s)`
+                      : t('noDocumentsText')}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-500 transition-transform group-open:rotate-180" />
+              </summary>
+              {documents.length > 0 && (
+                <div className="space-y-2 border-t border-gray-200 p-3 max-h-56 overflow-y-auto">
+                  {documents.map((doc) => (
+                    <label
+                      key={doc.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-all ${
+                        selectedDocumentIds.includes(doc.id)
+                          ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-400'
+                          : 'border-transparent bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedDocumentIds.includes(doc.id)}
+                        onChange={() => {
+                          setSelectedDocumentIds((prev) =>
+                            prev.includes(doc.id)
+                              ? prev.filter((id) => id !== doc.id)
+                              : [...prev, doc.id]
+                          )
+                        }}
+                        disabled={loading}
+                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-900 truncate flex-1">
+                        {doc.title}
+                      </span>
+                      <span className="text-xs text-gray-500">({doc.file_type.toUpperCase()})</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </details>
             {selectedDocumentIds.length > 0 && (
               <p className="mt-2 text-sm text-blue-600">
                 {t('documentsSelected', { count: selectedDocumentIds.length })}
