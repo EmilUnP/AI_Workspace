@@ -111,7 +111,7 @@ export async function quickUploadDocument(input: QuickUploadInput) {
           String(payload.document.file_name || payload.document.fileName || fileName),
           String(payload.document.file_type || payload.document.fileType || mimeType)
         ),
-        file_url: String(payload.document.local_path || payload.document.localPath || ''),
+        file_url: `${getBackendBase()}/v1/documents/${String(payload.document.id || '')}/file`,
         processing_status: normalizeProcessingStatus(payload.document.status),
         processing_error_message: payload.document.processing_error_message
           ? String(payload.document.processing_error_message)

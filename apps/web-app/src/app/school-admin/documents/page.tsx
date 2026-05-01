@@ -37,28 +37,31 @@ async function getDocuments() {
     const payload = (await response.json()) as { items?: Array<Record<string, unknown>> }
     const items = payload.items || []
 
-    return items.map((doc) => ({
-      id: String(doc.id || ''),
-      title: String(doc.title || ''),
-      description: String((doc.metadata as Record<string, unknown> | undefined)?.description || ''),
-      file_name: String(doc.file_name || doc.fileName || ''),
-      file_url: String(doc.local_path || doc.localPath || ''),
-      file_size: Number(doc.file_size || doc.fileSize || 0),
-      file_type: normalizeFileType(doc.file_type || doc.fileType),
-      tags: ((doc.metadata as Record<string, unknown> | undefined)?.tags as string[] | undefined) || [],
-      processing_status: normalizeProcessingStatus(doc.status),
-      processing_error_message: doc.processing_error_message
-        ? String(doc.processing_error_message)
-        : null,
-      quality_status: String(doc.quality_status || ''),
-      quality_message: String(doc.quality_message || ''),
-      total_tokens: Number(doc.total_tokens || 0),
-      chunk_count: Number(doc.chunk_count || 0),
-      avg_chunk_size: Number(doc.avg_chunk_size || 0),
-      content_language: String(doc.content_language || ''),
-      created_at: String(doc.created_at || doc.createdAt || new Date().toISOString()),
-      classes: null,
-    }))
+    return items.map((doc) => {
+      const docId = String(doc.id || '')
+      return {
+        id: docId,
+        title: String(doc.title || ''),
+        description: String((doc.metadata as Record<string, unknown> | undefined)?.description || ''),
+        file_name: String(doc.file_name || doc.fileName || ''),
+        file_url: `${backendBase}/v1/documents/${docId}/file`,
+        file_size: Number(doc.file_size || doc.fileSize || 0),
+        file_type: normalizeFileType(doc.file_type || doc.fileType),
+        tags: ((doc.metadata as Record<string, unknown> | undefined)?.tags as string[] | undefined) || [],
+        processing_status: normalizeProcessingStatus(doc.status),
+        processing_error_message: doc.processing_error_message
+          ? String(doc.processing_error_message)
+          : null,
+        quality_status: String(doc.quality_status || ''),
+        quality_message: String(doc.quality_message || ''),
+        total_tokens: Number(doc.total_tokens || 0),
+        chunk_count: Number(doc.chunk_count || 0),
+        avg_chunk_size: Number(doc.avg_chunk_size || 0),
+        content_language: String(doc.content_language || ''),
+        created_at: String(doc.created_at || doc.createdAt || new Date().toISOString()),
+        classes: null,
+      }
+    })
   } catch {
     return []
   }

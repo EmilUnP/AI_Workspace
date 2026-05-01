@@ -186,8 +186,8 @@ export class DocumentRagService {
          WHERE id = $1`,
         [
           doc.id,
-          JSON.stringify(chunks),
-          JSON.stringify(embeddings),
+          this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]'),
+          this.safeJsonStringify(embeddings, '[]'),
           contentLanguage,
           totalTokens,
           chunkCount,
@@ -222,9 +222,25 @@ export class DocumentRagService {
     if (doc.extracted_text && doc.extracted_text.length > 0) return doc.extracted_text
     if (!doc.local_path) throw new Error('Document local path is missing')
 
-    const absPath = path.isAbsolute(doc.local_path)
-      ? doc.local_path
-      : path.join(env.AI_STORAGE_DIR, doc.local_path)
+    const localPath = doc.local_path.replace(/\\/g, '/')
+    const normalizedStorageRoot = path.resolve(env.AI_STORAGE_DIR).replace(/\\/g, '/')
+    let absPath: string
+
+    if (path.isAbsolute(doc.local_path)) {
+      absPath = doc.local_path
+    } else if (localPath.startsWith('storage/')) {
+      // Legacy rows may store relative paths prefixed with "storage/".
+      // Avoid ".../storage/storage/..." by resolving from backend root.
+      absPath = path.resolve(localPath)
+    } else if (localPath.startsWith('documents/')) {
+      // Common relative path format inside storage dir.
+      absPath = path.join(env.AI_STORAGE_DIR, localPath)
+    } else if (localPath.startsWith(normalizedStorageRoot)) {
+      // Safety path in case slashes differ but string isn't detected as absolute.
+      absPath = path.resolve(localPath)
+    } else {
+      absPath = path.join(env.AI_STORAGE_DIR, localPath)
+    }
 
     const fileBuffer = await readFile(absPath)
     let text = ''
@@ -243,7 +259,7 @@ export class DocumentRagService {
       text = fileBuffer.toString('utf8')
     }
 
-    const normalized = text.replace(/\s+/g, ' ').trim()
+    const normalized = this.sanitizeForPostgresText(text.replace(/\s+/g, ' ').trim())
     const fileHash = createHash('sha256').update(normalized).digest('hex')
     await this.app.db.query(
       `UPDATE documents
@@ -254,12 +270,33 @@ export class DocumentRagService {
     return normalized
   }
 
+  /**
+   * PostgreSQL text/jsonb cannot contain NUL (\u0000). Some binary-heavy PDFs
+   * may leak it into extracted text; strip it to prevent "invalid byte sequence".
+   */
+  private sanitizeForPostgresText(value: string): string {
+    const withoutNull = value.replace(/\u0000/g, '')
+    if (typeof (withoutNull as unknown as { toWellFormed?: () => string }).toWellFormed === 'function') {
+      return (withoutNull as unknown as { toWellFormed: () => string }).toWellFormed()
+    }
+    return withoutNull
+  }
+
+  private safeJsonStringify(value: unknown, fallback: string): string {
+    try {
+      const serialized = JSON.stringify(value)
+      return typeof serialized === 'string' ? serialized : fallback
+    } catch {
+      return fallback
+    }
+  }
+
   private chunkText(text: string, chunkSize: number, overlap: number) {
     const chunks: string[] = []
     let index = 0
     while (index < text.length) {
       const end = Math.min(index + chunkSize, text.length)
-      chunks.push(text.slice(index, end).trim())
+      chunks.push(this.sanitizeForPostgresText(text.slice(index, end).trim()))
       if (end === text.length) break
       index = end - overlap
     }
@@ -277,8 +314,8 @@ export class DocumentRagService {
     const embeddings = await this.generateChunkEmbeddings(chunks)
     await this.app.db.query(`UPDATE documents SET text_chunks = $2::jsonb, chunk_embeddings = $3::jsonb WHERE id = $1`, [
       documentId,
-      JSON.stringify(chunks),
-      JSON.stringify(embeddings)
+      this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]'),
+      this.safeJsonStringify(embeddings, '[]')
     ])
     return embeddings
   }
