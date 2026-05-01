@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { createReadStream } from 'node:fs'
-import { access } from 'node:fs/promises'
+import { access, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../config/env.js'
 
@@ -237,6 +237,18 @@ export async function lessonsRoutes(app: FastifyInstance) {
     )
 
     if (!rows[0]) return reply.code(404).send({ error: 'Lesson not found' })
+
+    // Best-effort cleanup: remove local lesson media folder (images/audio).
+    const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', id)
+    try {
+      await rm(lessonDir, { recursive: true, force: true })
+    } catch (error) {
+      request.log.warn(
+        { error, lessonId: id, lessonDir },
+        'Failed to remove lesson media directory after delete'
+      )
+    }
+
     return reply.send({ ok: true })
   })
 }

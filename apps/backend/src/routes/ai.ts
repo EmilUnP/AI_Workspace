@@ -76,8 +76,15 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post('/ai/lessons/generate', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const lesson = await lessonService.generate(userId, request.body)
-    reply.code(201).send({ lesson })
+    try {
+      const lesson = await lessonService.generate(userId, request.body)
+      reply.code(201).send({ lesson })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      request.log.error({ error, userId }, 'Lesson generation route failed')
+      const statusCode = (error as { statusCode?: number })?.statusCode ?? 500
+      reply.code(statusCode).send({ error: message || 'Lesson generation failed' })
+    }
   })
 
   app.post('/ai/exams/generate', { preHandler: [app.authenticate] }, async (request, reply) => {
