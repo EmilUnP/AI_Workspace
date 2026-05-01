@@ -2,7 +2,7 @@
 
 Minimal, reset documentation for the current product baseline.
 
-Current baseline version: **0.0.8**.
+Current baseline version: **0.1.0**.
 
 ## Current Scope
 
@@ -29,8 +29,11 @@ npm run dev:web
 ## Documentation
 
 - `docs/DOCUMENTATION_INDEX.md`
-- `docs/FEATURES.md`
-- `docs/TECHNICAL.md`
-- `docs/API.md`
-- `docs/DEPLOYMENT.md`
+- `docs/STATUS.md`
 - `docs/ROADMAP.md`
+- `docs/TECHNICAL_SUMMARY.md`
+- `docs/API_SUMMARY.md`
+- `CHANGELOG.md`
+- `apps/backend/README.md`
+- `apps/backend/API_DOCUMENTATION.md`
+- `apps/backend/openapi.yaml`

@@ -51,7 +51,7 @@ JWT Bearer token required for protected endpoints.
 
 ### Auth
 - `POST /v1/auth/register`
-  - Body: `{ "email": "...", "password": "...", "role": "admin|teacher|student" }`
+  - Body: `{ "email": "...", "password": "...", "role": "admin|operator|user" }`
 - `POST /v1/auth/login`
   - Body: `{ "email": "...", "password": "..." }`
 - `POST /v1/auth/refresh`
@@ -69,6 +69,8 @@ JWT Bearer token required for protected endpoints.
   - Lists documents for authenticated user.
 - `GET /v1/documents/:id` (protected)
   - Gets one document by id (owner scoped).
+- `GET /v1/documents/:id/file` (protected)
+  - Streams original file by id (owner scoped).
 
 ### AI - Generic Request Tracking
 - `POST /v1/ai/requests` (protected)

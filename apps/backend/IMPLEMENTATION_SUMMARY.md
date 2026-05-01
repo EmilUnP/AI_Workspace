@@ -69,17 +69,8 @@ Service/repository split was implemented for users, documents, AI, and refresh t
   - Supabase references
   - `organization`, `organizations`, `organization_id`
 
-### 7) Tests and Developer Runbook
-- Integration test file:
-  - `tests/api.test.ts`
-- Environment template:
-  - `.env.example`
-- Quick request examples:
-  - `requests.http`
-- Main runbook:
-  - `README.md`
 
-### 8) AI Migration Expansion
+### 7) AI Migration Expansion
 - Added local AI stack in clean backend:
   - `src/ai/gemini.ts`
   - `src/services/document-rag.service.ts`

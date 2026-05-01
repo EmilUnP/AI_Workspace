@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.1.0 - 2026-05-01
+
+### Changed
+
+- Migrated project/version baseline to `0.1.0` across root manifests and OpenAPI metadata.
+- Upgraded school-admin documents UX (richer cards/list metadata, language and tags shown in both list and grid views).
+- Added authenticated web-app document file proxy route for view/download flows.
+- Added backend secure file streaming endpoint: `GET /v1/documents/:id/file`.
+- Fixed view/download behavior split by using `?download=1` for download action.
+- Fixed document delete behavior to remove both DB record and physical stored file.
+- Hardened document upload/list mapping to use canonical file URLs and normalized processing states.
+- Expanded backend RAG service with reusable core methods:
+  - `getParsedDocumentText`
+  - `getRelevantChunks`
+  - `getRelevantContentFromDocuments`
+  - `getDocumentsContent`
+- Improved RAG pipeline resilience:
+  - robust storage path resolution
+  - UTF-8/NUL sanitization for DB writes
+  - safer JSONB serialization for chunks/embeddings
+  - canonical file type normalization to avoid binary-as-text parsing
+  - improved extraction cleanup to reduce noisy chunk inflation
+  - embedding model compatibility update (`gemini-embedding-001` fallback)
+  - improved language detection heuristics (including Azerbaijani/Turkish signals)
+
+### Notes
+
+- This release finalizes the current local PostgreSQL + clean backend documents/RAG baseline.
+- Legacy Supabase-specific behavior is no longer required for current operator/platform-owner flows.
+
 ## 0.0.9 - 2026-04-30
 
 ### Changed
