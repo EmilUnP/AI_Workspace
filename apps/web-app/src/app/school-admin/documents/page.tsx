@@ -15,6 +15,14 @@ function normalizeFileType(value: unknown): DocumentFileType {
   return 'text'
 }
 
+function normalizeProcessingStatus(value: unknown): 'pending' | 'processing' | 'completed' | 'failed' {
+  const raw = String(value || '').toLowerCase().trim()
+  if (raw === 'ready' || raw === 'completed') return 'completed'
+  if (raw === 'failed' || raw === 'error') return 'failed'
+  if (raw === 'processing' || raw === 'uploaded') return 'processing'
+  return 'pending'
+}
+
 async function getDocuments() {
   const accessToken = await getAccessToken()
   if (!accessToken) return []
@@ -38,11 +46,10 @@ async function getDocuments() {
       file_size: Number(doc.file_size || doc.fileSize || 0),
       file_type: normalizeFileType(doc.file_type || doc.fileType),
       tags: ((doc.metadata as Record<string, unknown> | undefined)?.tags as string[] | undefined) || [],
-      processing_status:
-        String(doc.status || '').toLowerCase() === 'ready'
-          ? 'completed'
-          : String(doc.status || '').toLowerCase() || 'pending',
-      processing_error_message: null,
+      processing_status: normalizeProcessingStatus(doc.status),
+      processing_error_message: doc.processing_error_message
+        ? String(doc.processing_error_message)
+        : null,
       quality_status: String(doc.quality_status || ''),
       quality_message: String(doc.quality_message || ''),
       total_tokens: Number(doc.total_tokens || 0),
@@ -85,8 +92,8 @@ export default async function SchoolAdminDocumentsPage() {
       </div>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Documents</h1>
-        <p className="mt-1 text-sm text-gray-500">Upload files and manage your document library for AI usage.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Document Library</h1>
+        <p className="mt-1 text-sm text-gray-500">Upload documents, monitor RAG indexing quality, and manage files from one place.</p>
       </div>
 
       {/* Upload + Explorer */}

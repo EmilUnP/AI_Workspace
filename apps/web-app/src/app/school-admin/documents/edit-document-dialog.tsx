@@ -2,97 +2,255 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, Trash2, X } from 'lucide-react'
+import { Pencil, X, Loader2, Trash2, FileText, AlertTriangle } from 'lucide-react'
 
-export function EditDocumentDialog({
-  document,
-  onUpdate,
-  onDelete,
-}: {
-  document: { id: string; title: string; description?: string | null; tags?: string[] | null }
-  onUpdate: (input: { documentId: string; title: string; description?: string | null; tags?: string[] | null }) => Promise<{ error?: string; success?: boolean }>
+export interface EditDocumentTranslations {
+  editDocument: string
+  editTitle: string
+  editDescription: string
+  editTags: string
+  editTagsPlaceholder: string
+  editDeleteDocument: string
+  editCancel: string
+  editSaving: string
+  editSaveChanges: string
+  editDeleteTitle: string
+  editDeleteConfirm: string
+  editDeleting: string
+}
+
+const DEFAULT_EDIT_TRANSLATIONS: EditDocumentTranslations = {
+  editDocument: 'Edit Document',
+  editTitle: 'Title',
+  editDescription: 'Description',
+  editTags: 'Tags',
+  editTagsPlaceholder: 'Comma-separated tags',
+  editDeleteDocument: 'Delete Document',
+  editCancel: 'Cancel',
+  editSaving: 'Saving...',
+  editSaveChanges: 'Save Changes',
+  editDeleteTitle: 'Delete Document',
+  editDeleteConfirm: 'Are you sure you want to delete "{title}"? This action cannot be undone and the file will be permanently removed.',
+  editDeleting: 'Deleting...',
+}
+
+interface EditDocumentDialogProps {
+  document: {
+    id: string
+    title: string
+    description?: string | null
+    tags?: string[] | null
+  }
+  onUpdate: (input: {
+    documentId: string
+    title: string
+    description?: string | null
+    tags?: string[] | null
+  }) => Promise<{ error?: string; success?: boolean; data?: unknown }>
   onDelete: (documentId: string) => Promise<{ error?: string; success?: boolean }>
-}) {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState('')
-  const [title, setTitle] = useState(document.title)
-  const [description, setDescription] = useState(document.description || '')
-  const [tags, setTags] = useState((document.tags || []).join(', '))
+  translations?: Partial<EditDocumentTranslations>
+}
 
-  if (!open) {
-    return (
-      <button type="button" onClick={() => setOpen(true)} className="rounded p-1.5 text-gray-500 hover:bg-gray-100">
-        <Pencil className="h-4 w-4" />
-      </button>
-    )
+export function EditDocumentDialog({ document, onUpdate, onDelete, translations }: EditDocumentDialogProps) {
+  const t: EditDocumentTranslations = { ...DEFAULT_EDIT_TRANSLATIONS, ...translations }
+  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [formData, setFormData] = useState({
+    title: document.title,
+    description: document.description || '',
+    tags: document.tags?.join(', ') || '',
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    startTransition(async () => {
+      const result = await onUpdate({
+        documentId: document.id,
+        title: formData.title,
+        description: formData.description || null,
+        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : null,
+      })
+
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setIsOpen(false)
+        router.refresh()
+      }
+    })
+  }
+
+  const handleDelete = () => {
+    setIsDeleting(true)
+    setError(null)
+
+    startTransition(async () => {
+      const result = await onDelete(document.id)
+      if (result.error) {
+        setError(result.error)
+        setIsDeleting(false)
+        setShowDeleteConfirm(false)
+      } else {
+        setIsOpen(false)
+        router.refresh()
+      }
+    })
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">Edit document</h3>
-          <button type="button" onClick={() => setOpen(false)} className="rounded p-1 text-gray-500 hover:bg-gray-100">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="space-y-3">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded border border-gray-300 px-3 py-2 text-sm" />
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded border border-gray-300 px-3 py-2 text-sm" rows={3} />
-          <input value={tags} onChange={(e) => setTags(e.target.value)} className="w-full rounded border border-gray-300 px-3 py-2 text-sm" placeholder="tag1, tag2" />
-          {error ? <p className="text-xs text-red-600">{error}</p> : null}
-        </div>
-        <div className="mt-4 flex items-center justify-between">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() =>
-              startTransition(async () => {
-                const result = await onDelete(document.id)
-                if (result.error) return setError(result.error)
-                setOpen(false)
-                router.refresh()
-              })
-            }
-            className="inline-flex items-center gap-1 rounded border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete
-          </button>
-          <div className="flex items-center gap-2">
-            <button type="button" disabled={pending} onClick={() => setOpen(false)} className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700">
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  setError('')
-                  const result = await onUpdate({
-                    documentId: document.id,
-                    title: title.trim(),
-                    description: description.trim() || null,
-                    tags: tags
-                      .split(',')
-                      .map((t) => t.trim())
-                      .filter(Boolean),
-                  })
-                  if (result.error) return setError(result.error)
-                  setOpen(false)
-                  router.refresh()
-                })
-              }
-              className="rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800"
-            >
-              Save
-            </button>
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600"
+        title={t.editDocument}
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+
+      {isOpen && !showDeleteConfirm ? (
+        <div className="fixed inset-0 z-[100] overflow-y-auto">
+          <div className="fixed inset-0 animate-in fade-in bg-black/60 backdrop-blur-sm duration-200" onClick={() => !isPending && setIsOpen(false)} />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-md animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
+              <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <h3 className="text-lg font-bold">{t.editDocument}</h3>
+                    </div>
+                    <button type="button" onClick={() => setIsOpen(false)} disabled={isPending} className="rounded-full p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {error ? (
+                  <div className="mx-4 mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    {error}
+                  </div>
+                ) : null}
+
+                <form id="edit-document-form" onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
+                  <div>
+                    <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-gray-700">{t.editTitle}</label>
+                    <input
+                      type="text"
+                      id="title"
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      disabled={isPending}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="description" className="mb-1.5 block text-sm font-medium text-gray-700">{t.editDescription}</label>
+                    <textarea
+                      id="description"
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                      className="w-full resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      disabled={isPending}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="tags" className="mb-1.5 block text-sm font-medium text-gray-700">{t.editTags}</label>
+                    <input
+                      type="text"
+                      id="tags"
+                      value={formData.tags}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, tags: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      placeholder={t.editTagsPlaceholder}
+                      disabled={isPending}
+                    />
+                  </div>
+                </form>
+
+                <div className="flex flex-col-reverse gap-3 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                  <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50">
+                    <Trash2 className="h-4 w-4" />
+                    {t.editDeleteDocument}
+                  </button>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => setIsOpen(false)} disabled={isPending} className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 sm:flex-none">
+                      {t.editCancel}
+                    </button>
+                    <button type="submit" form="edit-document-form" disabled={isPending} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-70 sm:flex-none">
+                      {isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t.editSaving}
+                        </>
+                      ) : (
+                        t.editSaveChanges
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      ) : null}
+
+      {showDeleteConfirm ? (
+        <div className="fixed inset-0 z-[100] overflow-y-auto">
+          <div className="fixed inset-0 animate-in fade-in bg-black/60 backdrop-blur-sm duration-200" onClick={() => !isDeleting && setShowDeleteConfirm(false)} />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-md animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
+              <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="absolute right-4 top-4 z-10 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50">
+                  <X className="h-5 w-5" />
+                </button>
+
+                <div className="p-6 sm:p-8">
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
+                    <AlertTriangle className="h-8 w-8" />
+                  </div>
+                  <h3 className="mb-2 text-center text-xl font-bold text-gray-900">{t.editDeleteTitle}</h3>
+                  <p className="text-center text-sm leading-relaxed text-gray-600 sm:text-base">
+                    {t.editDeleteConfirm.replace('{title}', document.title)}
+                  </p>
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 bg-gray-50 px-6 py-4 sm:flex-row sm:px-8">
+                  <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50">
+                    {t.editCancel}
+                  </button>
+                  <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-70">
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>{t.editDeleting}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4" />
+                        <span>{t.editDeleteDocument}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }
-

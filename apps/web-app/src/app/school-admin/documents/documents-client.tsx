@@ -36,7 +36,6 @@ interface DocumentsClientProps {
 }
 
 export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslations, explorerTranslations }: DocumentsClientProps) {
-  void uploadTranslations
   void explorerTranslations
   const router = useRouter()
   const { documents, addDocument } = useDocumentsList(initialDocuments)
@@ -72,8 +71,16 @@ export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslati
 
   // Poll for document status updates when documents are processing
   useEffect(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+
     const hasProcessingDocuments = documents.some(
-      doc => doc.processing_status === 'processing' || doc.processing_status === null
+      (doc) => {
+        const status = String(doc.processing_status || '').toLowerCase()
+        return status === '' || status === 'pending' || status === 'uploaded' || status === 'processing'
+      }
     )
 
     if (hasProcessingDocuments) {
@@ -81,12 +88,6 @@ export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslati
       pollingIntervalRef.current = setInterval(() => {
         router.refresh()
       }, 3000)
-    } else {
-      // Stop polling if no documents are processing
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current)
-        pollingIntervalRef.current = null
-      }
     }
 
     // Cleanup on unmount
@@ -104,6 +105,7 @@ export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslati
         workspaceId={workspaceId}
         onUpload={quickUploadDocument}
         onUploadSuccess={handleUploadSuccess}
+        translations={uploadTranslations}
       />
 
       {/* Documents Explorer */}

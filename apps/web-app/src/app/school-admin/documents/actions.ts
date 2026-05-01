@@ -44,6 +44,14 @@ function normalizeTitle(inputTitle?: string, fileName?: string): string {
   return fallback.replace(/\.[^/.]+$/, '')
 }
 
+function normalizeProcessingStatus(value: unknown): 'pending' | 'processing' | 'completed' | 'failed' {
+  const raw = String(value || '').toLowerCase().trim()
+  if (raw === 'ready' || raw === 'completed') return 'completed'
+  if (raw === 'failed' || raw === 'error') return 'failed'
+  if (raw === 'processing' || raw === 'uploaded') return 'processing'
+  return 'pending'
+}
+
 export async function quickUploadDocument(input: QuickUploadInput) {
   const token = await getAccessToken()
   if (!token) return { success: false, error: 'Not authenticated' }
@@ -104,10 +112,10 @@ export async function quickUploadDocument(input: QuickUploadInput) {
           String(payload.document.file_type || payload.document.fileType || mimeType)
         ),
         file_url: String(payload.document.local_path || payload.document.localPath || ''),
-        processing_status:
-          String(payload.document.status || '').toLowerCase() === 'ready'
-            ? 'completed'
-            : String(payload.document.status || '').toLowerCase(),
+        processing_status: normalizeProcessingStatus(payload.document.status),
+        processing_error_message: payload.document.processing_error_message
+          ? String(payload.document.processing_error_message)
+          : null,
         quality_status: payload.document.quality_status || null,
         quality_message: payload.document.quality_message || null,
         total_tokens: Number(payload.document.total_tokens || 0),

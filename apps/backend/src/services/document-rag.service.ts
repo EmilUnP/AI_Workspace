@@ -81,6 +81,81 @@ export class DocumentRagService {
     return { documentId: doc.id, chunks: relevant }
   }
 
+  /**
+   * Backward-compatible core RAG method:
+   * returns extracted text for one document (owner-checked).
+   */
+  async getParsedDocumentText(documentId: string, userId: string): Promise<string | null> {
+    const doc = await this.getDoc(userId, documentId)
+    if (!doc) return null
+    try {
+      return await this.ensureExtractedText(doc)
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Backward-compatible core RAG method:
+   * returns top relevant chunks for one document and query.
+   */
+  async getRelevantChunks(
+    documentId: string,
+    userId: string,
+    query: string,
+    topK = 7
+  ): Promise<string[]> {
+    const doc = await this.getDoc(userId, documentId)
+    if (!doc) return []
+    const text = await this.ensureExtractedText(doc)
+    const chunks = this.chunkText(text, 4000, 400)
+    if (chunks.length === 0) return []
+
+    const embeddings = await this.ensureEmbeddings(doc.id, chunks)
+    const queryForSearch = await this.translateQueryIfNeeded(query, doc.content_language)
+    try {
+      const queryVec = await generateEmbedding(queryForSearch)
+      return this.pickTopChunks(chunks, embeddings, queryVec, Math.max(1, topK))
+    } catch {
+      return chunks.slice(0, Math.max(1, topK))
+    }
+  }
+
+  /**
+   * Backward-compatible core RAG method:
+   * concatenates extracted text from many documents.
+   */
+  async getDocumentsContent(documentIds: string[], userId: string): Promise<string> {
+    const parts: string[] = []
+    for (const documentId of documentIds) {
+      const text = await this.getParsedDocumentText(documentId, userId)
+      if (text && text.trim()) parts.push(text)
+    }
+    return parts.join('\n\n---\n\n')
+  }
+
+  /**
+   * Backward-compatible core RAG method:
+   * concatenates relevant chunks from many documents for one query.
+   */
+  async getRelevantContentFromDocuments(
+    documentIds: string[],
+    userId: string,
+    query: string,
+    chunksPerDocument = 5
+  ): Promise<string> {
+    const relevant: string[] = []
+    for (const documentId of documentIds) {
+      try {
+        const chunks = await this.getRelevantChunks(documentId, userId, query, chunksPerDocument)
+        relevant.push(...chunks)
+      } catch {
+        // skip failed document and continue with others
+      }
+    }
+    return relevant.join('\n\n---\n\n')
+  }
+
   private async processSingle(userId: string, documentId: string) {
     const doc = await this.getDoc(userId, documentId)
     if (!doc) return
