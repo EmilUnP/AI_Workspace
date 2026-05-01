@@ -245,6 +245,8 @@ export function DocumentsExplorer({
           <div className="mt-2 space-y-1.5 text-sm">
             <p className="flex items-center justify-between text-gray-700"><span>PDF</span><span className="font-semibold text-gray-900">{stats.byType.pdf} ({formatFileSize(stats.byTypeSize.pdf)})</span></p>
             <p className="flex items-center justify-between text-gray-700"><span>Word</span><span className="font-semibold text-gray-900">{stats.byType.doc + stats.byType.docx} ({formatFileSize(stats.byTypeSize.doc + stats.byTypeSize.docx)})</span></p>
+            <p className="flex items-center justify-between text-gray-700"><span>Markdown</span><span className="font-semibold text-gray-900">{stats.byType.markdown} ({formatFileSize(stats.byTypeSize.markdown)})</span></p>
+            <p className="flex items-center justify-between text-gray-700"><span>Text</span><span className="font-semibold text-gray-900">{stats.byType.text} ({formatFileSize(stats.byTypeSize.text)})</span></p>
           </div>
         </div>
 
@@ -392,6 +394,16 @@ function DocumentRow({
                 </span>
               ) : null}
             </div>
+            {doc.tags && doc.tags.length > 0 ? (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {doc.tags.slice(0, 4).map((tag, idx) => (
+                  <span key={`${doc.id}-grid-tag-${idx}`} className="inline-flex items-center rounded bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700">
+                    #{String(tag).trim()}
+                  </span>
+                ))}
+                {doc.tags.length > 4 ? <span className="text-xs text-gray-400">+{doc.tags.length - 4}</span> : null}
+              </div>
+            ) : null}
             <div className="mt-2">
               <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${getStatusPillClasses(statusLevel)}`}>{statusLabel}</span>
             </div>
@@ -427,6 +439,28 @@ function DocumentRow({
           <span>{formatFileSize(doc.file_size)}</span>
           <span>·</span>
           <span>{getDateGroupKey(doc.created_at)}</span>
+          {doc.content_language ? (
+            <>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium capitalize text-blue-700">
+                <Globe className="h-3 w-3" />
+                {doc.content_language}
+              </span>
+            </>
+          ) : null}
+          {doc.tags && doc.tags.length > 0 ? (
+            <>
+              <span>·</span>
+              <span className="flex flex-wrap gap-1">
+                {doc.tags.slice(0, 3).map((tag, idx) => (
+                  <span key={`${doc.id}-tag-${idx}`} className="inline-flex items-center rounded bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700">
+                    #{String(tag).trim()}
+                  </span>
+                ))}
+                {doc.tags.length > 3 ? <span className="text-xs text-gray-400">+{doc.tags.length - 3}</span> : null}
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
       <div className="flex flex-shrink-0 items-center gap-2">

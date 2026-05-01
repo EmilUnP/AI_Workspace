@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { DocumentsRepository } from '../repositories/documents.repository.js'
@@ -21,6 +21,17 @@ const updateDocumentSchema = z.object({
   description: z.string().nullable().optional(),
   tags: z.array(z.string()).nullable().optional()
 })
+
+function normalizeStoredFileType(fileType: string, fileName: string): string {
+  const raw = String(fileType || '').toLowerCase()
+  const ext = fileName.split('.').pop()?.toLowerCase() || ''
+  if (raw.includes('pdf') || ext === 'pdf') return 'pdf'
+  if (raw.includes('officedocument.wordprocessingml.document') || ext === 'docx') return 'docx'
+  if (raw.includes('msword') || ext === 'doc') return 'doc'
+  if (raw.includes('markdown') || ext === 'md' || ext === 'markdown') return 'markdown'
+  if (raw.includes('text') || ext === 'txt') return 'text'
+  return raw || 'text'
+}
 
 export class DocumentsService {
   private readonly documentsRepo: DocumentsRepository
@@ -48,7 +59,7 @@ export class DocumentsService {
       ownerUserId: userId,
       title: data.title,
       fileName: data.fileName,
-      fileType: data.fileType,
+      fileType: normalizeStoredFileType(data.fileType, data.fileName),
       fileSize: data.fileSize,
       localPath,
       metadata: data.metadata
@@ -82,6 +93,27 @@ export class DocumentsService {
   }
 
   async delete(userId: string, id: string) {
+    const existing = await this.documentsRepo.getByIdForUser(id, userId)
+    if (!existing) return false
+
+    if (existing.local_path) {
+      const rawPath = existing.local_path.replace(/\\/g, '/')
+      const resolvedPath = path.isAbsolute(existing.local_path)
+        ? existing.local_path
+        : rawPath.startsWith('storage/')
+          ? path.resolve(rawPath)
+          : path.join(env.AI_STORAGE_DIR, rawPath)
+
+      try {
+        await unlink(resolvedPath)
+      } catch (error) {
+        // Ignore missing file; still delete DB record.
+        if (!(error instanceof Error && 'code' in error && (error as { code?: string }).code === 'ENOENT')) {
+          throw error
+        }
+      }
+    }
+
     return this.documentsRepo.deleteForUser(id, userId)
   }
 }

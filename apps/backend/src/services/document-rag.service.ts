@@ -6,7 +6,7 @@ import type { FastifyInstance } from 'fastify'
 import mammoth from 'mammoth'
 import WordExtractor from 'word-extractor'
 import pdfParse from '@cedrugs/pdf-parse'
-import { generateEmbedding, generateJson, generateText } from '../ai/gemini.js'
+import { generateEmbedding, generateText } from '../ai/gemini.js'
 import { env } from '../config/env.js'
 
 const querySchema = z.object({
@@ -245,13 +245,15 @@ export class DocumentRagService {
     const fileBuffer = await readFile(absPath)
     let text = ''
 
-    if (doc.file_type === 'pdf') {
+    const normalizedFileType = String(doc.file_type || '').toLowerCase()
+
+    if (normalizedFileType === 'pdf' || normalizedFileType.includes('pdf')) {
       const parsed = await pdfParse(fileBuffer)
       text = parsed.text || ''
-    } else if (doc.file_type === 'docx') {
+    } else if (normalizedFileType === 'docx' || normalizedFileType.includes('officedocument.wordprocessingml.document')) {
       const parsed = await mammoth.extractRawText({ buffer: fileBuffer })
       text = parsed.value || ''
-    } else if (doc.file_type === 'doc') {
+    } else if (normalizedFileType === 'doc' || normalizedFileType.includes('msword')) {
       const extractor = new WordExtractor()
       const parsed = await extractor.extract(fileBuffer)
       text = parsed.getBody() || ''
@@ -259,7 +261,8 @@ export class DocumentRagService {
       text = fileBuffer.toString('utf8')
     }
 
-    const normalized = this.sanitizeForPostgresText(text.replace(/\s+/g, ' ').trim())
+    const cleaned = this.cleanExtractedText(text)
+    const normalized = this.sanitizeForPostgresText(cleaned.replace(/\s+/g, ' ').trim())
     const fileHash = createHash('sha256').update(normalized).digest('hex')
     await this.app.db.query(
       `UPDATE documents
@@ -280,6 +283,41 @@ export class DocumentRagService {
       return (withoutNull as unknown as { toWellFormed: () => string }).toWellFormed()
     }
     return withoutNull
+  }
+
+  /**
+   * Remove common PDF/OCR artifacts so chunking/embedding focuses on useful text.
+   * This is intentionally conservative to avoid dropping valid educational content.
+   */
+  private cleanExtractedText(raw: string): string {
+    const text = this.sanitizeForPostgresText(raw)
+      .replace(/[^\S\r\n\t]+/g, ' ')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+
+    const lines = text.split('\n')
+    const kept: string[] = []
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+
+      // Drop likely binary/base64 fragments.
+      if (/^[A-Za-z0-9+/=]{120,}$/.test(trimmed)) continue
+
+      // Drop lines that are mostly symbols/noise.
+      const nonWord = (trimmed.match(/[^\p{L}\p{N}\s]/gu) || []).length
+      const ratio = nonWord / trimmed.length
+      if (trimmed.length < 40 && ratio > 0.45) continue
+
+      // Drop obvious repeated-character artifacts.
+      if (/(.)\1{8,}/.test(trimmed)) continue
+
+      kept.push(trimmed)
+    }
+
+    return kept.join('\n').replace(/\n{3,}/g, '\n\n')
   }
 
   private safeJsonStringify(value: unknown, fallback: string): string {
@@ -359,20 +397,88 @@ export class DocumentRagService {
     if (text.length < 500) {
       return { status: 'low_quality', message: 'Low text volume. AI output quality may be limited.' }
     }
+    const symbols = (text.match(/[^\p{L}\p{N}\s]/gu) || []).length
+    const symbolRatio = symbols / text.length
+    if (symbolRatio > 0.35) {
+      return { status: 'low_quality', message: 'Text contains many non-text artifacts; RAG quality may be limited.' }
+    }
     return { status: 'good', message: 'Text extracted and indexed successfully.' }
   }
 
-  private async detectLanguage(text: string) {
-    const sample = text.slice(0, 2000)
-    try {
-      const result = await generateJson<{ language: string }>(
-        `Detect the dominant language of this text and return an ISO code.\nText:\n${sample}`
-      )
-      const lang = String(result.language || '').trim().toLowerCase()
-      return lang || 'en'
-    } catch {
+  private normalizeLanguageCode(raw: string): string {
+    const value = raw.trim().toLowerCase()
+    if (!value) return ''
+    const isoMatch = value.match(/\b(en|ru|tr|az|ar|es|fr|de|uk|fa)\b/)
+    if (isoMatch?.[1]) return isoMatch[1]
+    const aliases: Record<string, string> = {
+      english: 'en',
+      russian: 'ru',
+      turkish: 'tr',
+      azerbaijani: 'az',
+      azeri: 'az',
+      arabic: 'ar',
+      spanish: 'es',
+      french: 'fr',
+      german: 'de',
+      ukrainian: 'uk',
+      persian: 'fa',
+      farsi: 'fa',
+    }
+    for (const [name, code] of Object.entries(aliases)) {
+      if (value === name || value.includes(name)) return code
+    }
+    if (/^[a-z]{2}(-[a-z]{2})?$/.test(value)) return value.slice(0, 2)
+    return ''
+  }
+
+  private detectLanguageByScript(text: string): string | null {
+    const sample = text.slice(0, 4000)
+    if (!sample) return null
+    const cyr = (sample.match(/\p{Script=Cyrillic}/gu) || []).length
+    const arab = (sample.match(/\p{Script=Arabic}/gu) || []).length
+    const latin = (sample.match(/\p{Script=Latin}/gu) || []).length
+    const total = cyr + arab + latin
+    if (total < 50) return null
+    if (cyr / total > 0.35) return 'ru'
+    if (arab / total > 0.35) return 'ar'
+    if (latin / total > 0.5) {
+      // Azerbaijani-specific letters.
+      const azChars = (sample.match(/[əğıöüşçƏĞIİÖÜŞÇ]/g) || []).length
+      // Turkish-specific letters (without Azerbaijani ə).
+      const trChars = (sample.match(/[ğıöüşçİIĞÖÜŞÇ]/g) || []).length
+      const lower = sample.toLowerCase()
+      const azWords = (lower.match(/\b(və|üçün|ilə|kimi|olan|dərs|mətn)\b/g) || []).length
+      const trWords = (lower.match(/\b(ve|için|ile|olarak|ders|metin)\b/g) || []).length
+      if (azChars >= 3 || azWords >= 2) return 'az'
+      if (trChars >= 3 || trWords >= 2) return 'tr'
       return 'en'
     }
+    return null
+  }
+
+  private async detectLanguage(text: string) {
+    const sample = text.slice(0, 3000).trim()
+    if (!sample) return 'en'
+
+    // Fast heuristic first.
+    const heuristic = this.detectLanguageByScript(sample)
+    if (heuristic && heuristic !== 'en') return heuristic
+
+    try {
+      const answer = await generateText(
+        `Detect dominant language of the following text.
+Return ONLY a 2-letter ISO 639-1 code (like en, ru, az, tr, ar, es, fr, de).
+Text:
+${sample}`
+      )
+      const normalized = this.normalizeLanguageCode(answer)
+      if (normalized) return normalized
+    } catch {
+      // fallback below
+    }
+
+    // Final fallback prefers heuristic result over hardcoded English.
+    return heuristic || this.detectLanguageByScript(sample) || 'en'
   }
 
   private async translateQueryIfNeeded(query: string, contentLanguage: string | null) {
