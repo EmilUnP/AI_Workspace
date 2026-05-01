@@ -2,6 +2,8 @@ import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { getCurrentUser } from '@/lib/backend-auth'
+import { mapLessonToViewData } from '@/lib/lesson-view-data'
+import { LessonTabsClient } from './lesson-tabs-client'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
@@ -13,7 +15,7 @@ import {
   Target,
   BookOpen,
 } from 'lucide-react'
-import { LessonTabs, AudioPlayer, LessonActions } from '@eduator/ui'
+import { AudioPlayer, LessonActions } from '@eduator/ui'
 import { updateLesson, regenerateAudio, deleteLesson } from '../actions'
 
 interface PageProps {
@@ -38,7 +40,6 @@ type LessonRecord = {
   documents?: { title?: string } | Array<{ title?: string }> | null
 }
 
-const LessonTabsAny = LessonTabs as any
 const AudioPlayerAny = AudioPlayer as any
 const LessonActionsAny = LessonActions as any
 
@@ -92,18 +93,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
     notFound()
   }
   
-  // Extract content text
-  const contentText = typeof lesson.content === 'object' && lesson.content && 'text' in lesson.content 
-    ? (lesson.content as { text: string }).text 
-    : typeof lesson.content === 'string' 
-      ? lesson.content 
-      : ''
-  
-  // Parse images and mini test
-  const images = Array.isArray(lesson.images) ? lesson.images : []
-  const miniTest = Array.isArray(lesson.mini_test) ? lesson.mini_test : []
-  const examples = lesson.metadata?.examples || []
-  const objectives = Array.isArray(lesson.learning_objectives) ? lesson.learning_objectives : []
+  const { contentText, images, miniTest, examples, objectives, centerText } = mapLessonToViewData(lesson)
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -262,12 +252,12 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
         )}
         
         {/* Tabbed Content */}
-        <LessonTabsAny 
+        <LessonTabsClient
           content={contentText} 
           images={images} 
           miniTest={miniTest} 
           examples={examples}
-          centerText={lesson.metadata?.generation_options?.centerText ?? false}
+          centerText={centerText}
           labels={{
             tabContent: tl('tabContent', 'Content'),
             tabExamples: tl('tabExamples', 'Examples'),
@@ -278,10 +268,6 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
             scoreLabel: tl('scoreLabel', 'Score'),
             noExamples: tl('noExamples', 'No examples'),
             noTestQuestions: tl('noTestQuestions', 'No test questions'),
-            contentsLabel: tl('contentsLabel', 'Contents'),
-            expand: tl('expand', 'Expand'),
-            collapse: tl('collapse', 'Collapse'),
-            fullScreen: tl('fullScreen', 'Full screen'),
           }}
         />
         

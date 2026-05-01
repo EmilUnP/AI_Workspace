@@ -1,4 +1,8 @@
 import type { FastifyInstance } from 'fastify'
+import { createReadStream } from 'node:fs'
+import { access } from 'node:fs/promises'
+import path from 'node:path'
+import { env } from '../config/env.js'
 
 type LessonRow = {
   id: string
@@ -174,7 +178,10 @@ export async function lessonsRoutes(app: FastifyInstance) {
         created_at: lesson.created_at,
         duration_minutes: lesson.duration_minutes ?? 45,
         is_published: lesson.is_published ?? false,
-        audio_url: lesson.audio_url,
+        audio_url:
+          lesson.audio_url ||
+          ((lesson.metadata as Record<string, unknown> | null)?.audio_url as string | null) ||
+          null,
         content: lesson.content,
         images: lesson.images,
         mini_test: lesson.mini_test,
@@ -183,5 +190,53 @@ export async function lessonsRoutes(app: FastifyInstance) {
         documents: lesson.document_title ? { title: lesson.document_title } : null,
       },
     })
+  })
+
+  app.get('/lessons/:id/media/:file', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+
+    const { id, file } = request.params as { id: string; file: string }
+    const { rows } = await app.db.query<{ id: string }>('SELECT id FROM lessons WHERE id = $1 AND user_id = $2 LIMIT 1', [id, userId])
+    if (!rows[0]) return reply.code(404).send({ error: 'Lesson not found' })
+
+    const safeFile = path.basename(file)
+    const mediaPath = path.join(env.AI_STORAGE_DIR, 'lessons', id, safeFile)
+    try {
+      await access(mediaPath)
+    } catch {
+      return reply.code(404).send({ error: 'Media file not found' })
+    }
+
+    const ext = path.extname(safeFile).toLowerCase()
+    const contentType =
+      ext === '.wav'
+        ? 'audio/wav'
+        : ext === '.png'
+          ? 'image/png'
+          : ext === '.svg'
+            ? 'image/svg+xml'
+          : ext === '.jpg' || ext === '.jpeg'
+            ? 'image/jpeg'
+            : 'application/octet-stream'
+
+    reply.header('Content-Type', contentType)
+    reply.send(createReadStream(mediaPath))
+  })
+
+  app.delete('/lessons/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+
+    const { id } = request.params as { id: string }
+    const { rows } = await app.db.query<{ id: string }>(
+      `DELETE FROM lessons
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
+      [id, userId]
+    )
+
+    if (!rows[0]) return reply.code(404).send({ error: 'Lesson not found' })
+    return reply.send({ ok: true })
   })
 }

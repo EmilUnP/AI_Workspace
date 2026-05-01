@@ -6,24 +6,20 @@ import Image from 'next/image'
 import { 
   GraduationCap, 
   Clock, 
-  CheckCircle, 
   Calendar,
   Sparkles,
   Search,
   BookOpen,
   Target,
   ArrowLeft,
-  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
   getTeacherLessons,
   TEACHER_LESSONS_PER_PAGE,
 } from '@eduator/core/utils/teacher-lessons'
-import { LessonRowActions, PaginationFooter } from '@eduator/ui'
-import { deleteLesson } from './actions'
+import { PaginationFooter } from '@eduator/ui'
 
-const LessonRowActionsAny = LessonRowActions as any
 const PaginationFooterAny = PaginationFooter as any
 
 const LANGUAGE_TO_COUNTRY: Record<string, string> = {
@@ -53,7 +49,7 @@ async function getAdminInfo() {
 export default async function SchoolAdminLessonsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; page?: string; classId?: string }>
+  searchParams: Promise<{ search?: string; page?: string }>
 }) {
   const adminData = await getAdminInfo()
   if (!adminData) redirect('/school-admin')
@@ -152,14 +148,11 @@ export default async function SchoolAdminLessonsPage({
                         href={`/school-admin/lessons/${lesson.id}`}
                         className="flex items-center gap-3 min-w-0 flex-1"
                       >
-                        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${lesson.is_published ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                           <BookOpen className="h-5 w-5" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-gray-900 truncate">{lesson.title}</p>
-                        {lesson.className && (
-                          <p className="text-sm text-gray-500 truncate">{lesson.className}</p>
-                        )}
                         </div>
                       </Link>
                     {lesson.languages.length > 0 && (
@@ -185,36 +178,6 @@ export default async function SchoolAdminLessonsPage({
                       </div>
                     )}
                     </div>
-<LessonRowActionsAny
-                      lessonId={lesson.id}
-                      isPublished={lesson.is_published}
-                      onDeleteLesson={deleteLesson}
-                      labels={{
-                        viewLessonTitle: t('viewLessonTitle'),
-                        deleteLessonTitle: t('deleteLessonTitle'),
-                        deleteConfirmTitle: t('deleteConfirmTitle'),
-                        deleteConfirmMessage: t('deleteConfirmMessage'),
-                        cancel: t('cancel'),
-                        deleting: t('deleting'),
-                      }}
-                    />
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="text-gray-500 font-medium">{t('usedIn')}</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {lesson.usedInClass && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-700 border border-blue-200" title={t('sharedInClass')}>
-                          <Users className="h-3 w-3" />
-                          {lesson.className || t('classBadge')}
-                        </span>
-                      )}
-                      {lesson.usedInCalendar && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700 border border-amber-200" title={t('scheduledInCalendar')}>
-                          <Calendar className="h-3 w-3" />
-                          {t('calendarBadge')}
-                        </span>
-                      )}
-                    </div>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <div className="flex items-center gap-3 text-sm">
@@ -232,17 +195,20 @@ export default async function SchoolAdminLessonsPage({
                         </>
                       )}
                     </div>
-                    {lesson.is_published ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
-                        <CheckCircle className="h-3 w-3" />
-                        {t('inClass')}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700">
-                        <Clock className="h-3 w-3" />
-                        {t('unused')}
-                      </span>
-                    )}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <a
+                      href={`/school-admin/lessons/${lesson.id}`}
+                      className="relative z-10 inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                    >
+                      View details
+                    </a>
+                    <a
+                      href={`/school-admin/lessons/delete/${lesson.id}`}
+                      className="relative z-10 inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+                    >
+                      Delete
+                    </a>
                   </div>
                 </div>
               ))}
@@ -256,9 +222,6 @@ export default async function SchoolAdminLessonsPage({
                     {t('lesson')}
                   </th>
                   <th scope="col" className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {t('usedIn')}
-                  </th>
-                  <th scope="col" className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                     {t('languages')}
                   </th>
                   <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">
@@ -266,9 +229,6 @@ export default async function SchoolAdminLessonsPage({
                   </th>
                   <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">
                     {t('objectives')}
-                  </th>
-                  <th scope="col" className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {t('status')}
                   </th>
                   <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">
                     {t('created')}
@@ -288,29 +248,13 @@ export default async function SchoolAdminLessonsPage({
                           href={`/school-admin/lessons/${lesson.id}`}
                           className="flex items-center gap-3 hover:opacity-80 flex-1 min-w-0"
                         >
-                          <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${lesson.is_published ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                             <BookOpen className="h-5 w-5" />
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900">{lesson.title}</p>
                           </div>
                         </Link>
-                      </div>
-                    </td>
-                    <td className="px-3 py-4">
-                      <div className="flex flex-wrap gap-1.5">
-                        {lesson.usedInClass && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 border border-blue-200" title={t('sharedInClass')}>
-                            <Users className="h-3 w-3" />
-                            {lesson.className || t('classBadge')}
-                          </span>
-                        )}
-                        {lesson.usedInCalendar && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 border border-amber-200" title={t('scheduledInCalendar')}>
-                            <Calendar className="h-3 w-3" />
-                            {t('calendarBadge')}
-                          </span>
-                        )}
                       </div>
                     </td>
 
@@ -360,21 +304,6 @@ export default async function SchoolAdminLessonsPage({
                       </div>
                     </td>
 
-                    {/* Status */}
-                    <td className="whitespace-nowrap px-3 py-4">
-                      {lesson.is_published ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
-                          <CheckCircle className="h-3 w-3" />
-                          {t('inClass')}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700">
-                          <Clock className="h-3 w-3" />
-                          {t('unused')}
-                        </span>
-                      )}
-                    </td>
-
                     {/* Created */}
                     <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
                       <div className="flex items-center gap-1.5">
@@ -389,20 +318,19 @@ export default async function SchoolAdminLessonsPage({
 
                     {/* Actions */}
                     <td className="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
-                      <div className="flex items-center justify-end">
-<LessonRowActionsAny
-                      lessonId={lesson.id}
-                      isPublished={lesson.is_published}
-                      onDeleteLesson={deleteLesson}
-                      labels={{
-                        viewLessonTitle: t('viewLessonTitle'),
-                        deleteLessonTitle: t('deleteLessonTitle'),
-                        deleteConfirmTitle: t('deleteConfirmTitle'),
-                        deleteConfirmMessage: t('deleteConfirmMessage'),
-                        cancel: t('cancel'),
-                        deleting: t('deleting'),
-                      }}
-                    />
+                      <div className="flex items-center justify-end gap-2">
+                        <a
+                          href={`/school-admin/lessons/${lesson.id}`}
+                          className="relative z-10 inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                        >
+                          View details
+                        </a>
+                        <a
+                          href={`/school-admin/lessons/delete/${lesson.id}`}
+                          className="relative z-10 inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+                        >
+                          Delete
+                        </a>
                       </div>
                     </td>
                   </tr>
@@ -423,7 +351,6 @@ export default async function SchoolAdminLessonsPage({
             baseUrl="/school-admin/lessons"
             searchParams={{
               search: params.search,
-              classId: params.classId,
             }}
           />
           {params.search && (

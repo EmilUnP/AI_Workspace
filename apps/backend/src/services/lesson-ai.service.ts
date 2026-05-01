@@ -1,7 +1,9 @@
 import { z } from 'zod'
-import { generateJson, generateText } from '../ai/gemini.js'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateText } from '../ai/gemini.js'
 import { DocumentRagService } from './document-rag.service.js'
 import type { FastifyInstance } from 'fastify'
+import { generateLessonAudioWithUsage, generateLessonImagesWithUsage } from './lesson-media.service.js'
 
 const lessonSchema = z.object({
   documentId: z.uuid().optional(),
@@ -111,6 +113,14 @@ const languageCodeToName = (language?: string) => {
   const code = language.trim().toLowerCase()
   return LANGUAGE_NAMES[code] ?? language
 }
+
+const defaultObjectivesForTopic = (topic: string): string[] => [
+  `Understand the core ideas of ${topic}.`,
+  `Explain key terms and concepts related to ${topic}.`,
+  `Apply ${topic} in practical classroom examples.`,
+  `Compare common cases and variations of ${topic}.`,
+  `Evaluate understanding through short assessment tasks.`,
+]
 
 const getFallbackPhrases = (languageCode?: string) => {
   const code = languageCode?.toLowerCase() || 'en'
@@ -222,6 +232,123 @@ const sanitizeExplanation = (explanation: unknown): string => {
   return cleaned || raw
 }
 
+const looksMostlyEnglish = (text: string) => {
+  const lower = text.toLowerCase()
+  const markers = [' the ', ' and ', ' of ', ' is ', ' are ', ' this ', ' lesson ', ' introduction ']
+  const hits = markers.reduce((acc, m) => acc + (lower.includes(m) ? 1 : 0), 0)
+  return hits >= 3
+}
+
+const estimateLessonDuration = (content: string, examplesCount: number, questionsCount: number) => {
+  const words = content.split(/\s+/).filter(Boolean).length
+  const readingMinutes = Math.ceil(words / 190)
+  const examplesMinutes = examplesCount * 2
+  const testMinutes = Math.ceil(questionsCount * 0.8)
+  return Math.max(10, Math.min(180, readingMinutes + examplesMinutes + testMinutes))
+}
+
+const LESSON_SYSTEM_INSTRUCTION = `You are an expert educational content creator.
+Generate comprehensive, practical, structured lessons.
+Rules:
+- Output only lesson content and educational structure; no disclaimers/meta-commentary.
+- Keep markdown clean and readable (##/### headings, bullets, numbered lists, tables where useful).
+- Ensure mini test is high quality and directly tied to lesson content.
+- Keep explanations direct; avoid filler like "According to the text".`
+
+const getApiKey = () => {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
+  if (!apiKey) throw new Error('Missing GOOGLE_GENERATIVE_AI_KEY or GOOGLE_GEMINI_API_KEY')
+  return apiKey
+}
+
+const getLessonModel = (systemInstruction: string, modelName = 'gemini-2.0-flash') => {
+  const client = new GoogleGenerativeAI(getApiKey())
+  return client.getGenerativeModel({
+    model: modelName,
+    systemInstruction: {
+      role: 'system',
+      parts: [{ text: systemInstruction }],
+    },
+    generationConfig: {
+      temperature: 0.7,
+      topP: 0.8,
+      topK: 40,
+      maxOutputTokens: 65536,
+    },
+  })
+}
+
+const recoverLessonFromRawResponse = (raw: string, fallbackTitle: string): { content: string; title: string } | null => {
+  const clean = raw.trim().replace(/^```json?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+  let content: string | null = null
+  let title: string | null = null
+  const titleMatch = clean.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/)
+  if (titleMatch) {
+    title = titleMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim()
+  }
+  const contentKey = '"content"'
+  const keyIdx = clean.indexOf(contentKey)
+  if (keyIdx === -1) return null
+  const afterKey = clean.slice(keyIdx + contentKey.length)
+  const valueMatch = afterKey.match(/\s*:\s*"/)
+  if (!valueMatch || valueMatch.index === undefined) return null
+  const start = keyIdx + contentKey.length + valueMatch.index + valueMatch[0].length
+  let out = ''
+  let i = start
+  while (i < clean.length) {
+    const c = clean[i]
+    if (c === '\\') {
+      if (i + 1 < clean.length) {
+        const next = clean[i + 1]
+        if (next === 'n') out += '\n'
+        else if (next === 't') out += '\t'
+        else if (next === '"') out += '"'
+        else out += next
+        i++
+      }
+      i++
+      continue
+    }
+    if (c === '"') {
+      const rest = clean.slice(i + 1).trimStart()
+      if (rest.startsWith(',') || rest.startsWith('}')) {
+        content = out.trim()
+        break
+      }
+      out += c
+      i++
+      continue
+    }
+    out += c
+    i++
+  }
+  if (!content || content.length < 20) return null
+  return { content, title: title ?? fallbackTitle }
+}
+
+const safeJsonParse = <T extends { title: string; content: string }>(text: string, fallback: T): T => {
+  try {
+    let cleanText = text.trim()
+    if (cleanText.startsWith('```json')) cleanText = cleanText.slice(7)
+    else if (cleanText.startsWith('```')) cleanText = cleanText.slice(3)
+    if (cleanText.endsWith('```')) cleanText = cleanText.slice(0, -3)
+    cleanText = cleanText.trim()
+    const extracted = extractFirstJsonObject(cleanText)
+    if (extracted) return JSON.parse(extracted) as T
+    return JSON.parse(cleanText) as T
+  } catch {
+    const recovered = recoverLessonFromRawResponse(text, fallback.title)
+    if (recovered && recovered.content.length > 0) {
+      return {
+        ...fallback,
+        title: recovered.title,
+        content: recovered.content,
+      } as T
+    }
+    return fallback
+  }
+}
+
 export class LessonAiService {
   private readonly rag: DocumentRagService
   constructor(private readonly app: FastifyInstance) {
@@ -233,6 +360,8 @@ export class LessonAiService {
     const targetLanguage = languageCodeToName(data.language)
     const fallback = getFallbackPhrases(data.language)
     const options = data.options || {}
+    const includeImages = options.includeImages !== false
+    const includeAudio = options.includeAudio !== false
 
     const allSelectedDocIds = Array.from(
       new Set([...(data.documentIds || []), ...(data.documentId ? [data.documentId] : [])])
@@ -275,6 +404,7 @@ Output rules:
 - Return ONLY valid JSON object.
 - No disclaimers/meta text like "impossible to create".
 - Use clean markdown in content with headings and lists.
+- STRICT LANGUAGE RULE: ALL output fields must be in ${targetLanguage}. Do not output English unless target language is English.
 Return ONLY valid JSON with exact keys:
 {
   "title": "string",
@@ -289,11 +419,27 @@ Return ONLY valid JSON with exact keys:
     let lesson: z.infer<typeof generatedLessonSchema>
     let rawModelText = ''
     try {
-      const raw = await generateText(generationPrompt)
-      rawModelText = raw
-      const extracted = extractFirstJsonObject(raw)
-      const generated = extracted ? JSON.parse(extracted) : await generateJson<unknown>(generationPrompt)
-      const parsed = generatedLessonSchema.safeParse(generated)
+      const languageSystemInstruction =
+        targetLanguage !== 'English'
+          ? `${LESSON_SYSTEM_INSTRUCTION}\nCRITICAL: Generate ALL fields EXCLUSIVELY in ${targetLanguage}.`
+          : LESSON_SYSTEM_INSTRUCTION
+      const model = getLessonModel(languageSystemInstruction)
+      const response = await model.generateContent(generationPrompt)
+      const text = response.response?.text() || '{}'
+      rawModelText = text
+      const parsedJson = safeJsonParse(
+        text,
+        {
+          title: fallback.title,
+          description: `Lesson about ${data.topic}`,
+          duration_minutes: 0,
+          learning_objectives: [],
+          content: `# ${fallback.title}\n\nContent is being prepared.`,
+          examples: [],
+          mini_test: [],
+        }
+      )
+      const parsed = generatedLessonSchema.safeParse(parsedJson)
       if (!parsed.success) throw new Error('Invalid lesson JSON shape')
       lesson = {
         ...parsed.data,
@@ -302,40 +448,55 @@ Return ONLY valid JSON with exact keys:
     } catch {
       // Fallback keeps endpoint resilient if model returns non-JSON text.
       try {
-        const text = await generateText(`${generationPrompt}\n\nReturn lesson content as plain text.`)
-        lesson = {
-          title: data.topic.trim().slice(0, 120) || fallback.title,
-          description: `Lesson about ${data.topic}`,
-          duration_minutes: 45,
-          learning_objectives: data.objectives
-            ? data.objectives
-                .split(/\n|,|;/)
-                .map((x) => x.trim())
-                .filter(Boolean)
-                .slice(0, 8)
-            : [],
-          content: normalizeLessonContent(text.trim() || `Generated lesson content for: ${data.topic}`),
-          examples: [
-            {
-              title: targetLanguage === 'English' ? 'Example' : fallback.title,
-              description: targetLanguage === 'English' ? 'Example related to the topic' : fallback.question,
-            },
-          ],
-          mini_test: [
-            {
-              question: fallback.question,
-              options: ['Option A', 'Option B', 'Option C', 'Option D'],
-              correct_answer: 0,
-              explanation: fallback.explanation,
-            },
-          ],
+        const raw = await generateText(generationPrompt)
+        rawModelText = raw
+        const extracted = extractFirstJsonObject(raw)
+        if (extracted) {
+          const parsed = generatedLessonSchema.safeParse(JSON.parse(extracted))
+          if (parsed.success) {
+            lesson = {
+              ...parsed.data,
+              content: normalizeLessonContent(parsed.data.content),
+            }
+          } else {
+            throw new Error('Invalid extracted JSON shape')
+          }
+        } else {
+          const text = await generateText(`${generationPrompt}\n\nReturn lesson content as plain text.`)
+          lesson = {
+            title: data.topic.trim().slice(0, 120) || fallback.title,
+            description: `Lesson about ${data.topic}`,
+            duration_minutes: 0,
+            learning_objectives: data.objectives
+              ? data.objectives
+                  .split(/\n|,|;/)
+                  .map((x) => x.trim())
+                  .filter(Boolean)
+                  .slice(0, 8)
+              : [],
+            content: normalizeLessonContent(text.trim() || `Generated lesson content for: ${data.topic}`),
+            examples: [
+              {
+                title: targetLanguage === 'English' ? 'Example' : fallback.title,
+                description: targetLanguage === 'English' ? 'Example related to the topic' : fallback.question,
+              },
+            ],
+            mini_test: [
+              {
+                question: fallback.question,
+                options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                correct_answer: 0,
+                explanation: fallback.explanation,
+              },
+            ],
+          }
         }
       } catch {
         // Final fallback when AI provider is unavailable or key/model is invalid.
         lesson = {
           title: data.topic.trim().slice(0, 120) || fallback.title,
           description: `Lesson about ${data.topic}`,
-          duration_minutes: 45,
+          duration_minutes: 0,
           learning_objectives: data.objectives
             ? data.objectives
                 .split(/\n|,|;/)
@@ -343,35 +504,19 @@ Return ONLY valid JSON with exact keys:
                 .filter(Boolean)
                 .slice(0, 8)
             : [],
-          content: [
+          content: normalizeLessonContent([
             `# ${data.topic}`,
             '',
-            `Language: ${data.language}`,
-            `Grade level: ${data.gradeLevel || 'N/A'}`,
-            '',
-            data.corePrompt?.trim() ? `Teacher prompt: ${data.corePrompt.trim()}` : '',
+            `Language: ${targetLanguage}`,
             '',
             '## Introduction',
-            `This lesson introduces "${data.topic}" with clear explanations and classroom-ready structure.`,
+            `Core overview of ${data.topic}.`,
             '',
             '## Key Concepts',
-            '- Define the topic and core terminology.',
-            '- Explain practical examples.',
-            '- Connect the concept to real-world contexts.',
-            '',
-            '## Classroom Activity',
-            '1. Warm-up discussion (5 min)',
-            '2. Guided explanation (20 min)',
-            '3. Practice task (15 min)',
-            '4. Reflection and recap (5 min)',
-            '',
-            '## Quick Check',
-            '- What is the main idea of this lesson?',
-            '- Give one real-world example.',
-            '- What question do you still have?',
-          ]
-            .filter(Boolean)
-            .join('\n'),
+            '- Main concept 1',
+            '- Main concept 2',
+            '- Main concept 3',
+          ].join('\n')),
           examples: [
             {
               title: targetLanguage === 'English' ? 'Example' : fallback.title,
@@ -402,6 +547,9 @@ Return ONLY valid JSON with exact keys:
     }
     if (!Array.isArray(lesson.examples)) lesson.examples = []
     if (!Array.isArray(lesson.mini_test)) lesson.mini_test = []
+    if (lesson.learning_objectives.length === 0) {
+      lesson.learning_objectives = defaultObjectivesForTopic(data.topic)
+    }
     if (lesson.examples.length === 0) {
       lesson.examples = [
         {
@@ -410,7 +558,7 @@ Return ONLY valid JSON with exact keys:
         },
       ]
     }
-    while (lesson.mini_test.length < 3) {
+    while (lesson.mini_test.length < 5) {
       lesson.mini_test.push({
         question: fallback.question,
         options: ['Option A', 'Option B', 'Option C', 'Option D'],
@@ -423,13 +571,27 @@ Return ONLY valid JSON with exact keys:
       explanation: sanitizeExplanation(item.explanation) || fallback.explanation,
     }))
 
-    const wordCount = lesson.content.split(/\s+/).filter(Boolean).length
-    const estimatedMinutes = Math.max(5, Math.ceil(wordCount / 200) + lesson.examples.length + Math.ceil(lesson.mini_test.length * 0.5))
-    lesson.duration_minutes = lesson.duration_minutes || estimatedMinutes
+    if (data.language?.toLowerCase() === 'tr' && looksMostlyEnglish(lesson.content)) {
+      try {
+        const translated = await generateText(
+          `Translate the following lesson content into Turkish. Keep markdown structure unchanged.\n\n${lesson.content}`
+        )
+        if (translated.trim().length > 50) {
+          lesson.content = normalizeLessonContent(translated)
+        }
+      } catch {
+        // keep original if translation fails
+      }
+    }
+
+    lesson.duration_minutes = estimateLessonDuration(lesson.content, lesson.examples.length, lesson.mini_test.length)
+
+    let generatedImages: Array<{ url: string; alt: string; description: string; position: 'top' | 'middle' | 'bottom' }> = []
+    let imageUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string } | null = null
 
     const { rows } = await this.app.db.query<{ id: string }>(
-      `INSERT INTO lessons (user_id, document_id, title, description, subject, grade_level, topic, duration_minutes, content, learning_objectives, mini_test, language)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12)
+      `INSERT INTO lessons (user_id, document_id, title, description, subject, grade_level, topic, duration_minutes, content, learning_objectives, mini_test, images, metadata, language)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14)
        RETURNING id`,
       [
         userId,
@@ -443,10 +605,76 @@ Return ONLY valid JSON with exact keys:
         JSON.stringify({ text: lesson.content }),
         JSON.stringify(lesson.learning_objectives || []),
         JSON.stringify(lesson.mini_test || []),
+        JSON.stringify(generatedImages),
+        JSON.stringify({
+          generation_mode: generationMode,
+          rag_document_count: allSelectedDocIds.length,
+          source_documents: allSelectedDocIds,
+          generation_options: options,
+          image_generation: imageUsage,
+          examples: lesson.examples || [],
+          core_prompt: data.corePrompt || null,
+          custom_objectives: data.objectives || null,
+        }),
         data.language
       ]
     )
 
-    return { id: rows[0].id, ...lesson }
+    const lessonId = rows[0].id
+
+    if (includeImages) {
+      try {
+        const imageResult = await generateLessonImagesWithUsage(lessonId, lesson.title || data.topic, lesson.content, 3)
+        if (imageResult.images.length > 0) {
+          await this.app.db.query('UPDATE lessons SET images = $2::jsonb, updated_at = now() WHERE id = $1', [
+            lessonId,
+            JSON.stringify(imageResult.images),
+          ])
+          generatedImages = imageResult.images
+          imageUsage = imageResult.usage
+          await this.app.db.query(
+            `UPDATE lessons
+             SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+                 updated_at = now()
+             WHERE id = $1`,
+            [lessonId, JSON.stringify({ image_generation: imageUsage })]
+          )
+        }
+      } catch {
+        // image generation is optional, do not fail lesson
+      }
+    }
+
+    let audioUrl: string | null = null
+    if (includeAudio) {
+      void (async () => {
+        try {
+          const tts = await generateLessonAudioWithUsage(lessonId, lesson.title, lesson.content)
+          if (!tts.audioUrl) return
+          audioUrl = tts.audioUrl
+          try {
+            await this.app.db.query('UPDATE lessons SET audio_url = $2, updated_at = now() WHERE id = $1', [lessonId, tts.audioUrl])
+          } catch {
+            await this.app.db.query(
+              `UPDATE lessons
+               SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+                   updated_at = now()
+               WHERE id = $1`,
+              [
+                lessonId,
+                JSON.stringify({
+                  audio_url: tts.audioUrl,
+                  tts_usage: tts.usage,
+                }),
+              ]
+            )
+          }
+        } catch {
+          // tts is optional
+        }
+      })()
+    }
+
+    return { id: lessonId, ...lesson, images: generatedImages, audio_url: audioUrl }
   }
 }

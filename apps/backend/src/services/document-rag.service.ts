@@ -34,6 +34,11 @@ type DocRow = {
   quality_message: string | null
 }
 
+type DocumentChunksData = {
+  chunks: string[]
+  embeddings: number[][] | null
+}
+
 export class DocumentRagService {
   private static readonly queue: Array<{ userId: string; documentId: string }> = []
   private static processing = false
@@ -108,14 +113,15 @@ export class DocumentRagService {
     const doc = await this.getDoc(userId, documentId)
     if (!doc) return []
     const text = await this.ensureExtractedText(doc)
-    const chunks = this.chunkText(text, 4000, 400)
+    const { chunks, embeddings } = await this.getDocumentChunks(doc.id, text)
     if (chunks.length === 0) return []
-
-    const embeddings = await this.ensureEmbeddings(doc.id, chunks)
     const queryForSearch = await this.translateQueryIfNeeded(query, doc.content_language)
     try {
       const queryVec = await generateEmbedding(queryForSearch)
-      return this.pickTopChunks(chunks, embeddings, queryVec, Math.max(1, topK))
+      if (embeddings && embeddings.length === chunks.length) {
+        return this.pickTopChunks(chunks, embeddings, queryVec, Math.max(1, topK))
+      }
+      return chunks.slice(0, Math.max(1, topK))
     } catch {
       return chunks.slice(0, Math.max(1, topK))
     }
@@ -331,14 +337,86 @@ export class DocumentRagService {
 
   private chunkText(text: string, chunkSize: number, overlap: number) {
     const chunks: string[] = []
-    let index = 0
-    while (index < text.length) {
-      const end = Math.min(index + chunkSize, text.length)
-      chunks.push(this.sanitizeForPostgresText(text.slice(index, end).trim()))
-      if (end === text.length) break
-      index = end - overlap
+    const cleanText = text.replace(/\s+/g, ' ').trim()
+    if (!cleanText) return chunks
+
+    // Prefer sentence boundaries for semantic chunking quality.
+    const sentences = cleanText.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0)
+    if (sentences.length === 0) {
+      let index = 0
+      while (index < cleanText.length) {
+        const end = Math.min(index + chunkSize, cleanText.length)
+        chunks.push(this.sanitizeForPostgresText(cleanText.slice(index, end).trim()))
+        if (end === cleanText.length) break
+        index = end - overlap
+      }
+      return chunks.filter((c) => c.length > 100)
     }
-    return chunks.filter((c) => c.length > 50)
+
+    let currentChunk = ''
+    let chunkStartIndex = 0
+
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i]
+      const potentialChunk = currentChunk ? `${currentChunk} ${sentence}` : sentence
+      if (potentialChunk.length > chunkSize && currentChunk) {
+        chunks.push(this.sanitizeForPostgresText(currentChunk.trim()))
+
+        const overlapSentences: string[] = []
+        let overlapLength = 0
+        for (let j = i - 1; j >= chunkStartIndex && overlapLength < overlap && j >= 0; j--) {
+          const prevSentence = sentences[j]
+          if (overlapLength + prevSentence.length <= overlap) {
+            overlapSentences.unshift(prevSentence)
+            overlapLength += prevSentence.length + 1
+          } else {
+            break
+          }
+        }
+
+        currentChunk = overlapSentences.join(' ') + (overlapSentences.length > 0 ? ' ' : '') + sentence
+        chunkStartIndex = i - overlapSentences.length
+      } else {
+        currentChunk = potentialChunk
+      }
+    }
+
+    if (currentChunk.trim()) {
+      chunks.push(this.sanitizeForPostgresText(currentChunk.trim()))
+    }
+
+    return chunks.filter((c) => c.length > 100)
+  }
+
+  private async getDocumentChunks(documentId: string, documentText: string): Promise<DocumentChunksData> {
+    const { rows } = await this.app.db.query<Pick<DocRow, 'text_chunks' | 'chunk_embeddings' | 'extracted_text'>>(
+      `SELECT text_chunks, chunk_embeddings, extracted_text FROM documents WHERE id = $1 LIMIT 1`,
+      [documentId]
+    )
+    const row = rows[0]
+    const cachedChunks = Array.isArray(row?.text_chunks) ? row.text_chunks : null
+    const cachedEmbeddings = Array.isArray(row?.chunk_embeddings) ? row.chunk_embeddings : null
+
+    // Reuse previously indexed chunks if source extracted text is unchanged.
+    if (
+      cachedChunks &&
+      cachedChunks.length > 0 &&
+      row?.extracted_text === documentText
+    ) {
+      if (cachedEmbeddings && cachedEmbeddings.length === cachedChunks.length) {
+        return { chunks: cachedChunks, embeddings: cachedEmbeddings }
+      }
+      return { chunks: cachedChunks, embeddings: null }
+    }
+
+    const chunks = this.chunkText(documentText, 4000, 400)
+    if (chunks.length === 0) return { chunks: [], embeddings: null }
+
+    const embeddings = await this.ensureEmbeddings(documentId, chunks)
+    if (Array.isArray(embeddings) && embeddings.length === chunks.length) {
+      return { chunks, embeddings }
+    }
+    return { chunks, embeddings: null }
   }
 
   private async ensureEmbeddings(documentId: string, chunks: string[]) {
@@ -360,6 +438,10 @@ export class DocumentRagService {
 
   private pickTopChunks(chunks: string[], embeddings: number[][], queryVec: number[], topK: number) {
     if (embeddings.length !== chunks.length || embeddings.length === 0) {
+      return chunks.slice(0, Math.max(1, topK))
+    }
+    // Embedding model/dim mismatch fallback instead of hard failure.
+    if (embeddings[0] && embeddings[0].length !== queryVec.length) {
       return chunks.slice(0, Math.max(1, topK))
     }
     const scored = embeddings.map((embedding, index) => ({
