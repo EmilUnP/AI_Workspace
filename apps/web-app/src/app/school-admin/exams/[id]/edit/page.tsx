@@ -6,8 +6,23 @@ import { ArrowLeft } from 'lucide-react'
 import type { Question as UiQuestion, QuestionType } from '@eduator/ui'
 import { createExam, updateExam } from '../../new/actions'
 import { generateExamFromDocuments, translateExam } from '../../new/ai-actions'
-import { normalizeExamQuestionsForUi } from '@eduator/core/utils/exam-question-normalize'
+import { normalizeExamQuestionsForUi } from '@/lib/eduator-exam-normalize-shim'
 import { ExamCreatorWithIntl } from '../../exam-creator-with-intl'
+
+type AnyQuestion = Record<string, unknown>
+type ExamRecord = {
+  id: string
+  title: string
+  description: string | null
+  subject: string | null
+  grade_level: string | null
+  duration_minutes: number | null
+  questions: AnyQuestion[]
+  language: string | null
+  translations: Record<string, unknown> | null
+  is_published: boolean
+  settings: Record<string, unknown> | null
+}
 
 function coerceQuestionType(type: string): QuestionType {
   switch (type) {
@@ -22,9 +37,10 @@ function coerceQuestionType(type: string): QuestionType {
 }
 
 function toUiQuestions(input: unknown): UiQuestion[] {
-  return normalizeExamQuestionsForUi(input).map((q) => ({
+  const normalized = normalizeExamQuestionsForUi((Array.isArray(input) ? input : []) as AnyQuestion[])
+  return normalized.map((q) => ({
     id: q.id,
-    type: coerceQuestionType(q.type),
+    type: coerceQuestionType(String(q.type ?? 'multiple_choice')),
     text: q.text,
     options: q.options,
     correctAnswer: q.correctAnswer,
@@ -37,14 +53,16 @@ function toUiQuestions(input: unknown): UiQuestion[] {
 
 async function getTeacherInfo() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: authData } = await supabase.auth.getUser()
+  const user = authData?.user as { id: string } | null
   if (!user) return null
   
-  const { data: profile } = await supabase
+  const { data } = await supabase
     .from('profiles')
     .select('id')
     .eq('user_id', user.id)
     .single()
+  const profile = data as { id: string } | null
   
   if (!profile?.id) return null
   
@@ -55,25 +73,26 @@ async function getTeacherDocuments(teacherId: string, workspaceId: string) {
   const supabase = await createClient()
   void workspaceId
   
-  const { data: documents } = await supabase
+  const { data } = await supabase
     .from('documents')
     .select('id, title, file_type, file_name')
     .eq('created_by', teacherId)
     .eq('is_archived', false)
     .order('created_at', { ascending: false })
-  
+  const documents = (data ?? []) as Array<{ id: string; title: string; file_type: string; file_name: string }>
   return documents || []
 }
 
 async function getExam(examId: string, teacherId: string) {
   const supabase = await createClient()
   
-  const { data: exam, error } = await supabase
+  const { data, error } = await supabase
     .from('exams')
     .select('*')
     .eq('id', examId)
     .eq('created_by', teacherId)
     .single()
+  const exam = data as ExamRecord | null
   
   if (error || !exam) {
     return null

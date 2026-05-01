@@ -1,5 +1,5 @@
 type QueryResult = {
-  data: any
+  data: unknown
   error: null
   count: number
 }
@@ -31,11 +31,11 @@ class QueryBuilder implements PromiseLike<QueryResult> {
   match(..._args: unknown[]) { return this }
 
   single() {
-    return Promise.resolve({ data: null, error: null, count: 0 })
+    return Promise.resolve({ data: null as Record<string, unknown> | null, error: null, count: 0 })
   }
 
   maybeSingle() {
-    return Promise.resolve({ data: null, error: null, count: 0 })
+    return Promise.resolve({ data: null as Record<string, unknown> | null, error: null, count: 0 })
   }
 
   insert(..._args: unknown[]) { return this }
@@ -58,10 +58,10 @@ function makeClient() {
     },
     auth: {
       async getUser() {
-        return { data: { user: null }, error: null }
+        return { data: { user: null as { id: string; email?: string } | null }, error: null }
       },
       async getSession() {
-        return { data: { session: null }, error: null }
+        return { data: { session: null as { user?: { id?: string } } | null }, error: null }
       },
     },
   }

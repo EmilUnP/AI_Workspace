@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
       .from('classes')
       .select('id')
 
-    const classIds = classData?.map(c => c.id) || []
+    const classRows = Array.isArray(classData) ? (classData as Array<{ id: string }>) : []
+    const classIds = classRows.map((c) => c.id)
 
     // Get enrollments over last 6 months
     const { data: enrollments } = classIds.length > 0
@@ -28,8 +29,9 @@ export async function GET(request: NextRequest) {
       : { data: null }
 
     // Group enrollments by month
+    const enrollmentRows = Array.isArray(enrollments) ? (enrollments as Array<{ enrolled_at: string }>) : []
     const enrollmentByMonth: Record<string, number> = {}
-    enrollments?.forEach(enrollment => {
+    enrollmentRows.forEach((enrollment) => {
       const date = new Date(enrollment.enrolled_at)
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
       enrollmentByMonth[monthKey] = (enrollmentByMonth[monthKey] || 0) + 1
@@ -52,8 +54,9 @@ export async function GET(request: NextRequest) {
       .from('exams')
       .select('created_at')
 
+    const examRows = Array.isArray(examData) ? (examData as Array<{ created_at: string }>) : []
     const examsByMonth: Record<string, number> = {}
-    examData?.forEach(exam => {
+    examRows.forEach((exam) => {
       const examDate = new Date(exam.created_at)
       if (examDate >= sixMonthsAgo) {
         const monthKey = `${examDate.getFullYear()}-${String(examDate.getMonth() + 1).padStart(2, '0')}`
@@ -100,7 +103,8 @@ export async function GET(request: NextRequest) {
       .from('exams')
       .select('id')
 
-    const recentExamIds = recentExamData?.map(e => e.id) || []
+    const recentExamRows = Array.isArray(recentExamData) ? (recentExamData as Array<{ id: string }>) : []
+    const recentExamIds = recentExamRows.map((e) => e.id)
 
     const { count: recentSubmissions } = recentExamIds.length > 0
       ? await supabase

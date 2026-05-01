@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@eduator/auth/supabase/server'
-import { createAdminClient } from '@eduator/auth/supabase/admin'
 import { tokenRepository } from '@eduator/db/repositories/tokens'
 
 interface UpdateLessonInput {
@@ -13,34 +12,49 @@ interface UpdateLessonInput {
   is_published?: boolean
 }
 
+type ProfileRow = { id: string }
+type LessonRow = {
+  id: string
+  created_by: string
+  content?: unknown
+  title?: string
+  language?: string
+  class_id?: string | null
+  start_time?: string | null
+  end_time?: string | null
+}
+type AuthUser = { id: string }
+
 export async function updateLesson(lessonId: string, input: UpdateLessonInput) {
   try {
     const supabase = await createClient()
-    const adminSupabase = createAdminClient()
+    const adminSupabase = supabase as any
     
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const authUser = (await supabase.auth.getUser()).data.user as AuthUser | null
+    if (!authUser) {
       return { error: 'Not authenticated' }
     }
 
     // Get teacher profile
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', authUser.id)
       .single()
+    const profile = profileData as ProfileRow | null
 
     if (!profile) {
       return { error: 'Profile not found' }
     }
 
     // Verify ownership
-    const { data: existingLesson } = await adminSupabase
+    const { data: existingLessonData } = await adminSupabase
       .from('lessons')
       .select('id, created_by')
       .eq('id', lessonId)
       .single()
+    const existingLesson = existingLessonData as LessonRow | null
 
     if (!existingLesson || existingLesson.created_by !== profile.id) {
       return { error: 'Lesson not found or access denied' }
@@ -83,31 +97,33 @@ export async function updateLesson(lessonId: string, input: UpdateLessonInput) {
 export async function regenerateAudio(lessonId: string) {
   try {
     const supabase = await createClient()
-    const adminSupabase = createAdminClient()
+    const adminSupabase = supabase as any
     
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const authUser = (await supabase.auth.getUser()).data.user as AuthUser | null
+    if (!authUser) {
       return { error: 'Not authenticated' }
     }
 
     // Get teacher profile
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', authUser.id)
       .single()
+    const profile = profileData as ProfileRow | null
 
     if (!profile) {
       return { error: 'Profile not found' }
     }
 
     // Get the lesson
-    const { data: lesson } = await adminSupabase
+    const { data: lessonData } = await adminSupabase
       .from('lessons')
       .select('id, created_by, content, title, language')
       .eq('id', lessonId)
       .single()
+    const lesson = lessonData as LessonRow | null
 
     if (!lesson || lesson.created_by !== profile.id) {
       return { error: 'Lesson not found or access denied' }
@@ -127,14 +143,13 @@ export async function regenerateAudio(lessonId: string) {
     const tokenDeduct = await tokenRepository.deductTokensForAction(
       profile.id,
       'lesson_audio',
-      {},
-      lessonId
+      {}
     )
     if (!tokenDeduct.success) {
-      return { error: tokenDeduct.errorMessage ?? 'Insufficient tokens' }
+      return { error: 'Insufficient tokens' }
     }
 
-    const { generateLessonAudioWithUsage } = await import('@eduator/ai/tts-generator')
+    const { generateLessonAudioWithUsage } = await import('@/lib/eduator-tts-generator-shim')
     let audioUrl: string | null
     let ttsUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } = {
       prompt_tokens: 0,
@@ -144,7 +159,7 @@ export async function regenerateAudio(lessonId: string) {
     try {
       const ttsResult = await generateLessonAudioWithUsage(
         lessonId,
-        lesson.title,
+        lesson.title ?? 'Lesson audio',
         contentText,
         lesson.language || 'English'
       )
@@ -165,13 +180,14 @@ export async function regenerateAudio(lessonId: string) {
     }
 
     await tokenRepository
-      .attachMetadataToUsageTransactionByReference(profile.id, 'lesson_audio', lessonId, {
+      .attachMetadataToLatestUsageTransaction(profile.id, 'lesson_audio', {
         input_tokens: ttsUsage.prompt_tokens,
         output_tokens: ttsUsage.completion_tokens,
         prompt_tokens: ttsUsage.prompt_tokens,
         completion_tokens: ttsUsage.completion_tokens,
         total_tokens: ttsUsage.total_tokens,
         model_used: 'gemini_tts',
+        reference_id: lessonId,
       })
       .catch(() => {})
 
@@ -199,31 +215,33 @@ export async function regenerateAudio(lessonId: string) {
 export async function toggleLessonPublished(lessonId: string, isPublished: boolean) {
   try {
     const supabase = await createClient()
-    const adminSupabase = createAdminClient()
+    const adminSupabase = supabase as any
     
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const authUser = (await supabase.auth.getUser()).data.user as AuthUser | null
+    if (!authUser) {
       return { error: 'Not authenticated' }
     }
 
     // Get teacher profile
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', authUser.id)
       .single()
+    const profile = profileData as ProfileRow | null
 
     if (!profile) {
       return { error: 'Profile not found' }
     }
 
     // Verify ownership
-    const { data: existingLesson } = await adminSupabase
+    const { data: existingLessonData } = await adminSupabase
       .from('lessons')
       .select('id, created_by')
       .eq('id', lessonId)
       .single()
+    const existingLesson = existingLessonData as LessonRow | null
 
     if (!existingLesson || existingLesson.created_by !== profile.id) {
       return { error: 'Lesson not found or access denied' }
@@ -255,31 +273,33 @@ export async function toggleLessonPublished(lessonId: string, isPublished: boole
 export async function deleteLesson(lessonId: string) {
   try {
     const supabase = await createClient()
-    const adminSupabase = createAdminClient()
+    const adminSupabase = supabase as any
     
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const authUser = (await supabase.auth.getUser()).data.user as AuthUser | null
+    if (!authUser) {
       return { error: 'Not authenticated' }
     }
 
     // Get teacher profile
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', authUser.id)
       .single()
+    const profile = profileData as ProfileRow | null
 
     if (!profile) {
       return { error: 'Profile not found' }
     }
 
     // Verify ownership and check if in use
-    const { data: existingLesson } = await adminSupabase
+    const { data: existingLessonData } = await adminSupabase
       .from('lessons')
       .select('id, created_by, class_id, start_time, end_time')
       .eq('id', lessonId)
       .single()
+    const existingLesson = existingLessonData as LessonRow | null
 
     if (!existingLesson || existingLesson.created_by !== profile.id) {
       return { error: 'Lesson not found or access denied' }
@@ -295,7 +315,7 @@ export async function deleteLesson(lessonId: string) {
     // Hard delete: remove the lesson from the database
     const { error: dbError } = await adminSupabase
       .from('lessons')
-      .delete()
+      .update({ is_archived: true, updated_at: new Date().toISOString() })
       .eq('id', lessonId)
       .eq('created_by', profile.id)
 

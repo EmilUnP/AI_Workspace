@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient as createServerClient } from '@eduator/auth/supabase/server'
-import { createAdminClient } from '@eduator/auth/supabase/admin'
+import { createAdminClient } from '@/lib/eduator-auth-admin-shim'
 import { tokenRepository } from '@eduator/db/repositories/tokens'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -26,14 +26,16 @@ async function requirePlatformOwner() {
   if (authError || !user) {
     return { error: 'Unauthorized' as const }
   }
+  const userId = (user as { id: string }).id
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('profile_type')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single()
+  const profileType = (profile as { profile_type?: string } | null)?.profile_type
 
-  if (profileError || profile?.profile_type !== 'platform_owner') {
+  if (profileError || profileType !== 'platform_owner') {
     return { error: 'Only Platform Owners can perform this action' as const }
   }
 
@@ -74,7 +76,7 @@ export async function updateUser(formData: FormData) {
 
   if (error) {
     console.error('Error updating user:', error)
-    return { error: error.message }
+    return { error: (error as { message?: string }).message ?? 'Failed to update user' }
   }
 
   revalidatePath('/platform-owner/users')
@@ -97,10 +99,11 @@ export async function deleteUser(profileId: string) {
     .select('user_id')
     .eq('id', profileId)
     .single()
+  const profileRow = profile as { user_id?: string } | null
 
   if (fetchError) {
     console.error('Error fetching profile:', fetchError)
-    return { error: fetchError.message }
+    return { error: (fetchError as { message?: string }).message ?? 'Failed to fetch profile' }
   }
 
   // Delete the profile
@@ -111,14 +114,14 @@ export async function deleteUser(profileId: string) {
 
   if (profileError) {
     console.error('Error deleting profile:', profileError)
-    return { error: profileError.message }
+    return { error: (profileError as { message?: string }).message ?? 'Failed to delete profile' }
   }
 
   // Try to delete the auth user using admin client
-  if (profile?.user_id) {
+  if (profileRow?.user_id) {
     try {
       const adminClient = createAdminClient()
-      const { error: authError } = await adminClient.auth.admin.deleteUser(profile.user_id)
+      const { error: authError } = await adminClient.auth.admin.deleteUser(profileRow.user_id)
       
       if (authError) {
         console.error('Error deleting auth user:', authError)
@@ -152,7 +155,7 @@ export async function approveUser(userId: string) {
 
   if (error) {
     console.error('Error approving user:', error)
-    return { error: error.message }
+    return { error: (error as { message?: string }).message ?? 'Failed to approve user' }
   }
 
   revalidatePath('/platform-owner/users')
@@ -179,7 +182,7 @@ export async function rejectUser(userId: string) {
 
   if (error) {
     console.error('Error rejecting user:', error)
-    return { error: error.message }
+    return { error: (error as { message?: string }).message ?? 'Failed to reject user' }
   }
 
   revalidatePath('/platform-owner/users')
@@ -232,7 +235,7 @@ export async function createSchoolAdmin(formData: FormData) {
   })
 
   if (authError) {
-    return { error: authError.message }
+    return { error: (authError as { message?: string }).message ?? 'Failed to create user' }
   }
   if (!authData.user) {
     return { error: 'Failed to create user' }
@@ -260,9 +263,10 @@ export async function createSchoolAdmin(formData: FormData) {
     .select('id')
     .eq('user_id', authData.user.id)
     .single()
+  const createdProfileRow = createdProfile as { id?: string } | null
 
-  if (createdProfile?.id) {
-    await tokenRepository.grantInitialTokensForNewUser(createdProfile.id)
+  if (createdProfileRow?.id) {
+    await tokenRepository.grantInitialTokensForNewUser(createdProfileRow.id)
   }
 
   revalidatePath('/platform-owner/users')

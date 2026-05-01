@@ -13,7 +13,7 @@ const envSchema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   GOOGLE_GEMINI_API_KEY: z.string().min(1, 'GOOGLE_GEMINI_API_KEY is required'),
-  AI_STORAGE_DIR: z.string().default('./apps/backend/storage')
+  AI_STORAGE_DIR: z.string().default('./backend/storage')
 })
 
 const parsed = envSchema.safeParse(process.env)

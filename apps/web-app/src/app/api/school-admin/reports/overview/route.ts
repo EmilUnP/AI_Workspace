@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
       .from('classes')
       .select('id')
 
-    const classIds = classData?.map(c => c.id) || []
+    const classRows = Array.isArray(classData) ? (classData as Array<{ id: string }>) : []
+    const classIds = classRows.map((c) => c.id)
 
     const { count: totalEnrollments } = classIds.length > 0
       ? await supabase

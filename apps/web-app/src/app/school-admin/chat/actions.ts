@@ -50,7 +50,7 @@ export async function getConversations() {
     .order('updated_at', { ascending: false })
 
   if (error) {
-    return { error: error.message }
+    return { error: (error as { message?: string }).message ?? 'Failed to load conversations' }
   }
 
   return { data: conversations || [] }
@@ -97,7 +97,7 @@ export async function getConversation(conversationId: string) {
     .order('created_at', { ascending: true })
 
   if (msgError) {
-    return { error: msgError.message }
+    return { error: (msgError as { message?: string }).message ?? 'Failed to load messages' }
   }
 
   return {
@@ -143,7 +143,7 @@ export async function createConversation(input: CreateConversationInput) {
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: (error as { message?: string }).message ?? 'Failed to create conversation' }
   }
 
   return { data: conversation }
@@ -199,7 +199,7 @@ export async function sendMessage(input: SendMessageInput) {
     .single()
 
   if (userMsgError) {
-    return { error: userMsgError.message }
+    return { error: (userMsgError as { message?: string }).message ?? 'Failed to save user message' }
   }
 
   // Create chatbot context
@@ -243,7 +243,7 @@ export async function sendMessage(input: SendMessageInput) {
     .single()
 
   if (assistantMsgError) {
-    return { error: assistantMsgError.message }
+    return { error: (assistantMsgError as { message?: string }).message ?? 'Failed to save assistant response' }
   }
 
   const telemetry = (response.message.metadata ?? {}) as Record<string, unknown>
@@ -321,7 +321,7 @@ export async function updateConversation(
     .single()
 
   if (error) {
-    return { error: error.message }
+    return { error: (error as { message?: string }).message ?? 'Failed to update conversation' }
   }
 
   return { data: conversation }
@@ -355,7 +355,7 @@ export async function deleteConversation(conversationId: string) {
     .eq('teacher_id', profile.id)
 
   if (error) {
-    return { error: error.message }
+    return { error: (error as { message?: string }).message ?? 'Failed to delete conversation' }
   }
 
   return { success: true }

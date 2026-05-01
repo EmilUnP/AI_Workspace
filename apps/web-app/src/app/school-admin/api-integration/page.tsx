@@ -19,10 +19,11 @@ export default async function ApiIntegrationPage() {
     .select('id, metadata')
     .eq('user_id', user.id)
     .single()
+  const profileRow = profile as { id?: string; metadata?: { api_integration_enabled?: boolean } | null } | null
 
-  if (!profile) redirect('/auth/login')
+  if (!profileRow?.id) redirect('/auth/login')
 
-  const metadata = profile.metadata as { api_integration_enabled?: boolean } | null
+  const metadata = profileRow.metadata ?? null
   if (!metadata?.api_integration_enabled) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -35,8 +36,8 @@ export default async function ApiIntegrationPage() {
   }
 
   const [keys, usageStats] = await Promise.all([
-    teacherApiKeyRepository.listByProfile(profile.id),
-    teacherApiKeyRepository.getUsageStats(profile.id),
+    teacherApiKeyRepository.listByProfile(profileRow.id),
+    teacherApiKeyRepository.getUsageStats(profileRow.id),
   ])
 
   return (
@@ -45,11 +46,7 @@ export default async function ApiIntegrationPage() {
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
           {t('title')}
         </h1>
-        <p className="mt-2 text-base text-gray-600 leading-relaxed">
-          {t.rich('subtitle', {
-            strong: (chunks) => <strong>{chunks}</strong>,
-          })}
-        </p>
+        <p className="mt-2 text-base text-gray-600 leading-relaxed">{t('subtitle')}</p>
       </header>
 
       <section className="rounded-xl border border-gray-200 bg-gray-50/50 p-5">
@@ -59,15 +56,11 @@ export default async function ApiIntegrationPage() {
         <ol className="flex flex-col gap-3 text-sm text-gray-700">
           <li className="flex items-start gap-3">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">1</span>
-            <span>{t.rich('step1', {
-              strong: (chunks) => <strong>{chunks}</strong>,
-            })}</span>
+            <span>{t('step1')}</span>
           </li>
           <li className="flex items-start gap-3">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">2</span>
-            <span>{t.rich('step2', {
-              strong: (chunks) => <strong>{chunks}</strong>,
-            })}</span>
+            <span>{t('step2')}</span>
           </li>
         </ol>
       </section>

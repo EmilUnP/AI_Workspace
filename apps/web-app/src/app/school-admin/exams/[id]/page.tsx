@@ -14,18 +14,48 @@ import {
 import { ExamActions } from './exam-actions'
 import { ExportExamCsvButton } from './export-exam-csv-button'
 import { ExamLanguageSelector } from './exam-language-selector'
-import { normalizeExamQuestionsForUi } from '@eduator/core/utils/exam-question-normalize'
+import { normalizeExamQuestionsForUi } from '@/lib/eduator-exam-normalize-shim'
+
+type AuthUser = { id: string }
+type ProfileRow = { id: string; organization_id: string | null }
+type AnyQuestion = Record<string, unknown>
+type ExamRow = {
+  id: string
+  created_by: string
+  title: string
+  description?: string | null
+  language?: string | null
+  translations?: Record<string, unknown> | null
+  questions?: AnyQuestion[] | null
+  is_published?: boolean | null
+  duration_minutes?: number | null
+  created_at: string
+  classInfo?: { name?: string | null; class_code?: string | null } | null
+}
+
+type UiQuestion = {
+  id: string
+  type: 'multiple_choice' | 'true_false' | 'multiple_select' | 'fill_blank'
+  text: string
+  options: string[]
+  correctAnswer: string | string[]
+  points: number
+  explanation?: string
+  difficulty?: 'easy' | 'medium' | 'hard'
+  topics?: string[]
+}
 
 async function getTeacherInfo() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const authUser = (await supabase.auth.getUser()).data.user as AuthUser | null
+  if (!authUser) return null
   
-  const { data: profile } = await supabase
+  const { data: profileData } = await supabase
     .from('profiles')
     .select('id, organization_id')
-    .eq('user_id', user.id)
+    .eq('user_id', authUser.id)
     .single()
+  const profile = profileData as ProfileRow | null
   
   if (!profile?.organization_id) return null
   
@@ -35,29 +65,19 @@ async function getTeacherInfo() {
 async function getExam(examId: string, teacherId: string) {
   const supabase = await createClient()
   
-  const { data: exam, error } = await supabase
+  const { data: examData, error } = await supabase
     .from('exams')
     .select('*')
     .eq('id', examId)
     .eq('created_by', teacherId)
     .single()
+  const exam = examData as ExamRow | null
   
   if (error || !exam) {
     return null
   }
 
-  // Get class info if assigned
-  let classInfo = null
-  if (exam.class_id) {
-    const { data: cls } = await supabase
-      .from('classes')
-      .select('id, name, class_code')
-      .eq('id', exam.class_id)
-      .single()
-    classInfo = cls
-  }
-
-  return { ...exam, classInfo }
+  return exam
 }
 
 interface PageProps {
@@ -84,16 +104,18 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
     notFound()
   }
 
-  const questions = normalizeExamQuestionsForUi(exam.questions).map((q) => ({
-    id: q.id,
-    type: q.type as 'multiple_choice' | 'true_false' | 'multiple_select' | 'fill_blank',
-    text: q.text,
-    options: q.options,
-    correctAnswer: q.correctAnswer,
+  const questions: UiQuestion[] = normalizeExamQuestionsForUi((exam.questions ?? []) as AnyQuestion[]).map((q) => ({
+    id: String(q.id ?? ''),
+    type: (q.type as UiQuestion['type']) ?? 'multiple_choice',
+    text: String(q.text ?? ''),
+    options: Array.isArray(q.options) ? (q.options as unknown[]).map((item) => String(item)) : [],
+    correctAnswer: Array.isArray(q.correctAnswer)
+      ? (q.correctAnswer as unknown[]).map((item) => String(item))
+      : String(q.correctAnswer ?? ''),
     points: 1,
-    explanation: q.explanation,
-    difficulty: q.difficulty as 'easy' | 'medium' | 'hard' | undefined,
-    topics: q.topics,
+    explanation: typeof q.explanation === 'string' ? q.explanation : undefined,
+    difficulty: q.difficulty as UiQuestion['difficulty'],
+    topics: Array.isArray(q.topics) ? (q.topics as unknown[]).map((item) => String(item)) : [],
   }))
 
   const primaryLanguage = exam.language || 'en'
@@ -101,19 +123,21 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
   const translations = Object.fromEntries(
     Object.entries(translationsRaw).map(([lang, qs]) => [
       lang,
-      normalizeExamQuestionsForUi(qs).map((q) => ({
-        id: q.id,
-        type: q.type as 'multiple_choice' | 'true_false' | 'multiple_select' | 'fill_blank',
-        text: q.text,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
+      normalizeExamQuestionsForUi((Array.isArray(qs) ? qs : []) as AnyQuestion[]).map((q) => ({
+        id: String(q.id ?? ''),
+        type: (q.type as UiQuestion['type']) ?? 'multiple_choice',
+        text: String(q.text ?? ''),
+        options: Array.isArray(q.options) ? (q.options as unknown[]).map((item) => String(item)) : [],
+        correctAnswer: Array.isArray(q.correctAnswer)
+          ? (q.correctAnswer as unknown[]).map((item) => String(item))
+          : String(q.correctAnswer ?? ''),
         points: 1,
-        explanation: q.explanation,
-        difficulty: q.difficulty as 'easy' | 'medium' | 'hard' | undefined,
-        topics: q.topics,
+        explanation: typeof q.explanation === 'string' ? q.explanation : undefined,
+        difficulty: q.difficulty as UiQuestion['difficulty'],
+        topics: Array.isArray(q.topics) ? (q.topics as unknown[]).map((item) => String(item)) : [],
       })),
     ])
-  ) as Record<string, typeof questions>
+  ) as Record<string, UiQuestion[]>
 
   const backHref = '/school-admin/exams'
   const backLabel = t('backToExams')
@@ -165,7 +189,7 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
                 examTitle={exam.title}
                 languageCode={primaryLanguage}
               />
-              <ExamActions examId={exam.id} isPublished={exam.is_published} />
+              <ExamActions examId={exam.id} isPublished={Boolean(exam.is_published)} />
             </div>
           </div>
         </div>

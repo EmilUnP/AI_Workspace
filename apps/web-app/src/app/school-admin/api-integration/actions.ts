@@ -22,15 +22,16 @@ export async function createApiKey(_prev: unknown, formData: FormData): Promise<
     .select('id, metadata')
     .eq('user_id', user.id)
     .single()
+  const profileRow = profile as { id?: string; metadata?: { api_integration_enabled?: boolean } | null } | null
 
-  if (!profile) return { error: 'Profile not found' }
+  if (!profileRow?.id) return { error: 'Profile not found' }
 
-  const metadata = profile.metadata as { api_integration_enabled?: boolean } | null
+  const metadata = profileRow.metadata ?? null
   if (!metadata?.api_integration_enabled) {
     return { error: 'API integration is not enabled for your account' }
   }
 
-  const result = teacherApiKeyRepository.create(profile.id, name)
+  const result = teacherApiKeyRepository.create(profileRow.id, name)
   const created = await result
   if (!created) return { error: 'Failed to create API key' }
 
@@ -48,10 +49,11 @@ export async function revokeApiKey(keyId: string): Promise<RevokeResult> {
     .select('id')
     .eq('user_id', user.id)
     .single()
+  const profileRow = profile as { id?: string } | null
 
-  if (!profile) return { error: 'Profile not found' }
+  if (!profileRow?.id) return { error: 'Profile not found' }
 
-  const ok = await teacherApiKeyRepository.revoke(keyId, profile.id)
+  const ok = await teacherApiKeyRepository.revoke(keyId, profileRow.id)
   if (!ok) return { error: 'Failed to revoke key' }
 
   revalidatePath('/school-admin/api-integration')
