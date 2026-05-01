@@ -1,6 +1,7 @@
 import { createClient } from '@eduator/auth/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { getCurrentUser } from '@/lib/backend-auth'
 import Image from 'next/image'
 import { 
   GraduationCap, 
@@ -23,6 +24,9 @@ import {
 import { LessonRowActions, PaginationFooter } from '@eduator/ui'
 import { deleteLesson } from './actions'
 
+const LessonRowActionsAny = LessonRowActions as any
+const PaginationFooterAny = PaginationFooter as any
+
 const LANGUAGE_TO_COUNTRY: Record<string, string> = {
   en: 'gb', tr: 'tr', de: 'de', fr: 'fr', es: 'es', it: 'it', pt: 'pt', ru: 'ru',
   ar: 'sa', zh: 'cn', ja: 'jp', ko: 'kr', nl: 'nl', pl: 'pl', uk: 'ua', az: 'az',
@@ -41,16 +45,10 @@ function getLanguageDisplay(lang: string): { countryCode: string; label: string 
 }
 
 async function getAdminInfo() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return null
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-  if (!profile?.id) return null
-  return { adminId: profile.id, workspaceId: 'global' }
+  if (user.role !== 'operator' && user.role !== 'admin') return null
+  return { adminId: user.id, workspaceId: 'global' }
 }
 
 export default async function SchoolAdminLessonsPage({
@@ -59,19 +57,23 @@ export default async function SchoolAdminLessonsPage({
   searchParams: Promise<{ search?: string; status?: string; page?: string; classId?: string }>
 }) {
   const adminData = await getAdminInfo()
-  if (!adminData) redirect('/auth/login')
+  if (!adminData) redirect('/school-admin')
 
   const { adminId, workspaceId } = adminData
   const params = await searchParams
   const t = await getTranslations('teacherLessons')
   const supabase = await createClient()
 
-  const [lessonsResult, stats] = await Promise.all([
+  const [lessonsResultRaw, statsRaw] = await Promise.all([
     getTeacherLessons(supabase, adminId, workspaceId, params),
     getTeacherLessonStats(supabase, adminId, workspaceId),
   ])
 
-  const { data: lessons, count: totalLessons, page: currentPage } = lessonsResult
+  const lessonsResult = lessonsResultRaw as any
+  const stats = statsRaw as any
+  const lessons = (lessonsResult?.data || []) as any[]
+  const totalLessons = Number(lessonsResult?.count || 0)
+  const currentPage = Number(lessonsResult?.page || 1)
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -211,7 +213,7 @@ export default async function SchoolAdminLessonsPage({
           <>
             {/* Mobile Card View */}
             <div className="divide-y divide-gray-100 sm:hidden">
-              {lessons.map((lesson) => (
+              {lessons.map((lesson: any) => (
                 <div key={lesson.id} className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -252,7 +254,7 @@ export default async function SchoolAdminLessonsPage({
                       </div>
                     )}
                     </div>
-<LessonRowActions
+<LessonRowActionsAny
                       lessonId={lesson.id}
                       isPublished={lesson.is_published}
                       onDeleteLesson={deleteLesson}
@@ -346,7 +348,7 @@ export default async function SchoolAdminLessonsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {lessons.map((lesson) => (
+                {lessons.map((lesson: any) => (
                   <tr key={lesson.id} className="hover:bg-gray-50 transition-colors">
                     {/* Lesson */}
                     <td className="py-4 pl-4 pr-3 sm:pl-6">
@@ -457,7 +459,7 @@ export default async function SchoolAdminLessonsPage({
                     {/* Actions */}
                     <td className="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
                       <div className="flex items-center justify-end">
-<LessonRowActions
+<LessonRowActionsAny
                       lessonId={lesson.id}
                       isPublished={lesson.is_published}
                       onDeleteLesson={deleteLesson}
@@ -483,7 +485,7 @@ export default async function SchoolAdminLessonsPage({
       {/* Footer with Pagination */}
       {lessons.length > 0 && (
         <div className="space-y-4">
-          <PaginationFooter
+          <PaginationFooterAny
             currentPage={currentPage}
             perPage={TEACHER_LESSONS_PER_PAGE}
             totalItems={totalLessons}

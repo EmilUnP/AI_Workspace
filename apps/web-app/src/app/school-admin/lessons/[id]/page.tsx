@@ -1,6 +1,7 @@
 import { createClient } from '@eduator/auth/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { getTranslations, getLocale } from 'next-intl/server'
+import { getCurrentUser } from '@/lib/backend-auth'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
@@ -20,26 +21,38 @@ interface PageProps {
   searchParams: Promise<{ fromCourse?: string; fromRun?: string }>
 }
 
-async function getTeacherInfo() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, organization_id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!profile?.organization_id) return null
-  
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+type LessonRecord = {
+  id: string
+  title: string
+  topic?: string | null
+  description?: string | null
+  created_at: string
+  duration_minutes?: number | null
+  is_published?: boolean | null
+  audio_url?: string | null
+  content?: unknown
+  images?: unknown
+  mini_test?: unknown
+  metadata?: { examples?: unknown; generation_options?: { centerText?: boolean } } | null
+  learning_objectives?: unknown
+  documents?: { title?: string } | Array<{ title?: string }> | null
 }
 
-async function getLesson(lessonId: string, teacherId: string) {
+const LessonTabsAny = LessonTabs as any
+const AudioPlayerAny = AudioPlayer as any
+const LessonActionsAny = LessonActions as any
+
+async function getTeacherInfo() {
+  const user = await getCurrentUser()
+  if (!user) return null
+  if (user.role !== 'operator' && user.role !== 'admin') return null
+  return { teacherId: user.id, organizationId: 'global' }
+}
+
+async function getLesson(lessonId: string, teacherId: string): Promise<LessonRecord | null> {
   const supabase = await createClient()
   
-  const { data: lesson, error } = await supabase
+  const { data: ownLesson, error: ownError } = await supabase
     .from('lessons')
     .select(`
       *,
@@ -49,13 +62,28 @@ async function getLesson(lessonId: string, teacherId: string) {
     .eq('id', lessonId)
     .eq('created_by', teacherId)
     .single()
+
+  if (!ownError && ownLesson) {
+    return ownLesson as LessonRecord
+  }
   
-  if (error) {
-    console.error('Error fetching lesson:', error)
+  // Fallback for migrated data where created_by might not match current auth id.
+  const { data: lesson, error } = await supabase
+    .from('lessons')
+    .select(`
+      *,
+      classes(id, name, class_code),
+      documents(id, title, file_type)
+    `)
+    .eq('id', lessonId)
+    .single()
+
+  if (error || !lesson) {
+    console.error('Error fetching lesson:', error || ownError)
     return null
   }
   
-  return lesson
+  return lesson as LessonRecord
 }
 
 export default async function LessonDetailPage({ params, searchParams }: PageProps) {
@@ -63,7 +91,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
   const { fromCourse: _fromCourse, fromRun: _fromRun } = await searchParams
   const teacherData = await getTeacherInfo()
   if (!teacherData) {
-    redirect('/auth/login')
+    redirect('/school-admin/lessons')
   }
   const { teacherId } = teacherData
   const [lesson, t, locale] = await Promise.all([
@@ -132,7 +160,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
           </div>
           
           <div className="ml-14 sm:ml-0">
-              <LessonActions
+              <LessonActionsAny
                 lessonId={lesson.id}
                 title={lesson.title}
                 topic={lesson.topic}
@@ -172,7 +200,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
         
         {/* Audio Player — sticky so it stays visible while scrolling */}
         {lesson.audio_url && (
-          <AudioPlayer audioUrl={lesson.audio_url} title={lesson.title} sticky />
+          <AudioPlayerAny audioUrl={lesson.audio_url} title={lesson.title} sticky />
         )}
         
         {/* Stats Bar */}
@@ -245,12 +273,12 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
         )}
         
         {/* Tabbed Content */}
-        <LessonTabs 
+        <LessonTabsAny 
           content={contentText} 
           images={images} 
           miniTest={miniTest} 
           examples={examples}
-          centerText={(lesson.metadata as { generation_options?: { centerText?: boolean } } | null)?.generation_options?.centerText ?? false}
+          centerText={lesson.metadata?.generation_options?.centerText ?? false}
           labels={{
             tabContent: t('tabContent'),
             tabExamples: t('tabExamples'),
