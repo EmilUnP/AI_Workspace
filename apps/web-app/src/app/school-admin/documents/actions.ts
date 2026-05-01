@@ -17,6 +17,7 @@ type UpdateDocumentInput = {
 }
 
 const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const getFileProxyBase = () => process.env.NEXT_PUBLIC_APP_URL || ''
 
 type NormalizedFileType = 'pdf' | 'markdown' | 'text' | 'doc' | 'docx'
 
@@ -111,7 +112,7 @@ export async function quickUploadDocument(input: QuickUploadInput) {
           String(payload.document.file_name || payload.document.fileName || fileName),
           String(payload.document.file_type || payload.document.fileType || mimeType)
         ),
-        file_url: `${getBackendBase()}/v1/documents/${String(payload.document.id || '')}/file`,
+        file_url: `${getFileProxyBase()}/api/school-admin/documents/${String(payload.document.id || '')}/file`,
         processing_status: normalizeProcessingStatus(payload.document.status),
         processing_error_message: payload.document.processing_error_message
           ? String(payload.document.processing_error_message)

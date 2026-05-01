@@ -44,7 +44,7 @@ async function getDocuments() {
         title: String(doc.title || ''),
         description: String((doc.metadata as Record<string, unknown> | undefined)?.description || ''),
         file_name: String(doc.file_name || doc.fileName || ''),
-        file_url: `${backendBase}/v1/documents/${docId}/file`,
+        file_url: `/api/school-admin/documents/${docId}/file`,
         file_size: Number(doc.file_size || doc.fileSize || 0),
         file_type: normalizeFileType(doc.file_type || doc.fileType),
         tags: ((doc.metadata as Record<string, unknown> | undefined)?.tags as string[] | undefined) || [],

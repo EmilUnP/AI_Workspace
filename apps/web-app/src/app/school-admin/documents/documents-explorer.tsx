@@ -416,7 +416,7 @@ function DocumentRow({
           <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="View">
             <Eye className="h-4 w-4" />
           </a>
-          <a href={doc.file_url} download={doc.file_name} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="Download">
+          <a href={`${doc.file_url}${doc.file_url.includes('?') ? '&' : '?'}download=1`} download={doc.file_name} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="Download">
             <Download className="h-4 w-4" />
           </a>
           <EditDocumentDialog document={doc} onUpdate={onUpdate} onDelete={onDelete} />
@@ -471,7 +471,7 @@ function DocumentRow({
         <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="View">
           <Eye className="h-4 w-4" />
         </a>
-        <a href={doc.file_url} download={doc.file_name} className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="Download">
+        <a href={`${doc.file_url}${doc.file_url.includes('?') ? '&' : '?'}download=1`} download={doc.file_name} className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="Download">
           <Download className="h-4 w-4" />
         </a>
         <EditDocumentDialog document={doc} onUpdate={onUpdate} onDelete={onDelete} />

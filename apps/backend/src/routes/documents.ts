@@ -77,8 +77,16 @@ export async function documentsRoutes(app: FastifyInstance) {
             ? 'text/markdown; charset=utf-8'
             : 'text/plain; charset=utf-8'
 
+    const safeAsciiFileName = String(document.file_name || 'document')
+      .replace(/[^\x20-\x7E]/g, '_')
+      .replace(/["\\]/g, '_')
+    const utf8FileName = encodeURIComponent(String(document.file_name || 'document'))
+
     reply.header('Content-Type', contentType)
-    reply.header('Content-Disposition', `inline; filename="${document.file_name}"`)
+    reply.header(
+      'Content-Disposition',
+      `inline; filename="${safeAsciiFileName}"; filename*=UTF-8''${utf8FileName}`
+    )
     return reply.send(createReadStream(resolvedPath))
   })
 
