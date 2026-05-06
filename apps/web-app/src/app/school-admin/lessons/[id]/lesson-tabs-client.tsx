@@ -106,11 +106,27 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
           <div className={centerText ? 'text-center' : ''}>
             <div className="prose max-w-none whitespace-pre-wrap text-sm text-gray-800">{content}</div>
             {images.length > 0 && (
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {images.map((img, idx) => (
-                  <a key={`${img.url}-${idx}`} href={img.url} target="_blank" rel="noreferrer" className="rounded-lg border border-gray-200 p-3 hover:bg-gray-50">
-                    <p className="text-xs font-medium text-gray-700">{img.alt || `Image ${idx + 1}`}</p>
-                    <p className="mt-1 text-xs text-gray-500">{img.description}</p>
+                  <a
+                    key={`${img.url}-${idx}`}
+                    href={img.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="overflow-hidden rounded-lg border border-gray-200 bg-white hover:bg-gray-50"
+                  >
+                    <div className="aspect-video w-full bg-gray-100">
+                      <img
+                        src={img.url}
+                        alt={img.alt || `Image ${idx + 1}`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-xs font-medium text-gray-700">{img.alt || `Image ${idx + 1}`}</p>
+                      <p className="mt-1 text-xs text-gray-500">{img.description}</p>
+                    </div>
                   </a>
                 ))}
               </div>

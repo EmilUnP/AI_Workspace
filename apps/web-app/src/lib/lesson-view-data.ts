@@ -15,6 +15,24 @@ type LessonLike = {
   metadata?: unknown
 }
 
+const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000').replace(/\/+$/, '')
+
+const normalizeLessonMediaProxyUrl = (raw: string): string => {
+  const mediaMatch = raw.match(/^\/v1\/lessons\/([^/]+)\/media\/([^/?#]+)$/)
+  if (!mediaMatch) return raw
+  const [, lessonId, fileName] = mediaMatch
+  return `/api/school-admin/lessons/${lessonId}/media/${fileName}`
+}
+
+const normalizeMediaUrl = (value: string): string => {
+  const raw = value.trim()
+  if (!raw) return raw
+  if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) return raw
+  if (raw.startsWith('/v1/lessons/')) return normalizeLessonMediaProxyUrl(raw)
+  if (raw.startsWith('/v1/')) return `${backendBase}${raw}`
+  return raw
+}
+
 export function mapLessonToViewData(lesson: LessonLike): LessonViewData {
   const contentText =
     typeof lesson.content === 'object' && lesson.content && 'text' in (lesson.content as object)
@@ -24,7 +42,10 @@ export function mapLessonToViewData(lesson: LessonLike): LessonViewData {
         : ''
 
   const images = Array.isArray(lesson.images)
-    ? (lesson.images as LessonViewData['images'])
+    ? (lesson.images as LessonViewData['images']).map((img) => ({
+        ...img,
+        url: typeof img?.url === 'string' ? normalizeMediaUrl(img.url) : '',
+      }))
     : []
 
   let miniTestRaw: unknown = lesson.mini_test

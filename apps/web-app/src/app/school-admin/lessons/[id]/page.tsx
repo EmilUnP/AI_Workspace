@@ -10,13 +10,13 @@ import {
   Image as ImageIcon, 
   FileQuestion, 
   Calendar,
-  CheckCircle,
   Clock,
   Target,
   BookOpen,
 } from 'lucide-react'
-import { AudioPlayer, LessonActions } from '@eduator/ui'
+import { LessonActions } from '@eduator/ui'
 import { updateLesson, regenerateAudio, deleteLesson } from '../actions'
+import { AudioPlayer } from './audio-player'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -40,7 +40,6 @@ type LessonRecord = {
   documents?: { title?: string } | Array<{ title?: string }> | null
 }
 
-const AudioPlayerAny = AudioPlayer as any
 const LessonActionsAny = LessonActions as any
 
 async function getTeacherInfo() {
@@ -69,6 +68,19 @@ async function getLesson(lessonId: string): Promise<LessonRecord | null> {
   const payload = (await response.json()) as { lesson?: LessonRecord }
   const lesson = payload.lesson
   if (!lesson) return null
+  if (typeof lesson.audio_url === 'string' && lesson.audio_url.startsWith('/v1/')) {
+    if (lesson.audio_url.startsWith('/v1/lessons/')) {
+      const mediaMatch = lesson.audio_url.match(/^\/v1\/lessons\/([^/]+)\/media\/([^/?#]+)$/)
+      if (mediaMatch) {
+        const [, lessonId, fileName] = mediaMatch
+        lesson.audio_url = `/api/school-admin/lessons/${lessonId}/media/${fileName}`
+      } else {
+        lesson.audio_url = `${backendBase.replace(/\/+$/, '')}${lesson.audio_url}`
+      }
+    } else {
+      lesson.audio_url = `${backendBase.replace(/\/+$/, '')}${lesson.audio_url}`
+    }
+  }
   return lesson
 }
 
@@ -123,17 +135,14 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                     {lesson.duration_minutes} min
                   </span>
                 )}
-                {lesson.is_published ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                    <CheckCircle className="w-3 h-3" />
-                    {tl('inClass', 'Published')}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700">
-                    <Clock className="w-3 h-3" />
-                    {tl('unused', 'Draft')}
-                  </span>
-                )}
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    lesson.audio_url ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  <Clock className="w-3 h-3" />
+                  {lesson.audio_url ? 'Audio ready' : 'Audio processing'}
+                </span>
               </div>
             </div>
           </div>
@@ -179,7 +188,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
         
         {/* Audio Player — sticky so it stays visible while scrolling */}
         {lesson.audio_url && (
-          <AudioPlayerAny audioUrl={lesson.audio_url} title={lesson.title} sticky />
+          <AudioPlayer audioUrl={lesson.audio_url} title={lesson.title} sticky />
         )}
         
         {/* Stats Bar */}
@@ -243,7 +252,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
             <ul className="space-y-2">
               {objectives.map((objective: string, index: number) => (
                 <li key={index} className="flex items-start gap-2 text-emerald-700">
-                  <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <Target className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm sm:text-base">{objective}</span>
                 </li>
               ))}

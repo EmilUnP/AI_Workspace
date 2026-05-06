@@ -10,9 +10,14 @@ import path from 'node:path'
 import { env } from '../config/env.js'
 
 const AI_MODELS = {
-  TEXT: 'gemini-2.0-flash',
-  IMAGE_GENERATION: ['gemini-2.0-flash-preview-image-generation', 'gemini-2.0-flash-exp-image-generation'],
-  TTS: 'gemini-2.5-flash-preview-tts',
+  TEXT: 'gemini-2.5-flash',
+  IMAGE_GENERATION: [
+    'gemini-3-pro-image-preview',
+    'gemini-2.5-flash-image-preview',
+  ],
+  TTS_MODELS: [
+    'gemini-2.5-flash-preview-tts'
+  ],
 } as const
 
 export interface LessonImage {
@@ -532,30 +537,35 @@ export async function generateLessonAudioWithUsage(
     const maxRetries = 2
     const retryDelayMs = 2000
     let data: { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }> } | null = null
+    for (const ttsModel of AI_MODELS.TTS_MODELS) {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${ttsModel}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+          }
+        )
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODELS.TTS}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody)
+        if (response.ok) {
+          data = await response.json()
+          break
         }
-      )
 
-      if (response.ok) {
-        data = await response.json()
-        break
+        const errorText = await response.text()
+        console.error(
+          `TTS API error (lesson ${lessonId}) model=${ttsModel} attempt ${attempt + 1}/${maxRetries + 1}:`,
+          response.status,
+          errorText
+        )
+
+        if (response.status >= 500 && attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)))
+          continue
+        }
       }
-
-      const errorText = await response.text()
-      console.error(`TTS API error (lesson ${lessonId}) attempt ${attempt + 1}/${maxRetries + 1}:`, response.status, errorText)
-
-      if (response.status >= 500 && attempt < maxRetries) {
-        await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)))
-        continue
-      }
-      return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
+      if (data) break
     }
 
     if (!data) {

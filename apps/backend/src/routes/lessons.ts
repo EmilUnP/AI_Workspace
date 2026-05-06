@@ -169,6 +169,22 @@ export async function lessonsRoutes(app: FastifyInstance) {
 
     if (!lesson) return reply.code(404).send({ error: 'Lesson not found' })
 
+    let resolvedAudioUrl =
+      lesson.audio_url ||
+      ((lesson.metadata as Record<string, unknown> | null)?.audio_url as string | null) ||
+      null
+
+    // Fallback: if DB field is not updated yet but local audio file exists, expose it.
+    if (!resolvedAudioUrl) {
+      const audioPath = path.join(env.AI_STORAGE_DIR, 'lessons', lesson.id, 'audio.wav')
+      try {
+        await access(audioPath)
+        resolvedAudioUrl = `/v1/lessons/${lesson.id}/media/audio.wav`
+      } catch {
+        // keep null when audio file is not present
+      }
+    }
+
     return reply.send({
       lesson: {
         id: lesson.id,
@@ -178,10 +194,7 @@ export async function lessonsRoutes(app: FastifyInstance) {
         created_at: lesson.created_at,
         duration_minutes: lesson.duration_minutes ?? 45,
         is_published: lesson.is_published ?? false,
-        audio_url:
-          lesson.audio_url ||
-          ((lesson.metadata as Record<string, unknown> | null)?.audio_url as string | null) ||
-          null,
+        audio_url: resolvedAudioUrl,
         content: lesson.content,
         images: lesson.images,
         mini_test: lesson.mini_test,

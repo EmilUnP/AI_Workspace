@@ -6,8 +6,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { randomUUID } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { generateLessonImagesWithUsage, type LessonImage } from './lesson-media.service.js'
 import { DocumentRagService } from './document-rag.service.js'
+import { generateLessonAudioWithUsage } from './lesson-media.service.js'
 
 const AI_MODELS = {
   LESSON: 'gemini-2.5-flash',
@@ -86,6 +88,13 @@ export interface GeneratedLesson {
   }
 }
 
+const miniTestItemSchema = z.object({
+  question: z.string().min(5),
+  options: z.array(z.string().min(1)).min(4).max(4),
+  correct_answer: z.number().int().min(0).max(3),
+  explanation: z.string().min(2),
+})
+
 export interface GenerateLessonParams {
   documentId?: string | null
   topic: string
@@ -146,8 +155,26 @@ const FALLBACK_PHRASES: Record<string, { title: string; question: string; explan
   ar: { title: 'الدرس', question: 'ما الموضوع الرئيسي لهذا الدرس؟', explanation: 'هذا الخيار صحيح لأنه يطابق الفكرة الأساسية المشروحة في الدرس.' },
 }
 function getFallbackPhrases(languageCode?: string): { title: string; question: string; explanation: string } {
-  const code = languageCode?.toLowerCase()
+  const code = normalizeLanguageCode(languageCode)
   return FALLBACK_PHRASES[code ?? 'en'] ?? FALLBACK_PHRASES.en
+}
+
+function normalizeLanguageCode(language?: string): string {
+  const raw = (language || '').trim().toLowerCase()
+  if (!raw) return 'en'
+  if (raw.length === 2 && LANGUAGE_NAMES[raw]) return raw
+  const byName: Record<string, string> = {
+    english: 'en',
+    azerbaijani: 'az',
+    azeri: 'az',
+    russian: 'ru',
+    turkish: 'tr',
+    german: 'de',
+    french: 'fr',
+    spanish: 'es',
+    arabic: 'ar',
+  }
+  return byName[raw] || 'en'
 }
 
 function sanitizeExplanation(explanation: unknown): string {
@@ -452,6 +479,115 @@ function safeJsonParse<T extends GeneratedLesson>(text: string, fallback: T): T 
   }
 }
 
+function isMiniTestLowQuality(items: GeneratedLesson['mini_test'], fallbackQuestion: string): boolean {
+  if (!Array.isArray(items) || items.length === 0) return true
+  const trimmedQuestions = items.map((q) => q.question?.trim().toLowerCase()).filter(Boolean)
+  if (trimmedQuestions.length === 0) return true
+
+  const uniqueQuestions = new Set(trimmedQuestions)
+  if (uniqueQuestions.size < Math.max(2, Math.floor(trimmedQuestions.length * 0.6))) return true
+
+  const fallbackNormalized = fallbackQuestion.trim().toLowerCase()
+  const fallbackCount = trimmedQuestions.filter((q) => q === fallbackNormalized).length
+  if (fallbackCount >= Math.ceil(trimmedQuestions.length / 2)) return true
+
+  const genericOptionsCount = items.filter((q) => {
+    const opts = q.options || []
+    return opts.every((opt) => /^option\s+[a-d]$/i.test(String(opt).trim()))
+  }).length
+  if (genericOptionsCount >= Math.ceil(items.length / 2)) return true
+
+  return false
+}
+
+async function regenerateMiniTestFromContent(
+  topic: string,
+  lessonContent: string,
+  targetLanguage: string,
+  count: number
+): Promise<GeneratedLesson['mini_test']> {
+  const model = getGeminiModelWithSystemInstruction(
+    `You are an expert assessment designer. Create classroom-quality multiple-choice questions.
+All output must be in ${targetLanguage}. Questions must be grounded in the provided lesson content.`
+  )
+
+  const prompt = `Create ${count} high-quality multiple-choice questions for this lesson.
+Rules:
+- Output ONLY valid JSON.
+- Language: ${targetLanguage}.
+- Each question must test understanding of actual lesson content, not generic trivia.
+- Provide exactly 4 plausible options.
+- Exactly one correct answer per question.
+- explanations must be concise and content-grounded.
+
+Return JSON with exact shape:
+{
+  "mini_test": [
+    { "question": "string", "options": ["A","B","C","D"], "correct_answer": 0, "explanation": "string" }
+  ]
+}
+
+Topic: ${topic}
+Lesson content:
+${lessonContent.substring(0, 12000)}`
+
+  const response = await model.generateContent(prompt)
+  const text = response.response?.text() || '{}'
+  const extracted = extractFirstJsonObject(text) || text
+  let candidate: unknown = []
+  try {
+    const parsed = JSON.parse(extracted) as { mini_test?: unknown }
+    candidate = parsed.mini_test
+  } catch {
+    candidate = []
+  }
+  const validated = z.object({ mini_test: z.array(miniTestItemSchema).min(1) }).safeParse({ mini_test: candidate })
+  if (!validated.success) return []
+  return validated.data.mini_test
+}
+
+async function enforceLessonLanguage(
+  lesson: GeneratedLesson,
+  targetLanguage: string,
+  languageCode?: string
+): Promise<GeneratedLesson> {
+  const code = normalizeLanguageCode(languageCode)
+  if (code === 'en') return lesson
+
+  const model = getGeminiModelWithSystemInstruction(
+    `You are a strict localization assistant.
+Translate all human-readable lesson JSON fields to ${targetLanguage}.
+Keep JSON keys and structure unchanged.
+Do not change correct_answer indexes.
+Return ONLY valid JSON.`
+  )
+
+  const source = {
+    title: lesson.title,
+    content: lesson.content,
+    learning_objectives: lesson.learning_objectives,
+    duration_minutes: lesson.duration_minutes,
+    examples: lesson.examples,
+    mini_test: lesson.mini_test,
+    images: lesson.images,
+  }
+
+  const response = await model.generateContent(
+    `Translate this lesson JSON to ${targetLanguage}.
+Rules:
+- Translate title, content, objectives, examples, and mini_test fields.
+- Preserve markdown structure in content.
+- Keep images URLs unchanged; translate only alt/description if present.
+- Return ONLY valid JSON.
+JSON:
+${JSON.stringify(source)}`
+  )
+  const text = response.response?.text() || '{}'
+  const localized = safeJsonParse<GeneratedLesson>(text, lesson)
+  localized.content = normalizeLessonContent(localized.content)
+  return localized
+}
+
 // Default system instruction for lesson generation (used for both course and API/in-app; keep output style universal)
 const LESSON_SYSTEM_INSTRUCTION = `You are an expert educational content creator. Your lessons should be:
 - Clear and easy to understand
@@ -564,7 +700,8 @@ export async function generateLesson(
   }
 
   // Determine target language (same as exam: use 2-letter code -> full name for prompts)
-  const targetLanguage = languageCodeToName(language)
+  const normalizedLanguageCode = normalizeLanguageCode(language)
+  const targetLanguage = languageCodeToName(normalizedLanguageCode)
 
   // Create language-specific system instruction
   const languageSystemInstruction =
@@ -692,7 +829,7 @@ Topic: ${topicString}
 
 Generate the lesson now. Return ONLY the JSON object, no other text.`
 
-  const fallback = getFallbackPhrases(language)
+  const fallback = getFallbackPhrases(normalizedLanguageCode)
   try {
     const response = await model.generateContent(prompt)
     const text = response.response?.text() || '{}'
@@ -773,6 +910,23 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
       ]
     }
 
+    const expectedMiniTestCount = contentLength === 'short' ? 3 : 5
+    if (isMiniTestLowQuality(lesson.mini_test, fallback.question)) {
+      try {
+        const regenerated = await regenerateMiniTestFromContent(
+          topicString,
+          lesson.content,
+          targetLanguage,
+          expectedMiniTestCount
+        )
+        if (regenerated.length > 0) {
+          lesson.mini_test = regenerated
+        }
+      } catch (error) {
+        console.warn('Mini-test regeneration failed, using current mini-test:', error)
+      }
+    }
+
     // Ensure we have 5 mini test questions (use target-language fallback, not topicString)
     while (lesson.mini_test.length < 5) {
       lesson.mini_test.push({
@@ -789,23 +943,29 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
       explanation: sanitizeExplanation(item.explanation) || fallback.explanation,
     }))
 
+    // Final language lock to avoid mismatched language outputs (e.g. TR request but AZ content).
+    try {
+      const locked = await enforceLessonLanguage(lesson, targetLanguage, normalizedLanguageCode)
+      lesson.title = locked.title
+      lesson.content = locked.content
+      lesson.learning_objectives = locked.learning_objectives
+      lesson.examples = locked.examples
+      lesson.mini_test = locked.mini_test
+    } catch (error) {
+      console.warn('Lesson language lock failed, keeping original output:', error)
+    }
+
     // Generate images for the lesson (2-3 images) with language context
     // If lessonId is provided, images will be saved to Supabase Storage
     if (includeImages) {
       try {
         const effectiveLessonId = lessonId ?? randomUUID()
-        const imageResult = await (generateLessonImagesWithUsage as unknown as (
-          lessonId: string,
-          topic: string,
-          content: string,
-          count: number,
-          language: string
-        ) => Promise<{ images: LessonImage[]; usage: NonNullable<GeneratedLesson['usage']> }> )(
-          effectiveLessonId,
+        const imageResult = await generateLessonImagesWithUsage(
           topicString,
           lesson.content,
           3,
-          language ?? 'en'
+          normalizedLanguageCode,
+          effectiveLessonId
         )
         lesson.images = imageResult.images
         usageTelemetry.image_prompt_tokens = imageResult.usage.prompt_tokens
@@ -947,7 +1107,28 @@ export class LessonAiService {
       throw wrapped
     }
 
-    // TTS remains optional and can be handled by dedicated media route/service.
+    if (includeAudio) {
+      void (async () => {
+        try {
+          const tts = await generateLessonAudioWithUsage(lessonId, generated.title, generated.content, body.language)
+          if (!tts.audioUrl) return
+          await this.app.db.query(
+            `UPDATE lessons
+             SET audio_url = $2,
+                 metadata = COALESCE(metadata, '{}'::jsonb) || $3::jsonb,
+                 updated_at = now()
+             WHERE id = $1`,
+            [
+              lessonId,
+              tts.audioUrl,
+              JSON.stringify({ audio_url: tts.audioUrl, tts_usage: tts.usage }),
+            ]
+          )
+        } catch (error) {
+          this.app.log.warn({ error, lessonId }, 'Lesson TTS generation failed')
+        }
+      })()
+    }
 
     return {
       id: lessonId,
