@@ -11,7 +11,6 @@ import {
   Search,
   BookOpen,
   Target,
-  ArrowLeft,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -67,32 +66,28 @@ export default async function SchoolAdminLessonsPage({
   const currentPage = Number(lessonsResult?.page || 1)
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Breadcrumb / Back to Teaching Studio */}
-      <div className="flex items-center justify-between gap-3">
-        <Link
-          href="/school-admin"
-          className="inline-flex items-center gap-2 text-xs font-medium text-blue-700 hover:text-blue-800"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          <span>{t('breadcrumb')}</span>
-        </Link>
-      </div>
-
+    <div className="space-y-6 sm:space-y-8">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('title')}</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {t('subtitle')}
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{t('title')}</h1>
         </div>
+        <form className="relative flex-1 sm:max-w-md">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            name="search"
+            defaultValue={params.search}
+            placeholder={t('searchPlaceholder')}
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          />
+        </form>
         
         <div className="flex items-center justify-between gap-4 sm:justify-end">
           {/* Create Lesson Button */}
           <Link
             href="/school-admin/lessons/generate"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">{t('generateLesson')}</span>
@@ -101,47 +96,33 @@ export default async function SchoolAdminLessonsPage({
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <form className="relative flex-1 sm:max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            name="search"
-            defaultValue={params.search}
-            placeholder={t('searchPlaceholder')}
-            className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </form>
-      </div>
-
       {/* Lessons List */}
-      <div className="rounded-lg border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {lessons.length === 0 ? (
-          <div className="p-8 text-center sm:p-12">
-            <GraduationCap className="mx-auto h-12 w-12 text-gray-300" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">{t('noLessonsFound')}</h3>
-            <p className="mt-2 text-sm text-gray-500">
+          <div className="flex flex-col items-center justify-center p-12 sm:p-16">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+              <GraduationCap className="h-7 w-7" />
+            </div>
+            <h3 className="mt-5 text-lg font-semibold text-gray-900">{t('noLessonsFound')}</h3>
+            <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
               {params.search
                 ? t('adjustFilters')
                 : t('createFirstLesson')}
             </p>
-            <div className="mt-6">
-              <Link
-                href="/school-admin/lessons/generate"
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-              >
-                <Sparkles className="h-4 w-4" />
-                {t('createFirstLessonButton')}
-              </Link>
-            </div>
+            <Link
+              href="/school-admin/lessons/generate"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {t('createFirstLessonButton')}
+            </Link>
           </div>
         ) : (
           <>
             {/* Mobile Card View */}
             <div className="divide-y divide-gray-100 sm:hidden">
               {lessons.map((lesson: any) => (
-                <div key={lesson.id} className="p-4">
+                <div key={lesson.id} className="p-4 transition-colors hover:bg-gray-50/50">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <Link 
@@ -152,7 +133,7 @@ export default async function SchoolAdminLessonsPage({
                           <BookOpen className="h-5 w-5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-gray-900 truncate">{lesson.title}</p>
+                          <p className="truncate font-medium text-gray-900">{lesson.title}</p>
                         </div>
                       </Link>
                     {lesson.languages.length > 0 && (
@@ -215,32 +196,32 @@ export default async function SchoolAdminLessonsPage({
             </div>
 
             {/* Desktop Table View */}
-            <table className="hidden min-w-full divide-y divide-gray-200 sm:table">
-              <thead className="bg-gray-50">
+            <table className="hidden min-w-full divide-y divide-gray-100 sm:table">
+              <thead className="bg-gray-50/80">
                 <tr>
-                  <th scope="col" className="py-3 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:pl-6">
+                  <th scope="col" className="py-3.5 pl-5 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
                     {t('lesson')}
                   </th>
-                  <th scope="col" className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                     {t('languages')}
                   </th>
-                  <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">
+                  <th scope="col" className="hidden px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 lg:table-cell">
                     {t('duration')}
                   </th>
-                  <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">
+                  <th scope="col" className="hidden px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 md:table-cell">
                     {t('objectives')}
                   </th>
-                  <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">
+                  <th scope="col" className="hidden px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 lg:table-cell">
                     {t('created')}
                   </th>
-                  <th scope="col" className="py-3 pl-3 pr-4 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:pr-6">
+                  <th scope="col" className="py-3.5 pl-3 pr-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
                     {t('actions')}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
                 {lessons.map((lesson: any) => (
-                  <tr key={lesson.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={lesson.id} className="transition-colors hover:bg-gray-50/70">
                     {/* Lesson */}
                     <td className="py-4 pl-4 pr-3 sm:pl-6">
                       <div className="flex items-center gap-3">

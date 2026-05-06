@@ -24,7 +24,7 @@ export function GlobalErrorBoundary({ error, reset }: { error: Error; reset: () 
   return <AppErrorBoundary error={error} reset={reset} />
 }
 
-export function PaginationFooter() {
+export function PaginationFooter(_props: AnyProps) {
   return null
 }
 

@@ -1,38 +1,43 @@
-import { createClient as createServerClient } from '@eduator/auth/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { createExam, updateExam } from './actions'
 import { generateExamFromDocuments, translateExam } from './ai-actions'
 import { ExamCreatorWithIntl } from '../exam-creator-with-intl'
 
 async function getTeacherInfo() {
-  const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return null
-  
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!profile?.id) return null
-  
-  return { teacherId: profile.id, workspaceId: 'global' }
+  if (user.role !== 'operator' && user.role !== 'admin') return null
+  return { teacherId: user.id, workspaceId: 'global' }
 }
 
 async function getTeacherDocuments(teacherId: string, workspaceId: string) {
-  const supabase = await createServerClient()
+  void teacherId
   void workspaceId
-  
-  const { data: documents } = await supabase
-    .from('documents')
-    .select('id, title, file_type, file_name')
-    .eq('created_by', teacherId)
-    .eq('is_archived', false)
-    .order('created_at', { ascending: false })
-  
-  return documents || []
+
+  const accessToken = await getAccessToken()
+  if (!accessToken) return []
+
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  try {
+    const response = await fetch(`${backendBase}/v1/documents`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: 'no-store',
+    })
+    if (!response.ok) return []
+
+    const payload = (await response.json()) as { items?: Array<Record<string, unknown>> }
+    const items = payload.items || []
+    return items.map((doc) => ({
+      id: String(doc.id || ''),
+      title: String(doc.title || ''),
+      file_type: String(doc.file_type || doc.fileType || 'text'),
+      file_name: String(doc.file_name || doc.fileName || ''),
+    }))
+  } catch {
+    return []
+  }
 }
 
 export default async function NewExamPage() {

@@ -10,7 +10,6 @@ const baseNavigation = [
   { name: 'Lessons', href: '/school-admin/lessons', icon: 'GraduationCap' },
   { name: 'Education Plans', href: '/school-admin/education-plans', icon: 'CalendarRange' },
   { name: 'AI Tutor', href: '/school-admin/chat', icon: 'MessageSquare' },
-  { name: 'Reports', href: '/school-admin/reports', icon: 'BarChart3' },
   { name: 'Tokens', href: '/school-admin/tokens', icon: 'Coins' },
 ]
 

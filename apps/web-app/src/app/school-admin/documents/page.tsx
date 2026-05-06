@@ -1,6 +1,4 @@
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { DocumentsClient } from './documents-client'
 
@@ -84,16 +82,6 @@ export default async function SchoolAdminDocumentsPage() {
 
   return (
     <div className="min-h-[60vh]">
-      <div className="mb-6">
-        <Link
-          href="/school-admin"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to dashboard</span>
-        </Link>
-      </div>
-
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Document Library</h1>
         <p className="mt-1 text-sm text-gray-500">Upload documents, monitor RAG indexing quality, and manage files from one place.</p>

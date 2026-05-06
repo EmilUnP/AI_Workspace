@@ -1,6 +1,7 @@
 import { createClient } from '@eduator/auth/supabase/server'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { getCurrentUser } from '@/lib/backend-auth'
 import Image from 'next/image'
 import { 
   FileText, 
@@ -32,17 +33,19 @@ const LANGUAGE_NAMES: Record<string, string> = {
   ja: 'Japanese', ko: 'Korean', nl: 'Dutch', pl: 'Polish', uk: 'Ukrainian', az: 'Azerbaijani',
 }
 
+const PaginationFooterAny = PaginationFooter as unknown as (props: {
+  currentPage: number
+  perPage: number
+  totalItems: number
+  baseUrl: string
+  searchParams?: Record<string, string | undefined>
+}) => any
+
 async function getAdminInfo() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return null
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-  if (!profile?.id) return null
-  return { adminId: profile.id, workspaceId: 'global' }
+  if (user.role !== 'operator' && user.role !== 'admin') return null
+  return { adminId: user.id, workspaceId: 'global' }
 }
 
 export default async function SchoolAdminExamsPage({
@@ -70,11 +73,20 @@ export default async function SchoolAdminExamsPage({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{t('title')}</h1>
-          <p className="mt-1.5 text-sm text-gray-500">{t('subtitle')}</p>
         </div>
+        <form className="relative flex-1 sm:max-w-md">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            name="search"
+            defaultValue={params.search}
+            placeholder={t('searchPlaceholder')}
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          />
+        </form>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-3 sm:hidden">
             <div className="rounded-xl bg-emerald-50 px-3 py-2 text-center ring-1 ring-emerald-100">
@@ -90,20 +102,6 @@ export default async function SchoolAdminExamsPage({
               <p className="text-xs text-violet-600/80">{t('questions')}</p>
             </div>
           </div>
-          <div className="hidden items-center gap-4 lg:flex">
-            <div className="rounded-xl bg-emerald-50/80 px-4 py-2.5 text-center ring-1 ring-emerald-100">
-              <p className="text-xl font-semibold text-emerald-700">{stats.published}</p>
-              <p className="text-xs text-emerald-600/80">{t('published')}</p>
-            </div>
-            <div className="rounded-xl bg-amber-50/80 px-4 py-2.5 text-center ring-1 ring-amber-100">
-              <p className="text-xl font-semibold text-amber-700">{stats.draft}</p>
-              <p className="text-xs text-amber-600/80">{t('unused')}</p>
-            </div>
-            <div className="rounded-xl bg-violet-50/80 px-4 py-2.5 text-center ring-1 ring-violet-100">
-              <p className="text-xl font-semibold text-violet-700">{stats.totalQuestions}</p>
-              <p className="text-xs text-violet-600/80">{t('questions')}</p>
-            </div>
-          </div>
           <Link
             href="/school-admin/exams/new"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -112,41 +110,6 @@ export default async function SchoolAdminExamsPage({
             <span className="hidden sm:inline">{t('createExam')}</span>
             <span className="sm:hidden">{t('create')}</span>
           </Link>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <form className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            name="search"
-            defaultValue={params.search}
-            placeholder={t('searchPlaceholder')}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-          />
-        </form>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-            <Link
-              href={params.classId ? `/school-admin/exams?classId=${params.classId}` : '/school-admin/exams'}
-              className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${!params.status ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              {`${t('all')} (${stats.total})`}
-            </Link>
-            <Link
-              href={params.classId ? `/school-admin/exams?status=published&classId=${params.classId}` : '/school-admin/exams?status=published'}
-              className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${params.status === 'published' ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              {`${t('published')} (${stats.published})`}
-            </Link>
-            <Link
-              href={params.classId ? `/school-admin/exams?status=draft&classId=${params.classId}` : '/school-admin/exams?status=draft'}
-              className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${params.status === 'draft' ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              {`${t('unused')} (${stats.draft})`}
-            </Link>
-          </div>
         </div>
       </div>
 
@@ -419,7 +382,7 @@ export default async function SchoolAdminExamsPage({
       {/* Footer with Pagination */}
       {exams.length > 0 && (
         <div className="space-y-4">
-          <PaginationFooter
+          <PaginationFooterAny
             currentPage={currentPage}
             perPage={TEACHER_EXAMS_PER_PAGE}
             totalItems={totalExams}
