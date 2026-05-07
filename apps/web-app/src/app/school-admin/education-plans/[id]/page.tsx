@@ -17,7 +17,7 @@ type EducationPlan = {
   hours_per_session: number
   audience: string | null
   is_shared_with_students: boolean
-  content: Array<{ week: number; title?: string; topics: string[]; objectives?: string[]; notes?: string }>
+  content: unknown
 }
 
 async function getTeacherData() {
@@ -95,7 +95,7 @@ export default async function TeacherEducationPlanDetailPage({
       </div>
 
       <EducationPlanViewClient
-        content={plan.content as Array<{ week: number; title?: string; topics: string[]; objectives?: string[]; notes?: string }>}
+        content={plan.content}
       />
     </div>
   )

@@ -25,6 +25,12 @@ const parseArray = <T = unknown>(value: unknown): T[] => {
   return value as T[]
 }
 
+const parseJsonContent = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value
+  if (value && typeof value === 'object') return value
+  return []
+}
+
 export async function educationPlansRoutes(app: FastifyInstance) {
   app.get('/education-plans', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
@@ -64,7 +70,7 @@ export async function educationPlansRoutes(app: FastifyInstance) {
       items: rows.map((row) => ({
         ...row,
         document_ids: parseArray<string>(row.document_ids),
-        content: parseArray<Record<string, unknown>>(row.content),
+        content: parseJsonContent(row.content),
       })),
     })
   })
@@ -111,7 +117,7 @@ export async function educationPlansRoutes(app: FastifyInstance) {
       plan: {
         ...row,
         document_ids: parseArray<string>(row.document_ids),
-        content: parseArray<Record<string, unknown>>(row.content),
+        content: parseJsonContent(row.content),
       },
     })
   })
@@ -132,7 +138,7 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     const audience = body.audience == null ? null : String(body.audience)
     const isShared = Boolean(body.is_shared_with_students)
     const documentIds = parseArray<string>(body.document_ids)
-    const content = parseArray<Record<string, unknown>>(body.content)
+    const content = parseJsonContent(body.content)
 
     const { rows } = await app.db.query<{ id: string }>(
       `INSERT INTO education_plans (
@@ -181,7 +187,7 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     if (body.audience !== undefined) add('audience', body.audience == null ? null : String(body.audience))
     if (body.is_shared_with_students !== undefined) add('is_shared_with_students', Boolean(body.is_shared_with_students))
     if (body.document_ids !== undefined) add('document_ids', JSON.stringify(parseArray<string>(body.document_ids)))
-    if (body.content !== undefined) add('content', JSON.stringify(parseArray<Record<string, unknown>>(body.content)))
+    if (body.content !== undefined) add('content', JSON.stringify(parseJsonContent(body.content)))
     add('updated_at', new Date().toISOString())
 
     if (keys.length === 0) return reply.send({ ok: true })
