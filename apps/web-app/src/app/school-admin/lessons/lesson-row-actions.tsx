@@ -25,17 +25,19 @@ export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
       <div className="flex items-center gap-2">
         <Link
           href={`/school-admin/lessons/${lessonId}`}
-          className="relative z-10 inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+          className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+          title="View lesson"
         >
-          View details
+          <Eye className="h-4 w-4" />
         </Link>
         <button
           type="button"
           onClick={() => setShowDeleteConfirm(true)}
           disabled={isPending}
-          className="relative z-10 inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
+          className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60"
+          title="Delete lesson"
         >
-          Delete
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
 

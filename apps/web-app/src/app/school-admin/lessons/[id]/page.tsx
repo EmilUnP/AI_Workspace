@@ -144,6 +144,12 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                   {lesson.audio_url ? 'Audio ready' : 'Audio processing'}
                 </span>
               </div>
+              {lesson.documents && (
+                <div className="mt-3 text-sm text-gray-500">
+                  <span className="font-medium">{tl('sourceDocument', 'Source document:')}</span>{' '}
+                  {Array.isArray(lesson.documents) ? lesson.documents[0]?.title : lesson.documents.title}
+                </div>
+              )}
             </div>
           </div>
           
@@ -280,13 +286,6 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
           }}
         />
         
-        {/* Source Document */}
-        {lesson.documents && (
-          <div className="mt-6 bg-gray-100 rounded-xl p-4 text-sm text-gray-600">
-            <span className="font-medium">{tl('sourceDocument', 'Source document:')}</span>{' '}
-            {Array.isArray(lesson.documents) ? lesson.documents[0]?.title : lesson.documents.title}
-          </div>
-        )}
       </div>
     </div>
   )
