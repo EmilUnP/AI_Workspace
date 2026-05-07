@@ -6,12 +6,10 @@ import Image from 'next/image'
 import { 
   FileText, 
   Clock, 
-  CheckCircle, 
   Award,
   Calendar,
   Sparkles,
-  Search,
-  Users
+  Search
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -183,24 +181,7 @@ export default async function SchoolAdminExamsPage({
                     </div>
                     <ExamRowActions examId={exam.id} isPublished={exam.is_published} />
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="text-gray-500 font-medium">{t('usedIn')}</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {exam.usedInClass && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-indigo-200/50" title={t('sharedInClass')}>
-                          <Users className="h-3 w-3" />
-                          {exam.className || t('classBadge')}
-                        </span>
-                      )}
-                      {exam.usedInCalendar && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200/50" title={t('scheduledInCalendar')}>
-                          <Calendar className="h-3 w-3" />
-                          {t('calendarBadge')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-3 flex items-center">
                     <div className="flex items-center gap-3 text-sm">
                       <span className="inline-flex items-center gap-1 text-gray-500">
                         <FileText className="h-3.5 w-3.5" />
@@ -217,17 +198,6 @@ export default async function SchoolAdminExamsPage({
                         {exam.duration_minutes || 60} {t('minutesAbbr')}
                       </span>
                     </div>
-                    {exam.is_published ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/50">
-                        <CheckCircle className="h-3 w-3" />
-                        {t('inClass')}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200/50">
-                        <Clock className="h-3 w-3" />
-                        {t('unused')}
-                      </span>
-                    )}
                   </div>
                 </div>
               ))}
@@ -237,10 +207,8 @@ export default async function SchoolAdminExamsPage({
               <thead className="bg-gray-50/80">
                 <tr>
                   <th scope="col" className="py-3.5 pl-5 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">{t('exam')}</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('usedIn')}</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('languages')}</th>
                   <th scope="col" className="hidden px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 lg:table-cell">{t('questions')}</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{t('status')}</th>
                   <th scope="col" className="hidden px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 lg:table-cell">{t('created')}</th>
                   <th scope="col" className="py-3.5 pl-3 pr-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">{t('actions')}</th>
                 </tr>
@@ -281,23 +249,6 @@ export default async function SchoolAdminExamsPage({
                         </Link>
                       </div>
                     </td>
-                    <td className="px-3 py-4">
-                      <div className="flex flex-wrap gap-1.5">
-                        {exam.usedInClass && (
-                          <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-indigo-200/50" title={t('sharedInClass')}>
-                            <Users className="h-3 w-3" />
-                            {exam.className || t('classBadge')}
-                          </span>
-                        )}
-                        {exam.usedInCalendar && (
-                          <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200/50" title={t('scheduledInCalendar')}>
-                            <Calendar className="h-3 w-3" />
-                            {t('calendarBadge')}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
                     {/* Languages */}
                     <td className="whitespace-nowrap px-3 py-4">
                       <div className="flex items-center gap-1">
@@ -337,20 +288,6 @@ export default async function SchoolAdminExamsPage({
                         <FileText className="h-4 w-4" />
                         {exam.questionCount}
                       </div>
-                    </td>
-
-                    <td className="whitespace-nowrap px-3 py-4">
-                      {exam.is_published ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/50">
-                          <CheckCircle className="h-3 w-3" />
-                          {t('inClass')}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200/50">
-                          <Clock className="h-3 w-3" />
-                          {t('unused')}
-                        </span>
-                      )}
                     </td>
 
                     {/* Created */}
