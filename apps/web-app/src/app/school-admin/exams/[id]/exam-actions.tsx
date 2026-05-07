@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Pencil, Trash2, Loader2, AlertTriangle, X } from 'lucide-react'
+import { Trash2, Loader2, AlertTriangle, X } from 'lucide-react'
 import { deleteExam } from '../new/actions'
 
 interface ExamActionsProps {
@@ -22,10 +22,8 @@ export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fro
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-
-  const editHref = fromCourse
-    ? `/school-admin/exams/${examId}/edit?fromCourse=${fromCourse}${fromRun === '1' ? '&fromRun=1' : ''}`
-    : `/school-admin/exams/${examId}/edit`
+  void fromCourse
+  void fromRun
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -40,15 +38,6 @@ export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fro
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => router.push(editHref)}
-          disabled={isPending}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 sm:px-4"
-          title={tl('editExam', 'Edit exam')}
-        >
-          <Pencil className="h-4 w-4" />
-          <span className="hidden sm:inline">{tl('editShort', 'Edit')}</span>
-        </button>
         <button
           onClick={() => setShowDeleteConfirm(true)}
           disabled={isPending}

@@ -5,14 +5,11 @@ import Link from 'next/link'
 import { 
   ArrowLeft, 
   Clock, 
-  FileText, 
-  CheckCircle, 
-  Award,
+  FileText,
   Calendar,
   BookOpen
 } from 'lucide-react'
 import { ExamActions } from './exam-actions'
-import { ExportExamCsvButton } from './export-exam-csv-button'
 import { ExamLanguageSelector } from './exam-language-selector'
 import { normalizeExamQuestionsForUi } from '@/lib/eduator-exam-normalize-shim'
 
@@ -145,17 +142,6 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{exam.title}</h1>
-                {exam.is_published ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/50">
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    {tl('inClass', 'In class')}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200/50">
-                    <Clock className="h-3.5 w-3.5" />
-                    {tl('unused', 'Unused')}
-                  </span>
-                )}
               </div>
               {exam.description && (
                 <p className="mt-2 max-w-2xl text-sm text-gray-600">{exam.description}</p>
@@ -171,11 +157,6 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <ExportExamCsvButton
-                questions={questions}
-                examTitle={exam.title}
-                languageCode={primaryLanguage}
-              />
               <ExamActions examId={exam.id} isPublished={Boolean(exam.is_published)} />
             </div>
           </div>
@@ -183,6 +164,15 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
 
         <div className="border-t border-gray-100 bg-white px-6 py-4 sm:px-8">
           <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 ring-1 ring-blue-200/50">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{questions.length}</p>
+                <p className="text-xs text-gray-500">Questions total</p>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600 ring-1 ring-violet-200/50">
                 <Clock className="h-5 w-5" />

@@ -18,6 +18,7 @@ import {
   TEACHER_LESSONS_PER_PAGE,
 } from '@eduator/core/utils/teacher-lessons'
 import { PaginationFooter } from '@eduator/ui'
+import { LessonRowActions } from './lesson-row-actions'
 
 const PaginationFooterAny = PaginationFooter as any
 
@@ -177,19 +178,8 @@ export default async function SchoolAdminLessonsPage({
                       )}
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <a
-                      href={`/school-admin/lessons/${lesson.id}`}
-                      className="relative z-10 inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                    >
-                      View details
-                    </a>
-                    <a
-                      href={`/school-admin/lessons/delete/${lesson.id}`}
-                      className="relative z-10 inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
-                    >
-                      Delete
-                    </a>
+                  <div className="mt-3">
+                    <LessonRowActions lessonId={String(lesson.id)} />
                   </div>
                 </div>
               ))}
@@ -300,18 +290,7 @@ export default async function SchoolAdminLessonsPage({
                     {/* Actions */}
                     <td className="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
                       <div className="flex items-center justify-end gap-2">
-                        <a
-                          href={`/school-admin/lessons/${lesson.id}`}
-                          className="relative z-10 inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                        >
-                          View details
-                        </a>
-                        <a
-                          href={`/school-admin/lessons/delete/${lesson.id}`}
-                          className="relative z-10 inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
-                        >
-                          Delete
-                        </a>
+                        <LessonRowActions lessonId={String(lesson.id)} />
                       </div>
                     </td>
                   </tr>

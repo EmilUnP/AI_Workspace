@@ -161,13 +161,6 @@ export function ExamLanguageSelector({
       {/* Header with Language Tabs */}
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">{tl('questionsHeader', 'Questions')}</h2>
-            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-              {displayQuestions.length} {selectedTopicFilter ? tl('filteredLabel', 'filtered') : tl('totalLabel', 'total')}
-            </span>
-          </div>
-
           <div className="flex items-center gap-3 flex-wrap">
             {/* Language Selector - Only show available languages */}
             {availableLanguages.length > 1 && (
