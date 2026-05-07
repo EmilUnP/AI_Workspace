@@ -1,12 +1,12 @@
 import { z } from 'zod'
-import { generateJson, generateText } from '../ai/gemini.js'
+import { generateText } from '../ai/gemini.js'
 import { DocumentRagService } from './document-rag.service.js'
 import type { FastifyInstance } from 'fastify'
 
 const sendSchema = z.object({
   message: z.string().min(1),
   documentIds: z.array(z.uuid()).default([]),
-  shortAnswer: z.boolean().default(false)
+  shortAnswer: z.boolean().default(true)
 })
 
 const updateConversationSchema = z.object({
@@ -144,27 +144,29 @@ export class TeacherChatbotService {
       context += `\n\n[Doc:${id}]\n${retrieved.chunks.join('\n')}`
     }
 
-    const style = data.shortAnswer ? 'Respond briefly in 1-3 bullets.' : 'Respond with detailed guidance.'
+    const style = data.shortAnswer
+      ? 'Respond briefly in 1-4 bullet points. Keep it short and practical.'
+      : 'Respond with detailed guidance.'
     const reply = await generateText(
-      `You are Eduator teacher assistant. ${style}\nUser question: ${data.message}\nRelevant context:${context}`
+      `You are Eduator teacher assistant. ${style}
+If the user asks a direct definition, answer in max 3 short bullets.
+Avoid long introductions and avoid repeating the same idea.
+User question: ${data.message}
+Relevant context:${context}`
     )
-
-    const followups = await generateJson<string[]>(
-      `Create 3 short follow-up questions for this teacher chat.\nQuestion: ${data.message}\nAssistant answer: ${reply}`
-    ).catch(() => [])
 
     const { rows: msgRows } = await this.app.db.query<{ id: string; content: string }>(
       `INSERT INTO teacher_chat_messages (conversation_id, role, content, metadata)
        VALUES ($1, 'assistant', $2, $3::jsonb)
        RETURNING id, content`,
-      [conversationId, reply, JSON.stringify({ followups })]
+      [conversationId, reply, JSON.stringify({ followups: [] })]
     )
 
     await this.app.db.query(`UPDATE teacher_chat_conversations SET updated_at = NOW() WHERE id = $1`, [conversationId])
 
     return {
       message: msgRows[0],
-      followups
+      followups: []
     }
   }
 }

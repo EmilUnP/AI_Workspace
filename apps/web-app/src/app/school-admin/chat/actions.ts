@@ -7,6 +7,7 @@ const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.
 type Conversation = {
   id: string
   title: string
+  document_ids?: string[]
   created_at?: string
   updated_at?: string
 }
@@ -16,6 +17,12 @@ type Message = {
   role: string
   content: string
   created_at?: string
+}
+
+type DocumentItem = {
+  id: string
+  title?: string
+  file_name?: string
 }
 
 export interface CreateConversationInput {
@@ -74,7 +81,7 @@ export async function createConversation(input: CreateConversationInput) {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ title: input.title }),
+    body: JSON.stringify({ title: input.title, documentIds: input.document_ids || [] }),
     cache: 'no-store',
   })
   if (!response.ok) {
@@ -118,9 +125,6 @@ export async function sendMessage(input: SendMessageInput) {
   }
 }
 
-/**
- * Update conversation (title, documents, etc.)
- */
 export async function updateConversation(
   conversationId: string,
   updates: {
@@ -130,9 +134,24 @@ export async function updateConversation(
     context?: Record<string, unknown>
   }
 ) {
-  void conversationId
-  void updates
-  return { error: 'Update conversation not supported in clean mode' }
+  const token = await getAccessToken()
+  if (!token) return { error: 'Not authenticated' }
+
+  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      title: updates.title,
+      documentIds: updates.document_ids,
+    }),
+    cache: 'no-store',
+  })
+  if (!response.ok) return { error: 'Failed to update conversation' }
+  const payload = (await response.json()) as { conversation?: Conversation }
+  return { data: payload.conversation }
 }
 
 /**
@@ -152,5 +171,18 @@ export async function deleteConversation(conversationId: string) {
     return { error: 'Failed to delete conversation' }
   }
   return { success: true }
+}
+
+export async function getDocuments() {
+  const token = await getAccessToken()
+  if (!token) return { error: 'Not authenticated' }
+
+  const response = await fetch(`${getBackendBase()}/v1/documents`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) return { error: 'Failed to load documents' }
+  const payload = (await response.json()) as { items?: DocumentItem[] }
+  return { data: payload.items || [] }
 }
 
