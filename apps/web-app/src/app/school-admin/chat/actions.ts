@@ -1,275 +1,119 @@
 'use server'
 
-import { createClient } from '@eduator/auth/supabase/server'
-import { createTeacherChatbot, type TeacherChatContext } from '@eduator/ai/services/teacher-chatbot'
-import { tokenRepository } from '@eduator/db/repositories/tokens'
+import { getAccessToken } from '@/lib/backend-auth'
+
+const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+
+type Conversation = {
+  id: string
+  title: string
+  created_at?: string
+  updated_at?: string
+}
+
+type Message = {
+  id: string
+  role: string
+  content: string
+  created_at?: string
+}
 
 export interface CreateConversationInput {
   title?: string
   document_ids?: string[]
-  class_id?: string | null // Optional: assign to a class for learner access
-  context?: {
-    subject?: string
-    grade_level?: string
-  }
 }
 
 export interface SendMessageInput {
   conversation_id: string
   message: string
-  use_rag?: boolean
-  /** When true, AI gives short answers; when false, detailed. */
   short_answer?: boolean
+  document_ids?: string[]
 }
 
-/**
- * Get all conversations for the current school admin
- */
 export async function getConversations() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  const token = await getAccessToken()
+  if (!token) {
     return { error: 'Not authenticated' }
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!profile) {
-    return { error: 'Profile not found' }
+  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) {
+    return { error: 'Failed to load conversations' }
   }
-
-  const { data: conversations, error } = await supabase
-    .from('teacher_chat_conversations')
-    .select('id, title, document_ids, context, is_active, created_at, updated_at, class_id')
-    .eq('teacher_id', profile.id)
-    .order('updated_at', { ascending: false })
-
-  if (error) {
-    return { error: (error as { message?: string }).message ?? 'Failed to load conversations' }
-  }
-
-  return { data: conversations || [] }
+  const payload = (await response.json()) as { items?: Conversation[] }
+  return { data: payload.items || [] }
 }
 
-/**
- * Get a single conversation with all messages
- */
 export async function getConversation(conversationId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  const token = await getAccessToken()
+  if (!token) {
     return { error: 'Not authenticated' }
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!profile) {
-    return { error: 'Profile not found' }
-  }
-
-  // Get conversation
-  const { data: conversation, error: convError } = await supabase
-    .from('teacher_chat_conversations')
-    .select('*')
-    .eq('id', conversationId)
-    .eq('teacher_id', profile.id)
-    .single()
-
-  if (convError || !conversation) {
+  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) {
     return { error: 'Conversation not found' }
   }
-
-  // Get messages
-  const { data: messages, error: msgError } = await supabase
-    .from('teacher_chat_messages')
-    .select('*')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-
-  if (msgError) {
-    return { error: (msgError as { message?: string }).message ?? 'Failed to load messages' }
-  }
-
-  return {
-    data: {
-      ...conversation,
-      messages: messages || [],
-    },
-  }
+  const payload = (await response.json()) as { conversation?: Conversation & { messages?: Message[] } }
+  return { data: payload.conversation }
 }
 
-/**
- * Create a new conversation
- */
 export async function createConversation(input: CreateConversationInput) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  const token = await getAccessToken()
+  if (!token) {
     return { error: 'Not authenticated' }
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!profile) {
-    return { error: 'Profile not found' }
+  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ title: input.title }),
+    cache: 'no-store',
+  })
+  if (!response.ok) {
+    return { error: 'Failed to create conversation' }
   }
-
-  const { data: conversation, error } = await supabase
-    .from('teacher_chat_conversations')
-    .insert({
-      teacher_id: profile.id,
-      organization_id: 'global',
-      title: input.title || 'New Conversation',
-      document_ids: input.document_ids || [],
-      class_id: input.class_id || null,
-      context: input.context || {},
-    })
-    .select()
-    .single()
-
-  if (error) {
-    return { error: (error as { message?: string }).message ?? 'Failed to create conversation' }
-  }
-
-  return { data: conversation }
+  const payload = (await response.json()) as { conversation?: Conversation }
+  return { data: payload.conversation }
 }
 
-/**
- * Send a message in a conversation
- */
 export async function sendMessage(input: SendMessageInput) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  const token = await getAccessToken()
+  if (!token) {
     return { error: 'Not authenticated' }
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!profile) {
-    return { error: 'Profile not found' }
-  }
-
-  // Verify conversation belongs to school admin
-  const { data: conversation, error: convError } = await supabase
-    .from('teacher_chat_conversations')
-    .select('document_ids, context')
-    .eq('id', input.conversation_id)
-    .eq('teacher_id', profile.id)
-    .single()
-
-  if (convError || !conversation) {
-    return { error: 'Conversation not found' }
-  }
-
-  const tokenDeduct = await tokenRepository.deductTokensForAction(profile.id, 'teacher_chat', {})
-  if (!tokenDeduct.success) {
-    return { error: tokenDeduct.errorMessage ?? 'Insufficient tokens' }
-  }
-
-  // Save user message
-  const { data: userMessage, error: userMsgError } = await supabase
-    .from('teacher_chat_messages')
-    .insert({
-      conversation_id: input.conversation_id,
-      role: 'user',
-      content: input.message,
-    })
-    .select()
-    .single()
-
-  if (userMsgError) {
-    return { error: (userMsgError as { message?: string }).message ?? 'Failed to save user message' }
-  }
-
-  // Create chatbot context
-  const chatContext: TeacherChatContext = {
-    subject: conversation.context?.subject,
-    grade_level: conversation.context?.grade_level,
-    organization_id: 'global',
-    document_ids: conversation.document_ids || [],
-    preferences: {
-      language: 'en',
-      explanation_style: input.short_answer === true ? 'short' : 'detailed',
+  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${input.conversation_id}/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({
+      message: input.message,
+      shortAnswer: Boolean(input.short_answer),
+      documentIds: input.document_ids || [],
+    }),
+    cache: 'no-store',
+  })
+  const payload = (await response.json().catch(() => ({}))) as {
+    error?: string
+    message?: Message
+    followups?: string[]
   }
-
-  // Get AI response
-  const chatbot = createTeacherChatbot(chatContext)
-  let response
-  try {
-    response = await chatbot.sendMessage(
-      input.message,
-      user.id,
-      input.use_rag !== false && (conversation.document_ids?.length || 0) > 0
-    )
-  } catch (aiError) {
-    if ((tokenDeduct.cost ?? 0) > 0) {
-      await tokenRepository.addTokens(profile.id, tokenDeduct.cost!, 'refund', undefined, { reason: 'ai_failed' }).catch(() => {})
-    }
-    throw aiError
+  if (!response.ok) {
+    return { error: payload.error || 'Failed to send message' }
   }
-
-  // Save assistant message
-  const { data: assistantMessage, error: assistantMsgError } = await supabase
-    .from('teacher_chat_messages')
-    .insert({
-      conversation_id: input.conversation_id,
-      role: 'assistant',
-      content: response.message.content,
-      metadata: response.message.metadata,
-    })
-    .select()
-    .single()
-
-  if (assistantMsgError) {
-    return { error: (assistantMsgError as { message?: string }).message ?? 'Failed to save assistant response' }
-  }
-
-  const telemetry = (response.message.metadata ?? {}) as Record<string, unknown>
-  await tokenRepository
-    .attachMetadataToLatestUsageTransaction(profile.id, 'teacher_chat', {
-      input_tokens: telemetry.input_tokens,
-      output_tokens: telemetry.output_tokens,
-      prompt_tokens: telemetry.prompt_tokens,
-      completion_tokens: telemetry.completion_tokens,
-      total_tokens: telemetry.total_tokens ?? telemetry.tokens_used,
-      model_used: telemetry.model_used,
-    })
-    .catch(() => {})
-
-  // Update conversation timestamp
-  await supabase
-    .from('teacher_chat_conversations')
-    .update({ updated_at: new Date().toISOString() })
-    .eq('id', input.conversation_id)
-
   return {
     data: {
-      user_message: userMessage,
-      assistant_message: assistantMessage,
-      sources: response.sources,
-      suggested_follow_ups: response.suggested_follow_ups,
+      assistant_message: payload.message,
+      suggested_follow_ups: payload.followups || [],
     },
   }
 }
@@ -286,78 +130,27 @@ export async function updateConversation(
     context?: Record<string, unknown>
   }
 ) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { error: 'Not authenticated' }
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!profile) {
-    return { error: 'Profile not found' }
-  }
-
-  const updateData: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  }
-
-  if (updates.title !== undefined) updateData.title = updates.title
-  if (updates.document_ids !== undefined) updateData.document_ids = updates.document_ids
-  if (updates.class_id !== undefined) updateData.class_id = updates.class_id
-  if (updates.context !== undefined) updateData.context = updates.context
-
-  const { data: conversation, error } = await supabase
-    .from('teacher_chat_conversations')
-    .update(updateData)
-    .eq('id', conversationId)
-    .eq('teacher_id', profile.id)
-    .select()
-    .single()
-
-  if (error) {
-    return { error: (error as { message?: string }).message ?? 'Failed to update conversation' }
-  }
-
-  return { data: conversation }
+  void conversationId
+  void updates
+  return { error: 'Update conversation not supported in clean mode' }
 }
 
 /**
  * Delete a conversation
  */
 export async function deleteConversation(conversationId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
+  const token = await getAccessToken()
+  if (!token) {
     return { error: 'Not authenticated' }
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!profile) {
-    return { error: 'Profile not found' }
+  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) {
+    return { error: 'Failed to delete conversation' }
   }
-
-  const { error } = await supabase
-    .from('teacher_chat_conversations')
-    .delete()
-    .eq('id', conversationId)
-    .eq('teacher_id', profile.id)
-
-  if (error) {
-    return { error: (error as { message?: string }).message ?? 'Failed to delete conversation' }
-  }
-
   return { success: true }
 }
 

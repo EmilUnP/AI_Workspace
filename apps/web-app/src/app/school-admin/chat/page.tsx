@@ -1,46 +1,13 @@
-import { createClient } from '@eduator/auth/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
-import { AITutor } from '@eduator/ui'
-import {
-  getConversations,
-  getConversation,
-  createConversation,
-  sendMessage,
-  updateConversation,
-  deleteConversation,
-} from './actions'
+import { getCurrentUser } from '@/lib/backend-auth'
+import { ChatClient } from './chat-client'
 
 async function getAdminInfo() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return null
-  
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!profile?.id) return null
-  
-  return { adminId: profile.id, workspaceId: 'global', name: profile.full_name }
-}
-
-async function getAdminDocuments(adminId: string, workspaceId: string) {
-  const supabase = await createClient()
-  void workspaceId
-  
-  const { data: documents } = await supabase
-    .from('documents')
-    .select('id, title, file_type, file_name')
-    .eq('created_by', adminId)
-    .eq('is_archived', false)
-    .order('created_at', { ascending: false })
-  
-  return documents || []
+  if (user.role !== 'operator' && user.role !== 'admin') return null
+  return { adminId: user.id, workspaceId: 'global', name: user.full_name }
 }
 
 export default async function SchoolAdminChatPage() {
@@ -51,81 +18,13 @@ export default async function SchoolAdminChatPage() {
   if (!adminData) {
     redirect('/auth/login')
   }
-
-  const documents = await getAdminDocuments(adminData.adminId, adminData.workspaceId)
-
   return (
-    <div className="space-y-3 max-w-6xl mx-auto">
+    <div className="space-y-3">
       <div>
-        <Link
-          href="/school-admin"
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('breadcrumb')}
-        </Link>
-        <h1 className="text-xl font-bold text-gray-900 mt-1">{t('title')}</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
-          {t('subtitle')}
-        </p>
+        <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
       </div>
 
-      <AITutor
-        documents={documents.map(doc => ({
-          id: doc.id,
-          title: doc.title,
-          file_type: doc.file_type,
-        }))}
-        documentsPath="/school-admin/documents"
-        labels={{
-          createNewSession: t('createNewSession'),
-          newSessionDialogTitle: t('newSessionDialogTitle'),
-          newSessionDialogDescription: t('newSessionDialogDescription'),
-          sessionTitleLabel: t('sessionTitleLabel'),
-          sessionTitlePlaceholder: t('sessionTitlePlaceholder'),
-          selectDocumentsOptional: t('selectDocumentsOptional'),
-          selectedDocsRagHint: t('selectedDocsRagHint'),
-          cancel: t('cancel'),
-          creating: t('creating'),
-          createTutorSession: t('createTutorSession'),
-          newSession: t('newSession'),
-          loading: t('loading'),
-          noSessions: t('noSessionsLearner'),
-          startNewSession: t('startNewSession'),
-          untitledConversation: t('untitledConversation'),
-          deleteSessionAria: t('deleteSessionAria'),
-          documentsCount: t('documentsCount', { count: '{count}' }),
-          untitled: t('untitled'),
-          eduBot: t('eduBot'),
-          askQuestionToStart: t('askQuestionToStart'),
-          sources: t('sources'),
-          documentsLabel: t('documentsLabel'),
-          uploadDocumentsLink: t('uploadDocumentsLink'),
-          uploadDocumentsHint: t('uploadDocumentsHint'),
-          useDocumentsForContext: t('useDocumentsForContext'),
-          selectAbove: t('selectAbove'),
-          shortAnswers: t('shortAnswers'),
-          shortAnswersHint: t('shortAnswersHint'),
-          inputPlaceholder: t('inputPlaceholder'),
-          inputPlaceholderFallback: t('inputPlaceholderLearner'),
-          sendMessageAria: t('sendMessageAria'),
-          aiGeneratedDisclaimer: t('aiGeneratedDisclaimer'),
-          selectSession: t('selectSession'),
-          noSessionSelected: t('noSessionSelected'),
-          chooseSession: t('chooseSessionLearner'),
-          createOrSelectSession: t('createOrSelectSession'),
-          deleteConfirm: t('deleteConfirm'),
-          deleteSuccess: t('deleteSuccess'),
-          failedToSend: t('failedToSend'),
-          newConversation: t('newConversation'),
-        }}
-        getConversations={getConversations}
-        getConversation={getConversation}
-        createConversation={createConversation}
-        sendMessage={sendMessage}
-        updateConversation={updateConversation}
-        deleteConversation={deleteConversation}
-      />
+      <ChatClient />
     </div>
   )
 }

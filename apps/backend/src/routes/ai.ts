@@ -60,9 +60,25 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post('/ai/chat/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const body = request.body as { title?: string }
+    const body = request.body as { title?: string; documentIds?: string[] }
     const conversation = await chatService.createConversation(userId, body?.title)
+    if (body?.documentIds && body.documentIds.length > 0) {
+      const updated = await chatService.updateConversation(userId, conversation.id, {
+        documentIds: body.documentIds,
+      })
+      reply.code(201).send({ conversation: updated || conversation })
+      return
+    }
     reply.code(201).send({ conversation })
+  })
+
+  app.get('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+    const id = (request.params as { id: string }).id
+    const conversation = await chatService.getConversation(userId, id)
+    if (!conversation) return reply.code(404).send({ error: 'Conversation not found' })
+    reply.send({ conversation })
   })
 
   app.post('/ai/chat/conversations/:id/messages', { preHandler: [app.authenticate] }, async (request, reply) => {
@@ -71,6 +87,24 @@ export async function aiRoutes(app: FastifyInstance) {
     const id = (request.params as { id: string }).id
     const result = await chatService.sendMessage(userId, id, request.body)
     reply.send(result)
+  })
+
+  app.delete('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+    const id = (request.params as { id: string }).id
+    const ok = await chatService.deleteConversation(userId, id)
+    if (!ok) return reply.code(404).send({ error: 'Conversation not found' })
+    reply.send({ success: true })
+  })
+
+  app.patch('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+    const id = (request.params as { id: string }).id
+    const conversation = await chatService.updateConversation(userId, id, request.body)
+    if (!conversation) return reply.code(404).send({ error: 'Conversation not found' })
+    reply.send({ conversation })
   })
 
   app.post('/ai/lessons/generate', { preHandler: [app.authenticate] }, async (request, reply) => {
