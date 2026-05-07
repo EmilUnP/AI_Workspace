@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 type AnyProps = Record<string, any>
 
@@ -30,7 +30,151 @@ export function PaginationFooter(_props: AnyProps) {
 
 export function LessonRowActions() { return null }
 export function EducationPlanRowActions() { return null }
-export function EducationPlanCreateForm() { return null }
+export function EducationPlanCreateForm(props: AnyProps) {
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [periodMonths, setPeriodMonths] = useState(3)
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
+  const [hoursPerSession, setHoursPerSession] = useState(1)
+  const [language, setLanguage] = useState('en')
+  const [documents, setDocuments] = useState<AnyProps[]>([])
+  const [selectedDocumentId, setSelectedDocumentId] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const labels = (props?.labels || {}) as Record<string, string>
+  const t = (key: string, fallback: string) => labels[key] || fallback
+
+  useEffect(() => {
+    const load = async () => {
+      if (!props?.documentsUrl) return
+      try {
+        const response = await fetch(String(props.documentsUrl), { cache: 'no-store' })
+        if (!response.ok) return
+        const payload = (await response.json()) as { items?: AnyProps[]; documents?: AnyProps[] }
+        setDocuments(Array.isArray(payload.items) ? payload.items : Array.isArray(payload.documents) ? payload.documents : [])
+      } catch {
+        setDocuments([])
+      }
+    }
+    void load()
+  }, [props?.documentsUrl])
+
+  const handleGenerate = async () => {
+    if (!props?.generateUrl) return
+    if (!selectedDocumentId) {
+      setError('Please select a source document first.')
+      return
+    }
+    if (!name.trim()) {
+      setError(t('planNameRequired', 'Plan name is required'))
+      return
+    }
+
+    setError(null)
+    setIsGenerating(true)
+    try {
+      const response = await fetch(String(props.generateUrl), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentId: selectedDocumentId,
+          name: name.trim(),
+          language,
+          periodMonths,
+          sessionsPerWeek,
+          hoursPerSession,
+        }),
+      })
+      const payload = (await response.json().catch(() => ({}))) as AnyProps
+      if (!response.ok) {
+        setError(String(payload?.error || t('generateFailed', 'Failed to generate plan')))
+        return
+      }
+      if (payload?.plan?.id) {
+        const href = typeof props?.planDetailHref === 'function'
+          ? props.planDetailHref(String(payload.plan.id))
+          : `/school-admin/education-plans/${String(payload.plan.id)}`
+        window.location.href = href
+        return
+      }
+      setError(t('generateFailed', 'Failed to generate plan'))
+    } catch {
+      setError(t('generateFailed', 'Failed to generate plan'))
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+      <h2 className="text-xl font-semibold text-gray-900">{t('createTitle', 'Create education plan')}</h2>
+      <p className="mt-1 text-sm text-gray-500">{t('createSubtitle', 'Generate a weekly plan from one selected source document')}</p>
+
+      <div className="mt-5 space-y-5">
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Basics</h3>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">{t('planName', 'Plan name')} *</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('planNamePlaceholder', 'Plan name')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">{t('descriptionOptional', 'Description (optional)')}</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('briefDescription', 'Description')} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">{t('schedule', 'Schedule')}</h3>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">{t('periodMonths', 'Period (months)')}</label>
+              <input type="number" min={1} max={24} value={periodMonths} onChange={(e) => setPeriodMonths(Math.max(1, Number(e.target.value || 1)))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">{t('sessionsPerWeek', 'Sessions/week')}</label>
+              <input type="number" min={1} max={14} value={sessionsPerWeek} onChange={(e) => setSessionsPerWeek(Math.max(1, Number(e.target.value || 1)))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">{t('hoursPerSession', 'Hours/session')}</label>
+              <input type="number" min={1} max={8} value={hoursPerSession} onChange={(e) => setHoursPerSession(Math.max(1, Number(e.target.value || 1)))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">{t('outputLanguage', 'Output language')}</label>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
+                <option value="en">English</option>
+                <option value="az">Azerbaijani</option>
+                <option value="tr">Turkish</option>
+                <option value="ru">Russian</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-1">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">{t('baseOnDocuments', 'Source document')}</h3>
+          <label className="text-sm font-medium text-gray-700">Select one document *</label>
+          <select value={selectedDocumentId} onChange={(e) => setSelectedDocumentId(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
+            <option value="">Choose document</option>
+            {documents.map((doc) => (
+              <option key={String(doc.id)} value={String(doc.id)}>
+                {String(doc.title || doc.file_name || 'Untitled')}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500">{documents.length} available document(s)</p>
+        </section>
+      </div>
+
+      {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+      <div className="mt-5 flex flex-wrap gap-3">
+        <button type="button" onClick={handleGenerate} disabled={isGenerating} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50">
+          {isGenerating ? 'Generating...' : t('generateWithAi', 'Generate with AI')}
+        </button>
+      </div>
+    </div>
+  )
+}
 export function EducationPlanEditForm() { return null }
 export function AITutor() { return null }
 export function LessonTabs() { return null }

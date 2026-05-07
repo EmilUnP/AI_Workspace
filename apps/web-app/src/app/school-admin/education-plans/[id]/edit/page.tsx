@@ -1,29 +1,42 @@
-import { createClient } from '@eduator/auth/supabase/server'
+import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { notFound, redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { EducationPlanEditForm } from '@eduator/ui'
 import { updateEducationPlan } from '../../actions'
 
-async function getTeacherData() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single()
-  if (!profile?.id) return null
-  return { teacherId: profile.id, workspaceId: 'global' }
+type EducationPlanEditRow = {
+  id: string
+  name: string
+  description: string | null
+  period_months: number
+  sessions_per_week: number
+  hours_per_session: number
+  audience: string | null
+  content: Array<{ week: number; title?: string; topics: string[]; objectives?: string[]; notes?: string }>
 }
 
-async function getPlan(planId: string, teacherId: string, workspaceId: string) {
-  const supabase = await createClient()
+const EducationPlanEditFormAny = EducationPlanEditForm as any
+
+async function getTeacherData() {
+  const user = await getCurrentUser()
+  if (!user) return null
+  if (user.role !== 'operator' && user.role !== 'admin') return null
+  return { teacherId: user.id, workspaceId: 'global' }
+}
+
+async function getPlan(planId: string, teacherId: string, workspaceId: string): Promise<EducationPlanEditRow | null> {
+  void teacherId
   void workspaceId
-  const { data, error } = await supabase
-    .from('education_plans')
-    .select('id, name, description, period_months, sessions_per_week, hours_per_session, audience, content')
-    .eq('id', planId)
-    .eq('teacher_id', teacherId)
-    .single()
-  if (error || !data) return null
-  return data
+  const token = await getAccessToken()
+  if (!token) return null
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const response = await fetch(`${backendBase}/v1/education-plans/${planId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) return null
+  const payload = (await response.json()) as { plan?: EducationPlanEditRow }
+  return payload.plan ?? null
 }
 
 export default async function TeacherEducationPlanEditPage({
@@ -59,7 +72,7 @@ export default async function TeacherEducationPlanEditPage({
   ]
 
   return (
-    <EducationPlanEditForm
+    <EducationPlanEditFormAny
       planId={plan.id}
       initialData={{
         name: plan.name,

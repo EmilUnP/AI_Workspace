@@ -1,4 +1,4 @@
-import { createClient } from '@eduator/auth/supabase/server'
+import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -6,32 +6,44 @@ import { ArrowLeft, BookOpen, Share2 } from 'lucide-react'
 import { EducationPlanViewClient } from './plan-view-client'
 import { deleteEducationPlan } from '../actions'
 
+type EducationPlan = {
+  id: string
+  name: string
+  description: string | null
+  class_id: string | null
+  period_months: number
+  sessions_per_week: number
+  hours_per_session: number
+  audience: string | null
+  is_shared_with_students: boolean
+  content: Array<{ week: number; title?: string; topics: string[]; objectives?: string[]; notes?: string }>
+}
+
 async function getTeacherData() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return null
-  const { data: profile } = await supabase.from('profiles').select('id').eq('user_id', user.id).single()
-  if (!profile?.id) return null
-  return { teacherId: profile.id, workspaceId: 'global' }
+  if (user.role !== 'operator' && user.role !== 'admin') return null
+  return { teacherId: user.id, workspaceId: 'global' }
 }
 
-async function getPlan(planId: string, teacherId: string, workspaceId: string) {
-  const supabase = await createClient()
+async function getPlan(planId: string, teacherId: string, workspaceId: string): Promise<EducationPlan | null> {
+  void teacherId
   void workspaceId
-  const { data, error } = await supabase
-    .from('education_plans')
-    .select('*')
-    .eq('id', planId)
-    .eq('teacher_id', teacherId)
-    .single()
-  if (error || !data) return null
-  return data
+  const token = await getAccessToken()
+  if (!token) return null
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const response = await fetch(`${backendBase}/v1/education-plans/${planId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) return null
+  const payload = (await response.json()) as { plan?: EducationPlan }
+  return payload.plan ?? null
 }
 
-async function getClassName(classId: string, classFallback?: string) {
-  const supabase = await createClient()
-  const { data } = await supabase.from('classes').select('name').eq('id', classId).single()
-  return data?.name || (classFallback ?? 'Class')
+async function getClassName(classId: string | null, classFallback?: string) {
+  if (!classId) return classFallback ?? 'Class'
+  return classFallback ?? 'Class'
 }
 
 export default async function TeacherEducationPlanDetailPage({
