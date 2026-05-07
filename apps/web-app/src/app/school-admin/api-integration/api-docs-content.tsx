@@ -145,30 +145,61 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               Generate lesson
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              Real route: <code className="bg-gray-100 px-1">POST /v1/ai/lessons/generate</code>. Uses camelCase fields.
+              Real route: <code className="bg-gray-100 px-1">POST /v1/ai/lessons/generate</code>. This endpoint supports rich generation:
+              multi-document context, custom objectives, grade targeting, image generation, and async audio (TTS).
             </p>
           </div>
           <div className="p-6 space-y-5">
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Required fields</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Request fields</h4>
               <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside mb-3">
-                <li><code className="bg-gray-100 px-1">documentId</code> (uuid)</li>
-                <li><code className="bg-gray-100 px-1">topic</code></li>
-                <li><code className="bg-gray-100 px-1">language</code>, <code className="bg-gray-100 px-1">gradeLevel</code>, <code className="bg-gray-100 px-1">subject</code> are optional</li>
+                <li><code className="bg-gray-100 px-1">topic</code> (required)</li>
+                <li><code className="bg-gray-100 px-1">documentId</code> (optional UUID) and/or <code className="bg-gray-100 px-1">documentIds</code> (optional UUID array)</li>
+                <li><code className="bg-gray-100 px-1">language</code> (2-letter recommended: {languagesList})</li>
+                <li><code className="bg-gray-100 px-1">gradeLevel</code>, <code className="bg-gray-100 px-1">objectives</code>, <code className="bg-gray-100 px-1">corePrompt</code> (optional)</li>
+                <li>
+                  <code className="bg-gray-100 px-1">options</code> object:
+                  <code className="bg-gray-100 px-1">includeImages</code>,
+                  <code className="bg-gray-100 px-1">includeAudio</code>,
+                  <code className="bg-gray-100 px-1">includeTables</code>,
+                  <code className="bg-gray-100 px-1">includeFigures</code>,
+                  <code className="bg-gray-100 px-1">includeCharts</code>,
+                  <code className="bg-gray-100 px-1">contentLength</code> (<code className="bg-gray-100 px-1">short</code> | <code className="bg-gray-100 px-1">medium</code> | <code className="bg-gray-100 px-1">full</code>)
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Example</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Example (full settings)</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${lessonsGenerateUrl} \\
   -H "Authorization: Bearer ACCESS_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "documentId": "uuid-from-documents",
+    "documentId": "uuid-primary-document",
+    "documentIds": ["uuid-primary-document", "uuid-secondary-document"],
     "topic": "Introduction to Fractions",
-    "language": "en"
+    "language": "en",
+    "gradeLevel": "grade_9",
+    "objectives": "Define numerator and denominator\\nCompare fractions\\nAdd simple fractions",
+    "corePrompt": "Keep explanations practical with real-life examples.",
+    "options": {
+      "includeImages": true,
+      "includeAudio": true,
+      "includeTables": true,
+      "includeFigures": true,
+      "includeCharts": false,
+      "contentLength": "full"
+    }
   }'`}
               </pre>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Generation response (important)</h4>
+              <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                <li>Returns <code className="bg-gray-100 px-1">lesson</code> with rich content: <code className="bg-gray-100 px-1">content</code>, <code className="bg-gray-100 px-1">learning_objectives</code>, <code className="bg-gray-100 px-1">mini_test</code>, <code className="bg-gray-100 px-1">examples</code>, <code className="bg-gray-100 px-1">images</code>, <code className="bg-gray-100 px-1">usage</code></li>
+                <li><code className="bg-gray-100 px-1">audio_url</code> is initially <code className="bg-gray-100 px-1">null</code> even when audio is requested, because TTS is async</li>
+                <li>Use <code className="bg-gray-100 px-1">GET /v1/lessons/:id</code> to fetch the saved lesson and check when audio becomes available</li>
+              </ul>
             </div>
           </div>
         </article>
@@ -185,23 +216,32 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               Lesson retrieval
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              <strong>GET /v1/lessons</strong> lists lessons. <strong>GET /v1/lessons/:id</strong> returns full lesson content and media fields.
+              <strong>GET /v1/lessons</strong> gives list-level metadata. <strong>GET /v1/lessons/:id</strong> gives the full lesson including generated content, images, mini-test, and audio URL.
             </p>
           </div>
           <div className="p-6 space-y-5">
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons — list</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons — list with pagination</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET "${apiBaseUrl}/lessons?page=1&perPage=20" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
+              <p className="mt-2 text-sm text-gray-600">
+                Query params: <code className="bg-gray-100 px-1">page</code>, <code className="bg-gray-100 px-1">perPage</code>, <code className="bg-gray-100 px-1">search</code>.
+                Returns compact items for listing (id/title/language/objectivesCount/etc), not full lesson body.
+              </p>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons/:id</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons/:id — full lesson payload</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET "${apiBaseUrl}/lessons/LESSON_UUID" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
+              <ul className="mt-2 text-sm text-gray-600 space-y-1 list-disc list-inside">
+                <li>Includes full fields: <code className="bg-gray-100 px-1">content</code>, <code className="bg-gray-100 px-1">images</code>, <code className="bg-gray-100 px-1">mini_test</code>, <code className="bg-gray-100 px-1">learning_objectives</code>, <code className="bg-gray-100 px-1">metadata</code>, <code className="bg-gray-100 px-1">audio_url</code></li>
+                <li>When audio generation finishes, <code className="bg-gray-100 px-1">audio_url</code> is populated</li>
+                <li>If audio_url is relative (for local fallback), media can be fetched via <code className="bg-gray-100 px-1">GET /v1/lessons/:id/media/:file</code></li>
+              </ul>
             </div>
           </div>
         </article>
