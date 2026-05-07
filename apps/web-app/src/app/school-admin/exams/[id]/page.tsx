@@ -1,4 +1,4 @@
-import { createClient } from '@eduator/auth/supabase/server'
+import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { redirect, notFound } from 'next/navigation'
 import { getTranslations, getLocale } from 'next-intl/server'
 import Link from 'next/link'
@@ -16,8 +16,6 @@ import { ExportExamCsvButton } from './export-exam-csv-button'
 import { ExamLanguageSelector } from './exam-language-selector'
 import { normalizeExamQuestionsForUi } from '@/lib/eduator-exam-normalize-shim'
 
-type AuthUser = { id: string }
-type ProfileRow = { id: string; organization_id: string | null }
 type AnyQuestion = Record<string, unknown>
 type ExamRow = {
   id: string
@@ -46,38 +44,23 @@ type UiQuestion = {
 }
 
 async function getTeacherInfo() {
-  const supabase = await createClient()
-  const authUser = (await supabase.auth.getUser()).data.user as AuthUser | null
-  if (!authUser) return null
-  
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('id, organization_id')
-    .eq('user_id', authUser.id)
-    .single()
-  const profile = profileData as ProfileRow | null
-  
-  if (!profile?.organization_id) return null
-  
-  return { teacherId: profile.id, organizationId: profile.organization_id }
+  const user = await getCurrentUser()
+  if (!user) return null
+  if (user.role !== 'admin' && user.role !== 'operator') return null
+  return { teacherId: user.id, organizationId: 'global' }
 }
 
-async function getExam(examId: string, teacherId: string) {
-  const supabase = await createClient()
-  
-  const { data: examData, error } = await supabase
-    .from('exams')
-    .select('*')
-    .eq('id', examId)
-    .eq('created_by', teacherId)
-    .single()
-  const exam = examData as ExamRow | null
-  
-  if (error || !exam) {
-    return null
-  }
-
-  return exam
+async function getExam(examId: string, _teacherId: string) {
+  const token = await getAccessToken()
+  if (!token) return null
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const response = await fetch(`${backendBase}/v1/exams/${examId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  })
+  if (!response.ok) return null
+  const payload = (await response.json()) as { exam?: ExamRow }
+  return payload.exam ?? null
 }
 
 interface PageProps {

@@ -39,59 +39,69 @@ export function LessonActions() { return null }
 export function RichTextWithMath({ children }: { children?: ReactNode }) { return <>{children ?? null}</> }
 export function ExamCreator(props: AnyProps) {
   const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
   const [durationMinutes, setDurationMinutes] = useState(60)
-  const [isPublished, setIsPublished] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [questionCount, setQuestionCount] = useState(10)
   const [generateLanguage, setGenerateLanguage] = useState('en')
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
+  const [topicEntries, setTopicEntries] = useState<Array<{ name: string; count?: number }>>([])
+  const [questionTypeDistribution, setQuestionTypeDistribution] = useState({
+    multiple_choice: 50,
+    true_false: 20,
+    multiple_select: 20,
+    fill_blank: 10,
+  })
+  const [difficultyDistribution, setDifficultyDistribution] = useState({
+    easy: 30,
+    medium: 50,
+    hard: 20,
+  })
 
   const documents = Array.isArray(props?.documents) ? props.documents : []
 
-  const handleCreate = async () => {
-    if (!props?.onCreateExam || typeof props.onCreateExam !== 'function') {
-      setError('Create action is unavailable.')
-      return
+  const rebalance = (
+    current: Record<string, number>,
+    changedKey: string,
+    nextValueRaw: number,
+    keys: string[]
+  ): Record<string, number> => {
+    const nextValue = Math.max(0, Math.min(100, Math.floor(nextValueRaw)))
+    const out: Record<string, number> = { ...current, [changedKey]: nextValue }
+    const others = keys.filter((k) => k !== changedKey)
+    const remaining = 100 - nextValue
+    const sumOthers = others.reduce((s, k) => s + (current[k] || 0), 0)
+
+    if (remaining <= 0) {
+      others.forEach((k) => { out[k] = 0 })
+      return out
+    }
+    if (sumOthers <= 0) {
+      const per = Math.floor(remaining / others.length)
+      let extra = remaining - per * others.length
+      others.forEach((k) => {
+        out[k] = per + (extra > 0 ? 1 : 0)
+        if (extra > 0) extra -= 1
+      })
+      return out
     }
 
-    if (!title.trim()) {
-      setError('Title is required.')
-      return
+    const provisional = others.map((k) => {
+      const raw = (current[k] / sumOthers) * remaining
+      return { k, value: Math.floor(raw), rem: raw - Math.floor(raw) }
+    })
+    let assigned = provisional.reduce((s, i) => s + i.value, 0)
+    let left = remaining - assigned
+    provisional.sort((a, b) => b.rem - a.rem)
+    let idx = 0
+    while (left > 0 && provisional.length > 0) {
+      provisional[idx % provisional.length].value += 1
+      idx += 1
+      left -= 1
     }
-
-    setIsSubmitting(true)
-    setError(null)
-    setMessage(null)
-    try {
-      const payload = {
-        organizationId: String(props?.organizationId || 'global'),
-        title: title.trim(),
-        description: description.trim() || null,
-        durationMinutes: Number.isFinite(durationMinutes) ? durationMinutes : 60,
-        isPublished,
-        questions: [],
-        language: 'en',
-      }
-
-      const result = await props.onCreateExam(payload)
-      if (result?.success) {
-        setMessage('Exam created successfully.')
-        if (result?.data?.id) {
-          window.location.href = `/school-admin/exams/${String(result.data.id)}`
-          return
-        }
-      } else {
-        setError(String(result?.error || 'Failed to create exam.'))
-      }
-    } catch {
-      setError('Failed to create exam.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    provisional.forEach((i) => { out[i.k] = i.value })
+    return out
   }
 
   const handleGenerate = async () => {
@@ -103,7 +113,6 @@ export function ExamCreator(props: AnyProps) {
       setError('Please select at least one document.')
       return
     }
-
     setIsGenerating(true)
     setError(null)
     setMessage(null)
@@ -114,6 +123,10 @@ export function ExamCreator(props: AnyProps) {
         questionCount,
         difficulty: 'mixed',
         language: generateLanguage,
+        topics: topicEntries.map((x) => x.name.trim()).filter(Boolean),
+        topicQuestionCounts: topicEntries.map((x) => x.count),
+        questionTypes: questionTypeDistribution,
+        difficultyLevels: difficultyDistribution,
       })
       if (result?.error) {
         setError(String(result.error))
@@ -133,24 +146,32 @@ export function ExamCreator(props: AnyProps) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="text-lg font-semibold text-gray-900">Exam Creator</h2>
-      <p className="mt-1 text-sm text-gray-500">Generate from documents or create manually.</p>
+      <h2 className="text-lg font-semibold text-gray-900">AI Generate</h2>
+      <p className="mt-1 text-sm text-gray-500">Create questions from documents</p>
 
       <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm font-medium text-gray-800">AI Generate</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-gray-600">Source documents</label>
-            <div className="max-h-32 overflow-auto rounded-lg border border-gray-200 bg-white p-2">
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">Exam title</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Network Operating Systems - Midterm"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+        />
+        <p className="mt-1 text-xs text-gray-500">Leave empty to auto-generate from selected documents.</p>
+
+        <div className="mt-4">
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">Select documents</label>
+          <div className="max-h-36 overflow-auto rounded-lg border border-gray-200 bg-white">
+            <div className="divide-y divide-gray-100">
               {documents.length === 0 ? (
-                <p className="text-xs text-gray-500">No documents available.</p>
+                <p className="p-3 text-xs text-gray-500">No documents available.</p>
               ) : (
-                <div className="space-y-1">
-                  {documents.map((doc: AnyProps) => {
-                    const id = String(doc?.id || '')
-                    const checked = selectedDocumentIds.includes(id)
-                    return (
-                      <label key={id} className="flex items-center gap-2 text-xs text-gray-700">
+                documents.map((doc: AnyProps) => {
+                  const id = String(doc?.id || '')
+                  const checked = selectedDocumentIds.includes(id)
+                  return (
+                    <label key={id} className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">
+                      <div className="flex min-w-0 items-center gap-2">
                         <input
                           type="checkbox"
                           checked={checked}
@@ -162,15 +183,89 @@ export function ExamCreator(props: AnyProps) {
                           className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
                         <span className="truncate">{String(doc?.title || 'Untitled')}</span>
-                      </label>
-                    )
-                  })}
-                </div>
+                      </div>
+                      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-500">
+                        {String(doc?.file_type || 'text')}
+                      </span>
+                    </label>
+                  )
+                })
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-white p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-medium text-gray-700">Topics (Optional)</p>
+            <button
+              type="button"
+              onClick={() => setTopicEntries((prev) => [...prev, { name: '', count: undefined }])}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              + Add Topic
+            </button>
+          </div>
+          {topicEntries.length === 0 ? (
+            <p className="text-xs text-gray-500">Leave empty to generate from all document content.</p>
+          ) : (
+            <div className="space-y-2">
+              {topicEntries.map((entry, index) => (
+                <div key={index} className="grid gap-2 sm:grid-cols-4">
+                  <input
+                    value={entry.name}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setTopicEntries((prev) => prev.map((x, i) => (i === index ? { ...x, name: value } : x)))
+                    }}
+                    placeholder="Topic name"
+                    className="sm:col-span-3 rounded-lg border border-gray-300 px-3 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      value={entry.count ?? ''}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        const value = raw ? Math.max(1, Number(raw)) : undefined
+                        setTopicEntries((prev) => prev.map((x, i) => (i === index ? { ...x, count: value } : x)))
+                      }}
+                      placeholder="Q#"
+                      className="w-full rounded-lg border border-gray-300 px-2 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setTopicEntries((prev) => prev.filter((_, i) => i !== index))}
+                      className="rounded-lg border border-red-200 px-2 text-xs text-red-600 hover:bg-red-50"
+                    >
+                      x
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Questions</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Language</label>
+            <select
+              value={generateLanguage}
+              onChange={(e) => setGenerateLanguage(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="en">English</option>
+              <option value="az">Azerbaijani</option>
+              <option value="tr">Turkish</option>
+              <option value="ru">Russian</option>
+              <option value="de">German</option>
+              <option value="ar">Arabic</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Total Questions</label>
             <input
               type="number"
               min={1}
@@ -179,89 +274,97 @@ export function ExamCreator(props: AnyProps) {
               onChange={(e) => setQuestionCount(Math.max(1, Math.min(50, Number(e.target.value || 10))))}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             />
-            <label className="mb-1 mt-2 block text-xs font-medium text-gray-600">Language</label>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Minutes</label>
             <input
-              value={generateLanguage}
-              onChange={(e) => setGenerateLanguage(e.target.value || 'en')}
+              type="number"
+              min={5}
+              max={300}
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value || 60))}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             />
           </div>
         </div>
-        <div className="mt-3">
+
+        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-3">
+          <div className="space-y-4">
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-700">QUESTION TYPES</p>
+                <span className="text-xs font-semibold text-violet-600">
+                  {questionTypeDistribution.multiple_choice + questionTypeDistribution.true_false + questionTypeDistribution.multiple_select + questionTypeDistribution.fill_blank}%
+                </span>
+              </div>
+              {([
+                ['multiple_choice', 'Multiple Choice'],
+                ['true_false', 'True/False'],
+                ['multiple_select', 'Multiple Select'],
+                ['fill_blank', 'Fill in the Blank'],
+              ] as const).map(([key, label]) => (
+                <div key={key} className="mb-2 rounded-lg bg-gray-50 px-3 py-2">
+                  <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
+                    <span>{label}</span>
+                    <span>{questionTypeDistribution[key]}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={questionTypeDistribution[key]}
+                    onChange={(e) => setQuestionTypeDistribution(rebalance(questionTypeDistribution, key, Number(e.target.value), ['multiple_choice', 'true_false', 'multiple_select', 'fill_blank']) as typeof questionTypeDistribution)}
+                    className="w-full"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-700">DIFFICULTY LEVELS</p>
+                <span className="text-xs font-semibold text-emerald-600">
+                  {difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard}%
+                </span>
+              </div>
+              {([
+                ['easy', 'Easy'],
+                ['medium', 'Medium'],
+                ['hard', 'Hard'],
+              ] as const).map(([key, label]) => (
+                <div key={key} className="mb-2 rounded-lg bg-gray-50 px-3 py-2">
+                  <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
+                    <span>{label}</span>
+                    <span>{difficultyDistribution[key]}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={difficultyDistribution[key]}
+                    onChange={(e) => setDifficultyDistribution(rebalance(difficultyDistribution, key, Number(e.target.value), ['easy', 'medium', 'hard']) as typeof difficultyDistribution)}
+                    className="w-full"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
           <button
             type="button"
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-violet-600 hover:to-indigo-600 disabled:opacity-60"
           >
-            {isGenerating ? 'Generating...' : 'Generate with AI'}
+            {isGenerating ? 'Generating...' : 'Generate Questions'}
           </button>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter exam title"
-            className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-          />
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description"
-            className="min-h-[96px] w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700">Duration (minutes)</label>
-          <input
-            type="number"
-            min={5}
-            max={300}
-            value={durationMinutes}
-            onChange={(e) => setDurationMinutes(Number(e.target.value || 60))}
-            className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-          />
-        </div>
-
-        <div className="flex items-end">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={isPublished}
-              onChange={(e) => setIsPublished(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            Publish immediately
-          </label>
-        </div>
-      </div>
-
-      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-        Available documents: <span className="font-medium text-gray-800">{documents.length}</span>
-      </div>
-
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
       {message ? <p className="mt-3 text-sm text-emerald-600">{message}</p> : null}
-
-      <div className="mt-5 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleCreate}
-          disabled={isSubmitting}
-          className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSubmitting ? 'Creating...' : 'Create Exam'}
-        </button>
-      </div>
     </div>
   )
 }

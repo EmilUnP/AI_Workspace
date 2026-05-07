@@ -57,7 +57,6 @@ export default async function NewExamPage() {
     <div className="space-y-6 sm:space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{t('title')}</h1>
-        <p className="mt-1.5 text-sm text-gray-500">{t('subtitle')}</p>
       </div>
 
       {/* Exam Creator – translations resolved on client via useTranslations('teacherExamCreator') */}

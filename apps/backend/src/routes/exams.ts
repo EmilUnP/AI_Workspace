@@ -31,6 +31,54 @@ const toStringArray = (value: unknown): string[] => {
 }
 
 export async function examsRoutes(app: FastifyInstance) {
+  app.get('/exams/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+    const id = String((request.params as { id?: string }).id || '')
+    if (!id) return reply.code(400).send({ error: 'Exam id is required' })
+
+    const { rows } = await app.db.query<ExamRow & { grade_level: string | null }>(
+      `SELECT
+        id,
+        title,
+        description,
+        subject,
+        grade_level,
+        duration_minutes,
+        language,
+        is_published,
+        metadata,
+        questions,
+        created_at
+      FROM exams
+      WHERE id = $1 AND user_id = $2
+      LIMIT 1`,
+      [id, userId]
+    )
+
+    const row = rows[0]
+    if (!row) return reply.code(404).send({ error: 'Exam not found' })
+
+    const metadata = (row.metadata || {}) as Record<string, unknown>
+    return reply.send({
+      exam: {
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        subject: row.subject,
+        grade_level: row.grade_level,
+        duration_minutes: row.duration_minutes ?? 60,
+        language: row.language ?? 'en',
+        is_published: Boolean(row.is_published),
+        questions: parseQuestions(row.questions),
+        translations: parseObject(metadata.translations),
+        settings: parseObject(metadata.settings),
+        topics: toStringArray(metadata.topics),
+        created_at: row.created_at,
+      },
+    })
+  })
+
   app.post('/exams', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
