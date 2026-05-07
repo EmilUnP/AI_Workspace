@@ -141,11 +141,15 @@ export async function updateDocument(_input: UpdateDocumentInput) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        title: (_input.title || '').trim(),
-        description: _input.description ?? null,
-        tags: _input.tags ?? [],
-      }),
+      body: (() => {
+        // If tags are not provided, omit them from the payload so the backend keeps existing tags.
+        const body: { title: string; description: string | null; tags?: string[] } = {
+          title: (_input.title || '').trim(),
+          description: _input.description ?? null,
+        }
+        if (_input.tags !== undefined) body.tags = _input.tags ?? []
+        return JSON.stringify(body)
+      })(),
       cache: 'no-store',
     })
     if (!response.ok) {

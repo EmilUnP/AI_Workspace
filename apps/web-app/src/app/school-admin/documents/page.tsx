@@ -84,7 +84,6 @@ export default async function SchoolAdminDocumentsPage() {
     <div className="min-h-[60vh]">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Document Library</h1>
-        <p className="mt-1 text-sm text-gray-500">Upload documents, monitor RAG indexing quality, and manage files from one place.</p>
       </div>
 
       {/* Upload + Explorer */}

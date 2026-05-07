@@ -62,7 +62,6 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
   const [formData, setFormData] = useState({
     title: document.title,
     description: document.description || '',
-    tags: document.tags?.join(', ') || '',
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,7 +73,6 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
         documentId: document.id,
         title: formData.title,
         description: formData.description || null,
-        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : null,
       })
 
       if (result.error) {
@@ -163,19 +161,6 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
                       value={formData.description}
                       onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                       className="w-full resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                      disabled={isPending}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="tags" className="mb-1.5 block text-sm font-medium text-gray-700">{t.editTags}</label>
-                    <input
-                      type="text"
-                      id="tags"
-                      value={formData.tags}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, tags: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                      placeholder={t.editTagsPlaceholder}
                       disabled={isPending}
                     />
                   </div>

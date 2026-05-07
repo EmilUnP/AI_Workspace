@@ -5,7 +5,6 @@ import {
   FileText,
   File,
   FileCode,
-  Download,
   Eye,
   Info,
   FolderOpen,
@@ -14,24 +13,15 @@ import {
   ArrowUpDown,
   ArrowDownAZ,
   Folder,
-  LayoutGrid,
-  List,
-  HardDrive,
-  CheckCircle2,
-  Loader2,
-  XCircle,
-  Clock,
-  Tag,
   Globe,
 } from 'lucide-react'
 import { EditDocumentDialog } from './edit-document-dialog'
 import { DocumentQualityModal } from './document-quality-modal'
 import type { DocItem } from './documents-list-state'
 
-type GroupBy = 'none' | 'type' | 'date' | 'class' | 'tags'
+type GroupBy = 'none' | 'date' | 'class'
 type SortBy = 'name' | 'date' | 'type' | 'size'
 type SortDir = 'asc' | 'desc'
-type ViewMode = 'list' | 'grid'
 type DocumentStatusLevel = 'ok' | 'issues' | 'critical'
 type ExplorerItem = DocItem & { classes?: { id: string; name: string; class_code?: string | null } | null }
 
@@ -102,69 +92,13 @@ export function DocumentsExplorer({
   onUpdate: (input: { documentId: string; title: string; description?: string | null; tags?: string[] | null }) => Promise<{ error?: string; success?: boolean }>
   onDelete: (documentId: string) => Promise<{ error?: string; success?: boolean }>
 }) {
-  const [groupBy, setGroupBy] = useState<GroupBy>('type')
+  const [groupBy, setGroupBy] = useState<GroupBy>('none')
   const [sortBy, setSortBy] = useState<SortBy>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [qualityModalDocument, setQualityModalDocument] = useState<ExplorerItem | null>(null)
 
-  const stats = useMemo(() => {
-    const uniqueTags = new Set<string>()
-    let totalSizeBytes = 0
-    let ready = 0
-    let processing = 0
-    let pending = 0
-    let failed = 0
-    let taggedCount = 0
-    let withDescriptionCount = 0
-    const byType = { pdf: 0, markdown: 0, text: 0, doc: 0, docx: 0 }
-    const byTypeSize = { pdf: 0, markdown: 0, text: 0, doc: 0, docx: 0 }
-
-    for (const doc of documents) {
-      totalSizeBytes += doc.file_size || 0
-      const t = String(doc.file_type || 'text').toLowerCase()
-      if (t === 'pdf') { byType.pdf += 1; byTypeSize.pdf += doc.file_size || 0 }
-      else if (t === 'markdown') { byType.markdown += 1; byTypeSize.markdown += doc.file_size || 0 }
-      else if (t === 'doc') { byType.doc += 1; byTypeSize.doc += doc.file_size || 0 }
-      else if (t === 'docx') { byType.docx += 1; byTypeSize.docx += doc.file_size || 0 }
-      else { byType.text += 1; byTypeSize.text += doc.file_size || 0 }
-
-      const status = String(doc.processing_status || '').toLowerCase()
-      if (status === 'completed' || status === 'ready') ready += 1
-      else if (status === 'processing') processing += 1
-      else if (status === 'failed') failed += 1
-      else pending += 1
-
-      if (doc.tags && doc.tags.length > 0) {
-        taggedCount += 1
-        doc.tags.forEach((tag) => uniqueTags.add(String(tag).trim()))
-      }
-      if (doc.description && String(doc.description).trim()) withDescriptionCount += 1
-    }
-
-    return {
-      totalCount: documents.length,
-      totalSizeBytes,
-      ready,
-      processing,
-      pending,
-      failed,
-      byType,
-      byTypeSize,
-      taggedCount,
-      withDescriptionCount,
-      uniqueTags: Array.from(uniqueTags).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
-    }
-  }, [documents])
-
-  const filteredDocuments = useMemo(() => {
-    if (!tagFilter) return documents
-    return documents.filter((d) => d.tags?.some((tag) => String(tag).trim() === tagFilter))
-  }, [documents, tagFilter])
-
-  const sorted = useMemo(() => sortDocuments(filteredDocuments, sortBy, sortDir), [filteredDocuments, sortBy, sortDir])
+  const sorted = useMemo(() => sortDocuments(documents, sortBy, sortDir), [documents, sortBy, sortDir])
 
   const grouped = useMemo(() => {
     if (groupBy === 'none') return [{ key: '_', label: 'All documents', documents: sorted }]
@@ -172,13 +106,8 @@ export function DocumentsExplorer({
     const map = new Map<string, ExplorerItem[]>()
     for (const doc of sorted) {
       let key = '_'
-      if (groupBy === 'type') key = String(doc.file_type || 'other')
-      else if (groupBy === 'date') key = getDateGroupKey(doc.created_at)
+      if (groupBy === 'date') key = getDateGroupKey(doc.created_at)
       else if (groupBy === 'class') key = doc.classes?.id ?? '_none'
-      else if (groupBy === 'tags') {
-        const tags = doc.tags?.filter((v) => String(v).trim()).map((v) => String(v).trim()) ?? []
-        key = tags.length > 0 ? tags.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))[0] : '_untagged'
-      }
       if (!map.has(key)) map.set(key, [])
       map.get(key)?.push(doc)
     }
@@ -186,8 +115,6 @@ export function DocumentsExplorer({
     return Array.from(map.entries()).map(([key, groupDocs]) => {
       let label = key
       if (groupBy === 'class') label = key === '_none' ? 'No class' : (groupDocs[0]?.classes?.name ?? key)
-      if (groupBy === 'tags') label = key === '_untagged' ? 'Untagged' : `#${key}`
-      if (groupBy === 'type') label = key.charAt(0).toUpperCase() + key.slice(1)
       return { key, label, documents: groupDocs }
     })
   }, [sorted, groupBy])
@@ -211,78 +138,13 @@ export function DocumentsExplorer({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Folder className="h-4 w-4" />
-            <span className="text-xs font-medium uppercase tracking-wide">Documents</span>
-          </div>
-          <p className="mt-1 text-4xl font-semibold leading-none text-gray-900">{stats.totalCount}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</span>
-            <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {stats.ready}
-            </span>
-            {stats.processing > 0 ? <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700"><Loader2 className="h-3.5 w-3.5 animate-spin" />{stats.processing}</span> : null}
-            {stats.failed > 0 ? <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700"><XCircle className="h-3.5 w-3.5" />{stats.failed}</span> : null}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-500">
-            <HardDrive className="h-4 w-4" />
-            <span className="text-xs font-medium uppercase tracking-wide">Total size</span>
-          </div>
-          <p className="mt-2 text-4xl font-semibold leading-none text-gray-900">{formatFileSize(stats.totalSizeBytes)}</p>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-500">
-            <FileText className="h-4 w-4 text-red-500" />
-            <span className="text-xs font-medium uppercase tracking-wide">By type</span>
-          </div>
-          <div className="mt-2 space-y-1.5 text-sm">
-            <p className="flex items-center justify-between text-gray-700"><span>PDF</span><span className="font-semibold text-gray-900">{stats.byType.pdf} ({formatFileSize(stats.byTypeSize.pdf)})</span></p>
-            <p className="flex items-center justify-between text-gray-700"><span>Word</span><span className="font-semibold text-gray-900">{stats.byType.doc + stats.byType.docx} ({formatFileSize(stats.byTypeSize.doc + stats.byTypeSize.docx)})</span></p>
-            <p className="flex items-center justify-between text-gray-700"><span>Markdown</span><span className="font-semibold text-gray-900">{stats.byType.markdown} ({formatFileSize(stats.byTypeSize.markdown)})</span></p>
-            <p className="flex items-center justify-between text-gray-700"><span>Text</span><span className="font-semibold text-gray-900">{stats.byType.text} ({formatFileSize(stats.byTypeSize.text)})</span></p>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-500">
-            <Tag className="h-4 w-4 text-violet-500" />
-            <span className="text-xs font-medium uppercase tracking-wide">Metadata</span>
-          </div>
-          <div className="mt-2 space-y-1.5 text-sm">
-            <p className="flex items-center justify-between text-gray-700"><span>Tagged</span><span className="font-semibold text-gray-900">{stats.taggedCount}</span></p>
-            <p className="flex items-center justify-between text-gray-700"><span>Described</span><span className="font-semibold text-gray-900">{stats.withDescriptionCount}</span></p>
-          </div>
-        </div>
-      </div>
-
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Folder className="h-4 w-4 text-gray-500" />
-          <span>{filteredDocuments.length} of {documents.length} documents</span>
-        </div>
-        <div className="h-4 w-px bg-gray-200" />
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-500">Filter by tag</label>
-          <select value={tagFilter ?? ''} onChange={(e) => setTagFilter(e.target.value || null)} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
-            <option value="">All documents</option>
-            {stats.uniqueTags.map((tag) => <option key={tag} value={tag}>#{tag}</option>)}
-          </select>
-        </div>
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-gray-500">Group by</label>
           <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
             <option value="none">None</option>
-            <option value="type">Type</option>
             <option value="date">Date</option>
             <option value="class">Class</option>
-            <option value="tags">Tags</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -297,17 +159,8 @@ export function DocumentsExplorer({
             {sortDir === 'asc' ? <ArrowUpDown className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
           </button>
         </div>
-        <div className="ml-auto flex items-center gap-1">
-          <button type="button" onClick={() => setViewMode('list')} className={`rounded-lg p-2 transition-colors ${viewMode === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>
-            <List className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => setViewMode('grid')} className={`rounded-lg p-2 transition-colors ${viewMode === 'grid' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}>
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-        </div>
       </div>
 
-      {filteredDocuments.length > 0 ? (
         <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
           {grouped.map(({ key, label, documents: groupDocs }) => {
             const shouldShowHeader = groupBy !== 'none'
@@ -316,12 +169,18 @@ export function DocumentsExplorer({
             return (
               <div key={key} className="border-b border-gray-100 last:border-b-0">
                 {shouldShowHeader ? (
-                  <button type="button" onClick={() => setExpandedGroups((prev) => {
-                    const next = new Set(prev)
-                    if (next.has(key)) next.delete(key)
-                    else next.add(key)
-                    return next
-                  })} className="flex w-full items-center gap-2 bg-gray-50/80 px-4 py-3 text-left transition-colors hover:bg-gray-100/80">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedGroups((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(key)) next.delete(key)
+                        else next.add(key)
+                        return next
+                      })
+                    }
+                    className="flex w-full items-center gap-2 bg-gray-50/80 px-4 py-3 text-left transition-colors hover:bg-gray-100/80"
+                  >
                     {isCollapsed ? <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />}
                     <Folder className="h-4 w-4 flex-shrink-0 text-amber-500" />
                     <span className="font-medium text-gray-800">{label}</span>
@@ -329,9 +188,15 @@ export function DocumentsExplorer({
                   </button>
                 ) : null}
                 {isExpanded ? (
-                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3' : 'divide-y divide-gray-100'}>
+                  <div className="divide-y divide-gray-100">
                     {groupDocs.map((doc) => (
-                      <DocumentRow key={doc.id} doc={doc} viewMode={viewMode} onInfo={() => setQualityModalDocument(doc)} onUpdate={onUpdate} onDelete={onDelete} />
+                      <DocumentRow
+                        key={doc.id}
+                        doc={doc}
+                        onInfo={() => setQualityModalDocument(doc)}
+                        onUpdate={onUpdate}
+                        onDelete={onDelete}
+                      />
                     ))}
                   </div>
                 ) : null}
@@ -339,15 +204,6 @@ export function DocumentsExplorer({
             )
           })}
         </div>
-      ) : (
-        <div className="rounded-2xl border border-gray-200/80 bg-white px-6 py-10 text-center shadow-sm">
-          <Tag className="mx-auto h-10 w-10 text-gray-300" />
-          <p className="mt-3 text-sm font-medium text-gray-700">No documents with this tag</p>
-          <button type="button" onClick={() => setTagFilter(null)} className="mt-4 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-            Clear filter
-          </button>
-        </div>
-      )}
 
       {qualityModalDocument ? <DocumentQualityModal document={qualityModalDocument} onClose={() => setQualityModalDocument(null)} /> : null}
     </div>
@@ -356,13 +212,11 @@ export function DocumentsExplorer({
 
 function DocumentRow({
   doc,
-  viewMode,
   onInfo,
   onUpdate,
   onDelete,
 }: {
   doc: ExplorerItem
-  viewMode: ViewMode
   onInfo: () => void
   onUpdate: (input: { documentId: string; title: string; description?: string | null; tags?: string[] | null }) => Promise<{ error?: string; success?: boolean }>
   onDelete: (documentId: string) => Promise<{ error?: string; success?: boolean }>
@@ -372,58 +226,6 @@ function DocumentRow({
     doc.processing_status === 'completed' ? 'Ready' :
     doc.processing_status === 'processing' ? 'Processing' :
     doc.processing_status === 'failed' ? 'Failed' : 'Pending'
-
-  if (viewMode === 'grid') {
-    return (
-      <div className="group flex flex-col rounded-xl border border-gray-100 bg-gray-50/50 p-4 transition-all hover:border-gray-200 hover:bg-white hover:shadow-md">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
-            {getFileIcon(doc.file_type)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate font-medium text-gray-900" title={doc.title}>{doc.title}</h3>
-            {doc.description ? <p className="mt-0.5 line-clamp-2 text-xs text-gray-500" title={doc.description}>{doc.description}</p> : null}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium capitalize text-gray-600">{doc.file_type}</span>
-              <span className="text-xs text-gray-500">{formatFileSize(doc.file_size)}</span>
-              <span className="text-xs text-gray-500">{getDateGroupKey(doc.created_at)}</span>
-              {doc.content_language ? (
-                <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium capitalize text-blue-700">
-                  <Globe className="h-3 w-3" />
-                  {doc.content_language}
-                </span>
-              ) : null}
-            </div>
-            {doc.tags && doc.tags.length > 0 ? (
-              <div className="mt-1.5 flex flex-wrap gap-1">
-                {doc.tags.slice(0, 4).map((tag, idx) => (
-                  <span key={`${doc.id}-grid-tag-${idx}`} className="inline-flex items-center rounded bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700">
-                    #{String(tag).trim()}
-                  </span>
-                ))}
-                {doc.tags.length > 4 ? <span className="text-xs text-gray-400">+{doc.tags.length - 4}</span> : null}
-              </div>
-            ) : null}
-            <div className="mt-2">
-              <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${getStatusPillClasses(statusLevel)}`}>{statusLabel}</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-end gap-1 border-t border-gray-100 pt-3">
-          <button type="button" onClick={onInfo} className={getInfoButtonClasses(statusLevel)} title="Document info & quality">
-            <Info className="h-4 w-4" />
-          </button>
-          <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="View">
-            <Eye className="h-4 w-4" />
-          </a>
-          <a href={`${doc.file_url}${doc.file_url.includes('?') ? '&' : '?'}download=1`} download={doc.file_name} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="Download">
-            <Download className="h-4 w-4" />
-          </a>
-          <EditDocumentDialog document={doc} onUpdate={onUpdate} onDelete={onDelete} />
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-gray-50/80">
@@ -448,19 +250,6 @@ function DocumentRow({
               </span>
             </>
           ) : null}
-          {doc.tags && doc.tags.length > 0 ? (
-            <>
-              <span>·</span>
-              <span className="flex flex-wrap gap-1">
-                {doc.tags.slice(0, 3).map((tag, idx) => (
-                  <span key={`${doc.id}-tag-${idx}`} className="inline-flex items-center rounded bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700">
-                    #{String(tag).trim()}
-                  </span>
-                ))}
-                {doc.tags.length > 3 ? <span className="text-xs text-gray-400">+{doc.tags.length - 3}</span> : null}
-              </span>
-            </>
-          ) : null}
         </div>
       </div>
       <div className="flex flex-shrink-0 items-center gap-2">
@@ -470,9 +259,6 @@ function DocumentRow({
         </button>
         <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="View">
           <Eye className="h-4 w-4" />
-        </a>
-        <a href={`${doc.file_url}${doc.file_url.includes('?') ? '&' : '?'}download=1`} download={doc.file_name} className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="Download">
-          <Download className="h-4 w-4" />
         </a>
         <EditDocumentDialog document={doc} onUpdate={onUpdate} onDelete={onDelete} />
       </div>
