@@ -10,7 +10,6 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { CONTENT_LANGUAGES } from '@eduator/config/constants'
-import { RichTextWithMath } from '@eduator/ui'
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard'
 
@@ -77,21 +76,25 @@ export function ExamLanguageSelector({
   translations: initialTranslations 
 }: ExamLanguageSelectorProps) {
   const t = useTranslations('teacherExams')
+  const tl = (key: string, fallback: string) => {
+    const value = t(key as never)
+    return value === key ? fallback : value
+  }
   const [currentLanguage, setCurrentLanguage] = useState(primaryLanguage)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedTopicFilter, setSelectedTopicFilter] = useState<string | null>(null)
 
   const questionTypeLabels: Record<string, string> = useMemo(() => ({
-    multiple_choice: t('multipleChoice'),
-    true_false: t('trueFalse'),
-    multiple_select: t('multipleSelect'),
-    fill_blank: t('fillBlank'),
-  }), [t])
+    multiple_choice: tl('multipleChoice', 'Multiple Choice'),
+    true_false: tl('trueFalse', 'True/False'),
+    multiple_select: tl('multipleSelect', 'Multiple Select'),
+    fill_blank: tl('fillBlank', 'Fill in the Blank'),
+  }), [t, tl])
   const difficultyLabels: Record<DifficultyLevel, string> = useMemo(() => ({
-    easy: t('difficultyEasy'),
-    medium: t('difficultyMedium'),
-    hard: t('difficultyHard'),
-  }), [t])
+    easy: tl('difficultyEasy', 'Easy'),
+    medium: tl('difficultyMedium', 'Medium'),
+    hard: tl('difficultyHard', 'Hard'),
+  }), [t, tl])
 
   // Get all unique topics from questions
   const allTopics = useMemo(() => {
@@ -159,9 +162,9 @@ export function ExamLanguageSelector({
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">{t('questionsHeader')}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{tl('questionsHeader', 'Questions')}</h2>
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-              {displayQuestions.length} {selectedTopicFilter ? t('filteredLabel') : t('totalLabel')}
+              {displayQuestions.length} {selectedTopicFilter ? tl('filteredLabel', 'filtered') : tl('totalLabel', 'total')}
             </span>
           </div>
 
@@ -169,7 +172,7 @@ export function ExamLanguageSelector({
             {/* Language Selector - Only show available languages */}
             {availableLanguages.length > 1 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 mr-2">{t('languageLabel')}</span>
+                <span className="text-sm text-gray-500 mr-2">{tl('languageLabel', 'Language')}</span>
                 <div className="flex items-center gap-1">
                   {availableLanguages.map((langCode) => {
                     const lang = LANGUAGES[langCode]
@@ -187,7 +190,7 @@ export function ExamLanguageSelector({
                             ? 'bg-blue-100 ring-2 ring-blue-500 shadow-sm'
                             : 'bg-gray-100 hover:bg-gray-200'
                         }`}
-                        title={`${lang.name}${isPrimary ? ` ${t('originalLabel')}` : ''}`}
+                        title={`${lang.name}${isPrimary ? ` ${tl('originalLabel', '(original)')}` : ''}`}
                       >
                         <FlagIcon countryCode={lang.countryCode} size={24} />
                       </button>
@@ -203,7 +206,7 @@ export function ExamLanguageSelector({
         {allTopics.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-gray-700">{t('filterByTopic')}</span>
+              <span className="text-sm font-medium text-gray-700">{tl('filterByTopic', 'Filter by topic')}</span>
               <button
                 onClick={() => handleTopicFilter(null)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -212,7 +215,7 @@ export function ExamLanguageSelector({
                     : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                {t('all')} ({questions.length})
+                {tl('all', 'All')} ({questions.length})
               </button>
               {allTopics.map((topic) => (
                 <button
@@ -237,7 +240,7 @@ export function ExamLanguageSelector({
         {paginatedQuestions.length === 0 ? (
           <div className="p-12 text-center">
             <FileText className="mx-auto h-10 w-10 text-gray-300" />
-            <p className="mt-2 text-sm text-gray-500">{t('noQuestionsInExam')}</p>
+            <p className="mt-2 text-sm text-gray-500">{tl('noQuestionsInExam', 'No questions found')}</p>
           </div>
         ) : (
           paginatedQuestions.map((question, idx) => {
@@ -263,7 +266,7 @@ export function ExamLanguageSelector({
                         <span
                           key={topicIdx}
                           className="rounded-full px-2 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200"
-                          title={`${t('topicLabel')} ${topic}`}
+                          title={`${tl('topicLabel', 'Topic')}: ${topic}`}
                         >
                           {topic}
                         </span>
@@ -292,9 +295,7 @@ export function ExamLanguageSelector({
                         }`}>
                           {String.fromCharCode(65 + optIndex)}
                         </span>
-                        <span className="flex-1">
-                          <RichTextWithMath content={option} asHtml={false} />
-                        </span>
+                        <span className="flex-1">{option}</span>
                         {option === question.correctAnswer && (
                           <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                         )}
@@ -306,7 +307,7 @@ export function ExamLanguageSelector({
                 {/* True/False — display translated labels; correctAnswer may be "True"/"False" or translated */}
                 {question.type === 'true_false' && (() => {
                   const canonical: ['True', 'False'] = ['True', 'False']
-                  const labels = [t('optionTrue'), t('optionFalse')]
+                  const labels = [tl('optionTrue', 'True'), tl('optionFalse', 'False')]
                   return (
                     <div className="flex gap-3">
                       {canonical.map((canon, idx) => {
@@ -352,9 +353,7 @@ export function ExamLanguageSelector({
                           }`}>
                             {String.fromCharCode(65 + optIndex)}
                           </span>
-                          <span className="flex-1">
-                            <RichTextWithMath content={option} asHtml={false} />
-                          </span>
+                          <span className="flex-1">{option}</span>
                           {isCorrect && (
                             <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                           )}
@@ -367,10 +366,8 @@ export function ExamLanguageSelector({
                 {/* Fill Blank */}
                 {question.type === 'fill_blank' && (
                   <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3">
-                    <span className="text-sm text-green-600 font-medium">{t('correctAnswerLabel')} </span>
-                    <span className="text-sm text-green-800 font-semibold">
-                      <RichTextWithMath content={String(question.correctAnswer)} asHtml={false} />
-                    </span>
+                    <span className="text-sm text-green-600 font-medium">{tl('correctAnswerLabel', 'Correct answer')} </span>
+                    <span className="text-sm text-green-800 font-semibold">{String(question.correctAnswer)}</span>
                   </div>
                 )}
 
@@ -378,8 +375,8 @@ export function ExamLanguageSelector({
                 {question.explanation && (
                   <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3">
                     <p className="text-sm text-blue-700">
-                      <strong className="font-medium">{t('explanationLabel')}</strong>{' '}
-                      <RichTextWithMath content={question.explanation} asHtml={false} />
+                      <strong className="font-medium">{tl('explanationLabel', 'Explanation')}</strong>{' '}
+                      {question.explanation}
                     </p>
                   </div>
                 )}
@@ -399,7 +396,7 @@ export function ExamLanguageSelector({
               className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4" />
-              {t('previous')}
+              {tl('previous', 'Previous')}
             </button>
             <div className="flex items-center gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -421,7 +418,7 @@ export function ExamLanguageSelector({
               disabled={currentPage === totalPages}
               className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
             >
-              {t('next')}
+              {tl('next', 'Next')}
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

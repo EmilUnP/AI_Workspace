@@ -68,6 +68,8 @@ export class ExamAiService {
       questions: Array<Record<string, unknown>>
     }>(prompt)
 
+    const normalizedQuestions = this.normalizeGeneratedQuestions(exam.questions || [])
+
     const { rows } = await this.app.db.query<{ id: string }>(
       `INSERT INTO exams (user_id, title, description, subject, grade_level, questions, language, duration_minutes)
        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8) RETURNING id`,
@@ -77,13 +79,13 @@ export class ExamAiService {
         exam.description || null,
         data.subject || null,
         data.gradeLevel || null,
-        JSON.stringify(exam.questions || []),
+        JSON.stringify(normalizedQuestions),
         data.language,
         data.durationMinutes
       ]
     )
 
-    return { id: rows[0].id, ...exam }
+    return { id: rows[0].id, ...exam, questions: normalizedQuestions }
   }
 
   async translate(input: unknown) {
@@ -117,6 +119,8 @@ export class ExamAiService {
       `Subject: ${data.subject || 'General'}.`,
       `Grade: ${data.gradeLevel || 'N/A'}.`,
       `Allowed question types: ${questionTypes}.`,
+      'For multiple_choice and multiple_select questions, ALWAYS return exactly 4 options.',
+      'For multiple_select, return max 4 options and ensure correct_answer values are selected from those options.',
       dd,
       topics,
       custom,
@@ -126,5 +130,39 @@ export class ExamAiService {
     ]
       .filter(Boolean)
       .join('\n\n')
+  }
+
+  private normalizeGeneratedQuestions(questions: Array<Record<string, unknown>>) {
+    return questions.map((rawQuestion, index) => {
+      const question = { ...rawQuestion }
+      const type = String(question.type || '').trim().toLowerCase()
+      const rawOptions = Array.isArray(question.options) ? question.options : []
+      const options = rawOptions.map((item) => String(item ?? '')).filter(Boolean)
+
+      if (type === 'multiple_select' || type === 'multiple_choice') {
+        const limitedOptions = options.slice(0, 4)
+        question.options = limitedOptions
+
+        const rawCorrect = question.correct_answer
+        if (type === 'multiple_select') {
+          const asArray = Array.isArray(rawCorrect) ? rawCorrect : [rawCorrect]
+          const normalizedCorrect = asArray
+            .map((item) => String(item ?? '').trim())
+            .filter((item) => limitedOptions.includes(item))
+          question.correct_answer = normalizedCorrect
+        } else if (type === 'multiple_choice') {
+          const correct = String(rawCorrect ?? '').trim()
+          question.correct_answer = limitedOptions.includes(correct)
+            ? correct
+            : (limitedOptions[0] || '')
+        }
+      }
+
+      if (!question.id) {
+        question.id = `q${index + 1}`
+      }
+
+      return question
+    })
   }
 }

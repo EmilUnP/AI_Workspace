@@ -15,6 +15,10 @@ interface ExamActionsProps {
 
 export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fromRun }: ExamActionsProps) {
   const t = useTranslations('teacherExams')
+  const tl = (key: string, fallback: string) => {
+    const value = t(key as never)
+    return value === key ? fallback : value
+  }
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -40,19 +44,19 @@ export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fro
           onClick={() => router.push(editHref)}
           disabled={isPending}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 sm:px-4"
-          title={t('editExam')}
+          title={tl('editExam', 'Edit exam')}
         >
           <Pencil className="h-4 w-4" />
-          <span className="hidden sm:inline">{t('editShort')}</span>
+          <span className="hidden sm:inline">{tl('editShort', 'Edit')}</span>
         </button>
         <button
           onClick={() => setShowDeleteConfirm(true)}
           disabled={isPending}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:opacity-50 sm:px-4"
-          title={t('deleteExam')}
+          title={tl('deleteExam', 'Delete exam')}
         >
           <Trash2 className="h-4 w-4" />
-          <span className="hidden sm:inline">{t('deleteShort')}</span>
+          <span className="hidden sm:inline">{tl('deleteShort', 'Delete')}</span>
         </button>
       </div>
 
@@ -77,8 +81,8 @@ export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fro
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-600 ring-1 ring-red-200/50">
                   <AlertTriangle className="h-7 w-7" />
                 </div>
-                <h3 className="mt-5 text-lg font-semibold text-gray-900">{t('deleteExam')}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">{t('deleteExamConfirm')}</p>
+                <h3 className="mt-5 text-lg font-semibold text-gray-900">{tl('deleteExam', 'Delete exam')}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{tl('deleteExamConfirm', 'Are you sure you want to delete this exam?')}</p>
               </div>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:gap-3">
                 <button
@@ -86,7 +90,7 @@ export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fro
                   disabled={isPending}
                   className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                 >
-                  {t('cancel')}
+                  {tl('cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={handleDelete}
@@ -96,12 +100,12 @@ export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fro
                   {isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{t('deleting')}</span>
+                      <span>{tl('deleting', 'Deleting...')}</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4" />
-                      <span>{t('deleteExam')}</span>
+                      <span>{tl('deleteExam', 'Delete exam')}</span>
                     </>
                   )}
                 </button>

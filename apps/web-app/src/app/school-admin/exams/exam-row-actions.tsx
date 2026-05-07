@@ -21,6 +21,10 @@ interface ExamRowActionsProps {
 
 export function ExamRowActions({ examId, isPublished: _isPublished }: ExamRowActionsProps) {
   const t = useTranslations('teacherExams')
+  const tl = (key: string, fallback: string) => {
+    const value = t(key as never)
+    return value === key ? fallback : value
+  }
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -44,14 +48,14 @@ export function ExamRowActions({ examId, isPublished: _isPublished }: ExamRowAct
         <Link
           href={`/school-admin/exams/${examId}`}
           className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
-          title={t('viewExam')}
+          title={tl('viewExam', 'View exam')}
         >
           <Eye className="h-4 w-4" />
         </Link>
         <Link
           href={`/school-admin/exams/${examId}/edit`}
           className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
-          title={t('editExam')}
+          title={tl('editExam', 'Edit exam')}
         >
           <Pencil className="h-4 w-4" />
         </Link>
@@ -59,7 +63,7 @@ export function ExamRowActions({ examId, isPublished: _isPublished }: ExamRowAct
           onClick={() => setShowDeleteConfirm(true)}
           disabled={isPending}
           className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-          title={t('deleteExam')}
+          title={tl('deleteExam', 'Delete exam')}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -86,8 +90,8 @@ export function ExamRowActions({ examId, isPublished: _isPublished }: ExamRowAct
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-600 ring-1 ring-red-200/50">
                   <AlertTriangle className="h-7 w-7" />
                 </div>
-                <h3 className="mt-5 text-lg font-semibold text-gray-900">{t('deleteExam')}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">{t('deleteExamConfirm')}</p>
+                <h3 className="mt-5 text-lg font-semibold text-gray-900">{tl('deleteExam', 'Delete exam')}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{tl('deleteExamConfirm', 'Are you sure you want to delete this exam?')}</p>
               </div>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:gap-3">
                 <button
@@ -95,7 +99,7 @@ export function ExamRowActions({ examId, isPublished: _isPublished }: ExamRowAct
                   disabled={isPending}
                   className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                 >
-                  {t('cancel')}
+                  {tl('cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={handleDelete}
@@ -105,12 +109,12 @@ export function ExamRowActions({ examId, isPublished: _isPublished }: ExamRowAct
                   {isPending && actionType === 'delete' ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{t('deleting')}</span>
+                      <span>{tl('deleting', 'Deleting...')}</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4" />
-                      <span>{t('deleteExam')}</span>
+                      <span>{tl('deleteExam', 'Delete exam')}</span>
                     </>
                   )}
                 </button>
