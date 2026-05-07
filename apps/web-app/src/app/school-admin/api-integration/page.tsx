@@ -1,4 +1,4 @@
-import { createClient } from '@eduator/auth/supabase/server'
+import { getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 import { teacherApiKeyRepository } from '@eduator/db'
 import { getTranslations } from 'next-intl/server'
@@ -10,34 +10,13 @@ const API_BASE_V1 = `${API_BASE}/api/v1/school-admin`
 
 export default async function ApiIntegrationPage() {
   const t = await getTranslations('teacherApiIntegration')
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, metadata')
-    .eq('user_id', user.id)
-    .single()
-  const profileRow = profile as { id?: string; metadata?: { api_integration_enabled?: boolean } | null } | null
-
-  if (!profileRow?.id) redirect('/auth/login')
-
-  const metadata = profileRow.metadata ?? null
-  if (!metadata?.api_integration_enabled) {
-    return (
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-gray-900">
-        <h2 className="text-lg font-semibold">{t('notEnabled')}</h2>
-        <p className="mt-2 text-sm">
-          {t('notEnabledMessage')}
-        </p>
-      </div>
-    )
-  }
+  if (user.role !== 'operator' && user.role !== 'admin') redirect('/app')
 
   const [keys, usageStats] = await Promise.all([
-    teacherApiKeyRepository.listByProfile(profileRow.id),
-    teacherApiKeyRepository.getUsageStats(profileRow.id),
+    teacherApiKeyRepository.listByProfile(user.id),
+    teacherApiKeyRepository.getUsageStats(user.id),
   ])
 
   return (

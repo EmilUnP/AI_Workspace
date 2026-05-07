@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@eduator/auth/supabase/server'
+import { getCurrentUser } from '@/lib/backend-auth'
 import { revalidatePath } from 'next/cache'
 import { teacherApiKeyRepository } from '@eduator/db'
 
@@ -13,25 +13,11 @@ export async function createApiKey(_prev: unknown, formData: FormData): Promise<
     return { error: 'Key name is required' }
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return { error: 'Not authenticated' }
+  if (user.role !== 'operator' && user.role !== 'admin') return { error: 'Not authorized' }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, metadata')
-    .eq('user_id', user.id)
-    .single()
-  const profileRow = profile as { id?: string; metadata?: { api_integration_enabled?: boolean } | null } | null
-
-  if (!profileRow?.id) return { error: 'Profile not found' }
-
-  const metadata = profileRow.metadata ?? null
-  if (!metadata?.api_integration_enabled) {
-    return { error: 'API integration is not enabled for your account' }
-  }
-
-  const result = teacherApiKeyRepository.create(profileRow.id, name)
+  const result = teacherApiKeyRepository.create(user.id, name)
   const created = await result
   if (!created) return { error: 'Failed to create API key' }
 
@@ -40,20 +26,11 @@ export async function createApiKey(_prev: unknown, formData: FormData): Promise<
 }
 
 export async function revokeApiKey(keyId: string): Promise<RevokeResult> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
   if (!user) return { error: 'Not authenticated' }
+  if (user.role !== 'operator' && user.role !== 'admin') return { error: 'Not authorized' }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-  const profileRow = profile as { id?: string } | null
-
-  if (!profileRow?.id) return { error: 'Profile not found' }
-
-  const ok = await teacherApiKeyRepository.revoke(keyId, profileRow.id)
+  const ok = await teacherApiKeyRepository.revoke(keyId, user.id)
   if (!ok) return { error: 'Failed to revoke key' }
 
   revalidatePath('/school-admin/api-integration')
