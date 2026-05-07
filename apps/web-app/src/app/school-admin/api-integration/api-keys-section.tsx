@@ -61,7 +61,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Your API keys</h2>
           <p className="text-sm text-gray-600 mt-0.5">
-            Create a key to authenticate your app. Copy it when shown — you won&apos;t see it again. Keep it secret.
+            Manage integration keys for app workflows. Keep keys secret and rotate regularly.
           </p>
         </div>
       </div>

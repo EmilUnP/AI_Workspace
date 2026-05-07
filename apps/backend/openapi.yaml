@@ -137,6 +137,341 @@ paths:
           description: One document
         '404':
           description: Not found
+    patch:
+      tags: [Documents]
+      summary: Update document metadata
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      tags: [Documents]
+      summary: Delete document
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+  /v1/documents/{id}/file:
+    get:
+      tags: [Documents]
+      summary: Stream original document file
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: File stream
+        '404':
+          description: Not found
+  /v1/lessons:
+    get:
+      tags: [AI]
+      summary: List lessons
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Lesson list
+  /v1/lessons/{id}:
+    get:
+      tags: [AI]
+      summary: Get lesson by ID
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: One lesson
+        '404':
+          description: Not found
+    delete:
+      tags: [AI]
+      summary: Delete lesson
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+  /v1/lessons/{id}/media/{file}:
+    get:
+      tags: [AI]
+      summary: Get lesson media asset
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: file
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Media stream
+        '404':
+          description: Not found
+  /v1/exams:
+    get:
+      tags: [AI]
+      summary: List exams
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Exam list
+    post:
+      tags: [AI]
+      summary: Create exam
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '201':
+          description: Created
+  /v1/exams/{id}:
+    get:
+      tags: [AI]
+      summary: Get exam by ID
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: One exam
+        '404':
+          description: Not found
+    patch:
+      tags: [AI]
+      summary: Update exam
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      tags: [AI]
+      summary: Delete exam
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+  /v1/exams/stats:
+    get:
+      tags: [AI]
+      summary: Exam statistics
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Exam stats
+  /v1/education-plans:
+    get:
+      tags: [AI]
+      summary: List education plans
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: shared
+          schema:
+            type: string
+            enum: [shared, not_shared]
+        - in: query
+          name: classId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Education plan list
+    post:
+      tags: [AI]
+      summary: Create education plan
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '201':
+          description: Created
+  /v1/education-plans/stats:
+    get:
+      tags: [AI]
+      summary: Education plan statistics
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Plan stats
+  /v1/education-plans/{id}:
+    get:
+      tags: [AI]
+      summary: Get education plan by ID
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: One plan
+        '404':
+          description: Not found
+    patch:
+      tags: [AI]
+      summary: Update education plan
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated
+        '404':
+          description: Not found
+    delete:
+      tags: [AI]
+      summary: Delete education plan
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
   /v1/ai/requests:
     post:
       tags: [AI]

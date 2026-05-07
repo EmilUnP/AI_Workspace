@@ -25,11 +25,13 @@ export interface ApiIntegrationClientProps {
 
 export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl }: ApiIntegrationClientProps) {
   const t = useTranslations('teacherApiIntegration')
+  const keysTabLabel = t('keysTab') === 'keysTab' ? 'Keys & Docs' : t('keysTab')
+  const usageTabLabel = t('usageTab') === 'usageTab' ? 'Usage' : t('usageTab')
   const [activeTab, setActiveTab] = useState<'keys-docs' | 'usage'>('keys-docs')
 
   const TABS = [
-    { id: 'keys-docs' as const, label: t('keysTab'), icon: BookOpen },
-    { id: 'usage' as const, label: t('usageTab'), icon: BarChart3 },
+    { id: 'keys-docs' as const, label: keysTabLabel, icon: BookOpen },
+    { id: 'usage' as const, label: usageTabLabel, icon: BarChart3 },
   ]
 
   return (

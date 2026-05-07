@@ -6,10 +6,11 @@ import { ApiIntegrationClient } from './api-integration-client'
 import { getApiUrl } from '../../../lib/portal-urls'
 
 const API_BASE = getApiUrl()
-const API_BASE_V1 = `${API_BASE}/api/v1/school-admin`
+const API_BASE_V1 = `${API_BASE}/v1`
 
 export default async function ApiIntegrationPage() {
   const t = await getTranslations('teacherApiIntegration')
+  const title = t('title') === 'title' ? 'API Integration' : t('title')
   const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
   if (user.role !== 'operator' && user.role !== 'admin') redirect('/app')
@@ -20,29 +21,12 @@ export default async function ApiIntegrationPage() {
   ])
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="w-full max-w-none space-y-8">
       <header>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          {t('title')}
+          {title}
         </h1>
-        <p className="mt-2 text-base text-gray-600 leading-relaxed">{t('subtitle')}</p>
       </header>
-
-      <section className="rounded-xl border border-gray-200 bg-gray-50/50 p-5">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">
-          {t('howItWorks')}
-        </h2>
-        <ol className="flex flex-col gap-3 text-sm text-gray-700">
-          <li className="flex items-start gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-800">1</span>
-            <span>{t('step1')}</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-800">2</span>
-            <span>{t('step2')}</span>
-          </li>
-        </ol>
-      </section>
 
       <ApiIntegrationClient
         keys={keys}
