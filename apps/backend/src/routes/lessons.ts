@@ -30,6 +30,34 @@ type LessonDetailsRow = {
   document_title: string | null
 }
 
+const toAbsoluteMediaUrl = (
+  request: { protocol: string; headers: Record<string, string | string[] | undefined> },
+  value: unknown
+): string | null => {
+  const raw = typeof value === 'string' ? value.trim() : ''
+  if (!raw) return null
+  if (/^https?:\/\//i.test(raw)) return raw
+  if (!raw.startsWith('/')) return raw
+  const host = String(request.headers.host || '').trim()
+  if (!host) return raw
+  return `${request.protocol}://${host}${raw}`
+}
+
+const normalizeLessonImages = (
+  request: { protocol: string; headers: Record<string, string | string[] | undefined> },
+  value: unknown
+): unknown => {
+  if (!Array.isArray(value)) return value
+  return value.map((item) => {
+    if (!item || typeof item !== 'object') return item
+    const image = item as Record<string, unknown>
+    return {
+      ...image,
+      url: toAbsoluteMediaUrl(request, image.url) ?? image.url,
+    }
+  })
+}
+
 export async function lessonsRoutes(app: FastifyInstance) {
   app.get('/lessons', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
@@ -185,6 +213,9 @@ export async function lessonsRoutes(app: FastifyInstance) {
       }
     }
 
+    const images = normalizeLessonImages(request, lesson.images)
+    const audioUrl = toAbsoluteMediaUrl(request, resolvedAudioUrl)
+
     return reply.send({
       lesson: {
         id: lesson.id,
@@ -194,9 +225,9 @@ export async function lessonsRoutes(app: FastifyInstance) {
         created_at: lesson.created_at,
         duration_minutes: lesson.duration_minutes ?? 45,
         is_published: lesson.is_published ?? false,
-        audio_url: resolvedAudioUrl,
+        audio_url: audioUrl,
         content: lesson.content,
-        images: lesson.images,
+        images,
         mini_test: lesson.mini_test,
         metadata: lesson.metadata,
         learning_objectives: lesson.learning_objectives,
