@@ -250,7 +250,7 @@ export default function GenerateLessonPage() {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">
+      <div className="max-w-6xl xl:max-w-7xl mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Link
@@ -267,9 +267,9 @@ export default function GenerateLessonPage() {
         </div>
         
         {/* Main Content */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {/* Document Selection (multi-select for RAG from multiple sources) */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 xl:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <FileText className="w-4 h-4 inline mr-2" />
               {t('sourceDocuments')} (optional)
@@ -547,7 +547,7 @@ export default function GenerateLessonPage() {
           
           {/* Progress Display */}
           {(loading || currentStep !== 'idle') && currentStep !== 'complete' && currentStep !== 'error' && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 xl:col-span-2">
               {(() => {
                 const percent = getStepProgress(currentStep, includeImages, includeAudio)
                 return (
@@ -576,7 +576,7 @@ export default function GenerateLessonPage() {
           
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 xl:col-span-2">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-medium text-red-800">
@@ -597,7 +597,7 @@ export default function GenerateLessonPage() {
           
           {/* Success Display */}
           {currentStep === 'complete' && generatedLesson && (
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center xl:col-span-2">
               <div className="relative">
                 {/* Animated checkmark */}
                 <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-5 animate-bounce">
@@ -656,7 +656,7 @@ export default function GenerateLessonPage() {
             <button
               onClick={handleGenerate}
               disabled={loading || !topic.trim()}
-              className="w-full py-4 px-6 bg-gray-900 text-white rounded-xl font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 bg-gray-900 text-white rounded-xl font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 xl:col-span-2"
             >
               {loading ? (
                 <>
