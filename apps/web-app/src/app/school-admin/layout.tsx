@@ -21,9 +21,7 @@ export default async function SchoolAdminLayout({
   const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
   if (user.role !== 'operator' && user.role !== 'admin') redirect('/app')
-  const navigation = user.role === 'admin'
-    ? [{ name: 'Users', href: '/school-admin/users', icon: 'Users' }, ...baseNavigation]
-    : baseNavigation
+  const navigation = baseNavigation
 
   const displayProfile = {
     full_name: user.email?.split('@')[0] || 'Operator',

@@ -1,11 +1,10 @@
-import { getCurrentUser, listUsers } from '@/lib/backend-auth'
+import { getCurrentUser } from '@/lib/backend-auth'
 import { getTeacherExamStats } from '@eduator/core/utils/teacher-exams'
 import { BarChart3, BookOpen, Coins, FileText, MessageSquare, Shield, Sparkles, Users } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 type DashboardStats = {
-  recentUsers: Awaited<ReturnType<typeof listUsers>>
   lessonsTotal: number
   examsTotal: number
   examsPublished: number
@@ -15,14 +14,13 @@ type DashboardStats = {
   recentLessons: Array<{ id: string; title: string; created_at: string }>
 }
 
-async function getDashboardStats(isAdmin: boolean): Promise<DashboardStats> {
+async function getDashboardStats(): Promise<DashboardStats> {
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
   const { cookies } = await import('next/headers')
   const token = (await cookies()).get('access_token')?.value
 
   if (!token) {
     return {
-      recentUsers: [],
       lessonsTotal: 0,
       examsTotal: 0,
       examsPublished: 0,
@@ -44,8 +42,7 @@ async function getDashboardStats(isAdmin: boolean): Promise<DashboardStats> {
     }
   }
 
-  const [users, lessonsRes, documentsRes, examStats] = await Promise.all([
-    isAdmin ? listUsers({ limit: 100, offset: 0 }) : Promise.resolve([]),
+  const [lessonsRes, documentsRes, examStats] = await Promise.all([
     safeFetch(`${backendBase}/v1/lessons?page=1&perPage=5`),
     safeFetch(`${backendBase}/v1/documents`),
     getTeacherExamStats(null, '', ''),
@@ -67,21 +64,7 @@ async function getDashboardStats(isAdmin: boolean): Promise<DashboardStats> {
     return status === 'ready' || status === 'completed'
   }).length
 
-  if (!isAdmin) {
-    return {
-      recentUsers: users,
-      lessonsTotal: Number(lessonsPayload.total || 0),
-      examsTotal: Number(examStats.total || 0),
-      examsPublished: Number(examStats.published || 0),
-      totalQuestions: Number(examStats.totalQuestions || 0),
-      documentsTotal: documents.length,
-      documentsReady,
-      recentLessons: Array.isArray(lessonsPayload.items) ? lessonsPayload.items : [],
-    }
-  }
-
   return {
-    recentUsers: users.slice(0, 5),
     lessonsTotal: Number(lessonsPayload.total || 0),
     examsTotal: Number(examStats.total || 0),
     examsPublished: Number(examStats.published || 0),
@@ -97,8 +80,7 @@ export default async function SchoolAdminDashboard() {
   if (!currentUser) redirect('/auth/login')
   if (currentUser.role !== 'admin' && currentUser.role !== 'operator') redirect('/app')
 
-  const isAdmin = currentUser.role === 'admin'
-  const stats = await getDashboardStats(isAdmin)
+  const stats = await getDashboardStats()
 
   return (
     <div className="space-y-6">
@@ -195,33 +177,6 @@ export default async function SchoolAdminDashboard() {
         </div>
       </div>
 
-      {isAdmin && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Recent Users</h3>
-              <p className="mt-1 text-sm text-gray-500">Admin-only user management snapshot</p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-3">
-            {stats.recentUsers.length === 0 ? (
-              <p className="text-sm text-gray-500">No users yet.</p>
-            ) : (
-              stats.recentUsers.map((u) => (
-                <div key={u.id} className="flex items-center justify-between rounded-md border border-gray-200 p-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900">{u.email}</p>
-                    <p className="text-xs text-gray-500">{u.role}</p>
-                  </div>
-                  <Link href={`/school-admin/users/${u.id}`} className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                    View
-                  </Link>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
