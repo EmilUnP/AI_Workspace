@@ -762,9 +762,11 @@ Never add disclaimers or meta-commentary in the lesson content. Output only the 
     ? '\n- Where helpful, include chart-like data: use markdown tables for trends or comparisons, or a short description of what a chart would show (e.g. "A bar chart of X would show...").'
     : ''
 
-  const gradeLevelLabel = gradeValueToLabel(gradeLevel)
-  const gradeInstruction = gradeLevelLabel
-    ? `\n\n🎓 TARGET GRADE LEVEL: ${gradeLevelLabel}\nYou MUST tailor the lesson for this grade level:\n- Use vocabulary, sentence complexity, and examples appropriate for ${gradeLevelLabel} students\n- Adjust the depth of explanation: simpler for lower grades, more analytical for higher levels\n- Choose relatable examples and analogies suitable for this age group\n- The mini test difficulty must match this grade level\n`
+  const rawGradeLevel = typeof gradeLevel === 'string' ? gradeLevel.trim() : ''
+  const gradeLevelLabel = gradeValueToLabel(rawGradeLevel)
+  const targetGradeLevel = gradeLevelLabel ?? rawGradeLevel
+  const gradeInstruction = targetGradeLevel
+    ? `\n\n🎓 TARGET GRADE LEVEL: ${targetGradeLevel}\nYou MUST tailor the lesson for this grade level:\n- Use vocabulary, sentence complexity, and examples appropriate for ${targetGradeLevel} students\n- Adjust the depth of explanation: simpler for lower grades, more analytical for higher levels\n- Choose relatable examples and analogies suitable for this age group\n- The mini test difficulty must match this grade level\n`
     : ''
 
   const objectivesInstruction = objectives

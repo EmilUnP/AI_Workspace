@@ -291,11 +291,11 @@ export function ExamCreator(props: AnyProps) {
         </div>
 
         <div className="mt-4 rounded-lg border border-gray-200 bg-white p-3">
-          <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-700">QUESTION TYPES</p>
-                <span className="text-xs font-semibold text-violet-600">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Question types</p>
+                <span className="text-[11px] font-semibold text-gray-500">
                   {questionTypeDistribution.multiple_choice + questionTypeDistribution.true_false + questionTypeDistribution.multiple_select + questionTypeDistribution.fill_blank}%
                 </span>
               </div>
@@ -305,27 +305,27 @@ export function ExamCreator(props: AnyProps) {
                 ['multiple_select', 'Multiple Select'],
                 ['fill_blank', 'Fill in the Blank'],
               ] as const).map(([key, label]) => (
-                <div key={key} className="mb-2 rounded-lg bg-gray-50 px-3 py-2">
-                  <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
-                    <span>{label}</span>
-                    <span>{questionTypeDistribution[key]}%</span>
+                <div key={key} className="mb-2 flex items-center justify-between gap-3">
+                  <label className="text-xs text-gray-600">{label}</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={questionTypeDistribution[key]}
+                      onChange={(e) => setQuestionTypeDistribution(rebalance(questionTypeDistribution, key, Number(e.target.value), ['multiple_choice', 'true_false', 'multiple_select', 'fill_blank']) as typeof questionTypeDistribution)}
+                      className="w-14 rounded-md border border-gray-300 px-2 py-1 text-right text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs text-gray-500">%</span>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={questionTypeDistribution[key]}
-                    onChange={(e) => setQuestionTypeDistribution(rebalance(questionTypeDistribution, key, Number(e.target.value), ['multiple_choice', 'true_false', 'multiple_select', 'fill_blank']) as typeof questionTypeDistribution)}
-                    className="w-full"
-                  />
                 </div>
               ))}
             </div>
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-700">DIFFICULTY LEVELS</p>
-                <span className="text-xs font-semibold text-emerald-600">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Difficulty levels</p>
+                <span className="text-[11px] font-semibold text-gray-500">
                   {difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard}%
                 </span>
               </div>
@@ -334,19 +334,19 @@ export function ExamCreator(props: AnyProps) {
                 ['medium', 'Medium'],
                 ['hard', 'Hard'],
               ] as const).map(([key, label]) => (
-                <div key={key} className="mb-2 rounded-lg bg-gray-50 px-3 py-2">
-                  <div className="mb-1 flex items-center justify-between text-xs text-gray-600">
-                    <span>{label}</span>
-                    <span>{difficultyDistribution[key]}%</span>
+                <div key={key} className="mb-2 flex items-center justify-between gap-3">
+                  <label className="text-xs text-gray-600">{label}</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={difficultyDistribution[key]}
+                      onChange={(e) => setDifficultyDistribution(rebalance(difficultyDistribution, key, Number(e.target.value), ['easy', 'medium', 'hard']) as typeof difficultyDistribution)}
+                      className="w-14 rounded-md border border-gray-300 px-2 py-1 text-right text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs text-gray-500">%</span>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={difficultyDistribution[key]}
-                    onChange={(e) => setDifficultyDistribution(rebalance(difficultyDistribution, key, Number(e.target.value), ['easy', 'medium', 'hard']) as typeof difficultyDistribution)}
-                    className="w-full"
-                  />
                 </div>
               ))}
             </div>
