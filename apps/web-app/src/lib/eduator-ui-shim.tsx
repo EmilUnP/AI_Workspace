@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { AlertTriangle, Eye, Loader2, Trash2, X } from 'lucide-react'
 
 type AnyProps = Record<string, any>
 
@@ -29,7 +30,100 @@ export function PaginationFooter(_props: AnyProps) {
 }
 
 export function LessonRowActions() { return null }
-export function EducationPlanRowActions() { return null }
+export function EducationPlanRowActions(props: AnyProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const labels = (props?.labels || {}) as Record<string, string>
+  const t = (key: string, fallback: string) => labels[key] || fallback
+
+  const handleDelete = async () => {
+    if (!props?.deleteAction || typeof props.deleteAction !== 'function') return
+    setIsDeleting(true)
+    try {
+      const result = await props.deleteAction(String(props.planId || ''))
+      if (!result?.error) {
+        window.location.reload()
+      }
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="flex items-center gap-1">
+        <a
+          href={String(props?.viewHref || '#')}
+          className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          title={t('viewPlan', 'View plan')}
+        >
+          <Eye className="h-4 w-4" />
+        </a>
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          title={t('deletePlanBtn', 'Delete')}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50" onClick={() => !isDeleting && setShowDeleteConfirm(false)} aria-hidden />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-md rounded-2xl bg-white p-6 ring-1 ring-gray-200 sm:p-8">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                aria-label={t('close', 'Close')}
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-700 ring-1 ring-gray-200/70">
+                  <AlertTriangle className="h-7 w-7" />
+                </div>
+                <h3 className="mt-5 text-lg font-semibold text-gray-900">{t('deletePlanTitle', 'Delete plan')}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{t('deletePlanConfirm', 'Are you sure you want to delete this plan?')}</p>
+              </div>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {t('cancel', 'Cancel')}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black disabled:opacity-70"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{t('deleting', 'Deleting...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      <span>{t('deletePlanBtn', 'Delete')}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 export function EducationPlanCreateForm(props: AnyProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -175,7 +269,93 @@ export function EducationPlanCreateForm(props: AnyProps) {
     </div>
   )
 }
-export function EducationPlanEditForm() { return null }
+export function EducationPlanEditForm(props: AnyProps) {
+  const labels = (props?.labels || {}) as Record<string, string>
+  const t = (key: string, fallback: string) => labels[key] || fallback
+  const initial = (props?.initialData || {}) as AnyProps
+  const initialContent = Array.isArray(props?.content) ? props.content : []
+
+  const [name, setName] = useState(String(initial.name || ''))
+  const [description, setDescription] = useState(String(initial.description || ''))
+  const [periodMonths, setPeriodMonths] = useState(Number(initial.period_months || 3))
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(Number(initial.sessions_per_week || 3))
+  const [hoursPerSession, setHoursPerSession] = useState(Number(initial.hours_per_session || 1))
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSave = async () => {
+    if (!props?.updateAction || typeof props.updateAction !== 'function') return
+    if (!name.trim()) {
+      setError(t('planNameRequired', 'Plan name is required'))
+      return
+    }
+    setError(null)
+    setIsSaving(true)
+    try {
+      const result = await props.updateAction(String(props.planId || ''), {
+        name: name.trim(),
+        description: description.trim() || null,
+        period_months: periodMonths,
+        sessions_per_week: sessionsPerWeek,
+        hours_per_session: hoursPerSession,
+        content: initialContent,
+      })
+      if (result?.error) {
+        setError(String(result.error))
+        return
+      }
+      const base = String(props?.planDetailBase || '/school-admin/education-plans')
+      window.location.href = `${base}/${String(props.planId || '')}`
+    } catch {
+      setError(t('failedToSave', 'Failed to save'))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+      <h2 className="text-xl font-semibold text-gray-900">{t('editTitle', 'Edit education plan')}</h2>
+      <p className="mt-1 text-sm text-gray-500">{t('editSubtitle', 'Update the plan details')}</p>
+
+      <div className="mt-5 space-y-4">
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">{t('planName', 'Plan name')} *</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">{t('descriptionOptional', 'Description')}</label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">{t('periodMonths', 'Period (months)')}</label>
+            <input type="number" min={1} max={24} value={periodMonths} onChange={(e) => setPeriodMonths(Math.max(1, Number(e.target.value || 1)))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">{t('sessionsPerWeek', 'Sessions/week')}</label>
+            <input type="number" min={1} max={14} value={sessionsPerWeek} onChange={(e) => setSessionsPerWeek(Math.max(1, Number(e.target.value || 1)))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">{t('hoursPerSession', 'Hours/session')}</label>
+            <input type="number" min={1} max={8} value={hoursPerSession} onChange={(e) => setHoursPerSession(Math.max(1, Number(e.target.value || 1)))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300" />
+          </div>
+        </div>
+      </div>
+
+      {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        <a href={String(props?.backHref || '/school-admin/education-plans')} className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          {t('cancel', 'Cancel')}
+        </a>
+        <button type="button" onClick={handleSave} disabled={isSaving} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50">
+          {isSaving ? t('saving', 'Saving...') : t('saveChanges', 'Save changes')}
+        </button>
+      </div>
+    </div>
+  )
+}
 export function AITutor() { return null }
 export function LessonTabs() { return null }
 export function AudioPlayer() { return null }
