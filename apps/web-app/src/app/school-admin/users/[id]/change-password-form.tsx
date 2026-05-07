@@ -49,10 +49,10 @@ export function ChangePasswordForm({ userId, userName }: ChangePasswordFormProps
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-5">
       {/* Info Box */}
-      <div className="rounded-lg bg-blue-50 p-4">
+      <div className="rounded-lg bg-gray-100 p-4">
         <div className="flex items-start gap-3">
-          <Key className="h-5 w-5 text-blue-600 mt-0.5" />
-          <div className="text-sm text-blue-700">
+          <Key className="h-5 w-5 text-gray-700 mt-0.5" />
+          <div className="text-sm text-gray-700">
             <p className="font-medium">Password Reset</p>
             <p className="mt-1">
               Set a new password for <strong>{userName}</strong>. They will use this password to log in.
@@ -75,7 +75,7 @@ export function ChangePasswordForm({ userId, userName }: ChangePasswordFormProps
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="block w-full rounded-md border border-gray-300 py-2 pl-10 pr-10 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="block w-full rounded-md border border-gray-300 py-2 pl-10 pr-10 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
             placeholder="Enter new password"
           />
           <button
@@ -102,7 +102,7 @@ export function ChangePasswordForm({ userId, userName }: ChangePasswordFormProps
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={6}
-            className="block w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="block w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
             placeholder="Confirm new password"
           />
         </div>
@@ -115,15 +115,15 @@ export function ChangePasswordForm({ userId, userName }: ChangePasswordFormProps
 
       {/* Error Message */}
       {error && (
-        <div className="rounded-md bg-red-50 p-3">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="rounded-md bg-gray-100 p-3">
+          <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
 
       {/* Success Message */}
       {success && (
-        <div className="rounded-md bg-green-50 p-3">
-          <p className="text-sm text-green-700">Password changed successfully! The user can now log in with the new password.</p>
+        <div className="rounded-md bg-gray-100 p-3">
+          <p className="text-sm text-gray-800">Password changed successfully! The user can now log in with the new password.</p>
         </div>
       )}
 
@@ -131,7 +131,7 @@ export function ChangePasswordForm({ userId, userName }: ChangePasswordFormProps
       <button
         type="submit"
         disabled={isPending || !password || !confirmPassword}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isPending ? (
           <>

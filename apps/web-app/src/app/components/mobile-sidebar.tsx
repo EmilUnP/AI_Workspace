@@ -93,19 +93,7 @@ export function MobileSidebar({
     }
   }, [isOpen])
 
-  const getActiveClasses = (color: string) => {
-    switch (color) {
-      case 'red':
-        return 'bg-red-50 text-red-700 border-red-500'
-      case 'orange':
-        return 'bg-orange-50 text-orange-700 border-orange-500'
-      case 'green':
-        return 'bg-green-50 text-green-700 border-green-500'
-      case 'blue':
-      default:
-        return 'bg-blue-50 text-blue-700 border-blue-500'
-    }
-  }
+  const getActiveClasses = (_color: string) => 'bg-gray-100 text-gray-900 border-gray-500'
   
   const activeClasses = getActiveClasses(accentColor || 'blue')
 
@@ -166,7 +154,7 @@ export function MobileSidebar({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="lg:hidden inline-flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+        className="lg:hidden inline-flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-400"
         aria-label="Open sidebar"
       >
         <Menu className="h-6 w-6" />
@@ -179,11 +167,11 @@ export function MobileSidebar({
           onClick={() => setIsOpen(false)}
         >
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-gray-900/50" />
           
           {/* Sidebar panel */}
           <div 
-            className="fixed inset-y-0 left-0 w-72 bg-white shadow-xl"
+            className="fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex h-full flex-col">
@@ -257,19 +245,7 @@ export function DesktopNavigation({
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const getActiveClasses = (color: string) => {
-    switch (color) {
-      case 'red':
-        return 'bg-red-50 text-red-700 border-l-4 border-red-500'
-      case 'orange':
-        return 'bg-orange-50 text-orange-700 border-l-4 border-orange-500'
-      case 'green':
-        return 'bg-green-50 text-green-700 border-l-4 border-green-500'
-      case 'blue':
-      default:
-        return 'bg-blue-50 text-blue-700 border-l-4 border-blue-500'
-    }
-  }
+  const getActiveClasses = (_color: string) => 'bg-gray-100 text-gray-900 border-l-4 border-gray-500'
   
   const activeClasses = getActiveClasses(accentColor || 'blue')
 

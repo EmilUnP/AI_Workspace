@@ -82,27 +82,27 @@ export default async function SchoolAdminExamsPage({
             name="search"
             defaultValue={params.search}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
           />
         </form>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-3 sm:hidden">
-            <div className="rounded-xl bg-emerald-50 px-3 py-2 text-center ring-1 ring-emerald-100">
-              <p className="text-lg font-semibold text-emerald-700">{stats.published}</p>
-              <p className="text-xs text-emerald-600/80">{t('published')}</p>
+            <div className="rounded-xl bg-gray-100 px-3 py-2 text-center ring-1 ring-gray-200">
+              <p className="text-lg font-semibold text-gray-900">{stats.published}</p>
+              <p className="text-xs text-gray-600">{t('published')}</p>
             </div>
-            <div className="rounded-xl bg-amber-50 px-3 py-2 text-center ring-1 ring-amber-100">
-              <p className="text-lg font-semibold text-amber-700">{stats.draft}</p>
-              <p className="text-xs text-amber-600/80">{t('unused')}</p>
+            <div className="rounded-xl bg-gray-100 px-3 py-2 text-center ring-1 ring-gray-200">
+              <p className="text-lg font-semibold text-gray-900">{stats.draft}</p>
+              <p className="text-xs text-gray-600">{t('unused')}</p>
             </div>
-            <div className="rounded-xl bg-violet-50 px-3 py-2 text-center ring-1 ring-violet-100">
-              <p className="text-lg font-semibold text-violet-700">{stats.totalQuestions}</p>
-              <p className="text-xs text-violet-600/80">{t('questions')}</p>
+            <div className="rounded-xl bg-gray-100 px-3 py-2 text-center ring-1 ring-gray-200">
+              <p className="text-lg font-semibold text-gray-900">{stats.totalQuestions}</p>
+              <p className="text-xs text-gray-600">{t('questions')}</p>
             </div>
           </div>
           <Link
             href="/school-admin/exams/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
           >
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">{t('createExam')}</span>
@@ -111,7 +111,7 @@ export default async function SchoolAdminExamsPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         {exams.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 sm:p-16">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
@@ -123,7 +123,7 @@ export default async function SchoolAdminExamsPage({
             </p>
             <Link
               href="/school-admin/exams/new"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
             >
               <Sparkles className="h-4 w-4" />
               {t('createFirstExamButton')}
@@ -138,7 +138,7 @@ export default async function SchoolAdminExamsPage({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <Link href={`/school-admin/exams/${exam.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                        <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${exam.is_published ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200/50' : 'bg-amber-100 text-amber-600 ring-1 ring-amber-200/50'}`}>
+                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 ring-1 ring-gray-200/70">
                           <FileText className="h-5 w-5" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -146,7 +146,7 @@ export default async function SchoolAdminExamsPage({
                           {exam.topics && exam.topics.length > 0 && (
                             <div className="mt-1 flex flex-wrap items-center gap-1">
                               {exam.topics.slice(0, 2).map((topic: string, idx: number) => (
-                                <span key={idx} className="inline-flex items-center rounded-lg bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-violet-200/50">
+                                <span key={idx} className="inline-flex items-center rounded-lg bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-gray-200/70">
                                   {topic}
                                 </span>
                               ))}
@@ -219,7 +219,7 @@ export default async function SchoolAdminExamsPage({
                     <td className="py-4 pl-5 pr-3 sm:pl-6">
                       <div className="flex items-center gap-3">
                         <Link href={`/school-admin/exams/${exam.id}`} className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-90">
-                          <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${exam.is_published ? 'bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200/50' : 'bg-amber-100 text-amber-600 ring-1 ring-amber-200/50'}`}>
+                          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 ring-1 ring-gray-200/70">
                             <FileText className="h-5 w-5" />
                           </div>
                           <div className="min-w-0">
@@ -236,7 +236,7 @@ export default async function SchoolAdminExamsPage({
                             {exam.topics && exam.topics.length > 0 && (
                               <div className="flex items-center gap-1 mt-1 flex-wrap">
                                 {exam.topics.slice(0, 2).map((topic: string, idx: number) => (
-                                  <span key={idx} className="inline-flex items-center rounded-lg bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-violet-200/50">
+                                  <span key={idx} className="inline-flex items-center rounded-lg bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-gray-200/70">
                                     {topic}
                                   </span>
                                 ))}
@@ -334,7 +334,7 @@ export default async function SchoolAdminExamsPage({
             <div className="text-center">
               <Link
                 href="/school-admin/exams"
-                className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700"
+                className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900"
               >
                 {t('clearAllFilters')}
               </Link>

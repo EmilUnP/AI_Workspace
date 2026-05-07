@@ -77,25 +77,25 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
     : 0
 
   return (
-    <div className="overflow-visible rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+    <div className="overflow-visible rounded-2xl border border-gray-200 bg-white">
+      <div className="border-b border-gray-200 bg-gray-50">
         <div className="flex">
-          <button onClick={() => handleTabChange('content')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'content' ? 'bg-white text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+          <button onClick={() => handleTabChange('content')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'content' ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
             <BookOpen className="h-4 w-4" /> {L.tabContent}
-            {activeTab === 'content' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+            {activeTab === 'content' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />}
           </button>
           {examples.length > 0 && (
-            <button onClick={() => handleTabChange('examples')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'examples' ? 'bg-white text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+            <button onClick={() => handleTabChange('examples')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'examples' ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
               <Lightbulb className="h-4 w-4" /> {L.tabExamples}
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">{examples.length}</span>
-              {activeTab === 'examples' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">{examples.length}</span>
+              {activeTab === 'examples' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />}
             </button>
           )}
           {miniTest.length > 0 && (
-            <button onClick={() => handleTabChange('test')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'test' ? 'bg-white text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+            <button onClick={() => handleTabChange('test')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'test' ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
               <FileQuestion className="h-4 w-4" /> {L.tabMiniTest}
-              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700">{miniTest.length}</span>
-              {activeTab === 'test' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">{miniTest.length}</span>
+              {activeTab === 'test' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />}
             </button>
           )}
         </div>
@@ -140,7 +140,7 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
               <p className="py-8 text-center text-sm text-gray-500">{L.noExamples}</p>
             ) : (
               examples.map((ex, i) => (
-                <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                   <p className="font-semibold text-gray-900">{ex.title}</p>
                   <p className="mt-1 text-sm text-gray-700">{ex.description}</p>
                   {ex.code && <pre className="mt-3 overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100">{ex.code}</pre>}
@@ -159,7 +159,7 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
                 <div className="mb-2 flex items-center justify-between text-xs text-gray-600 sm:text-sm">
                   <p>{L.chooseBestAnswers} <span className="font-medium">{L.checkAnswers}</span>.</p>
                   <div className="flex items-center gap-2">
-                    {checked && <span className="font-medium text-purple-700">{L.scoreLabel} {totalCorrect}/{miniTest.length}</span>}
+                    {checked && <span className="font-medium text-gray-800">{L.scoreLabel} {totalCorrect}/{miniTest.length}</span>}
                     <button
                       type="button"
                       onClick={() => {
@@ -169,7 +169,7 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
                           setSelectedOptions(miniTest.map(() => null))
                         }
                       }}
-                      className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100"
+                      className="rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
                     >
                       {checked ? L.tryAgain : L.checkAnswers}
                     </button>
@@ -199,11 +199,11 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
                             }}
                             className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left ${
                               isCorrect
-                                ? 'border-green-200 bg-green-50'
+                                ? 'border-gray-300 bg-gray-200'
                                 : isWrongSelected
-                                  ? 'border-red-200 bg-red-50'
+                                  ? 'border-gray-300 bg-gray-200'
                                   : isSelected
-                                    ? 'border-blue-200 bg-blue-50'
+                                    ? 'border-gray-300 bg-gray-100'
                                     : 'border-transparent bg-gray-50'
                             }`}
                           >
@@ -217,7 +217,7 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
                     </div>
                     {checked && q.explanation && (
                       <div className="px-4 pb-4">
-                        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">{q.explanation}</div>
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800">{q.explanation}</div>
                       </div>
                     )}
                   </div>

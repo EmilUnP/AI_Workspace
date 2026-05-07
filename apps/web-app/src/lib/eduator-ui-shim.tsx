@@ -147,7 +147,7 @@ export function ExamCreator(props: AnyProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-gray-900">AI Generate</h2>
       <p className="mt-1 text-sm text-gray-500">Create questions from documents</p>
 
@@ -157,7 +157,7 @@ export function ExamCreator(props: AnyProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Network Operating Systems - Midterm"
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
         />
         <p className="mt-1 text-xs text-gray-500">Leave empty to auto-generate from selected documents.</p>
 
@@ -182,7 +182,7 @@ export function ExamCreator(props: AnyProps) {
                               e.target.checked ? [...prev, id] : prev.filter((x) => x !== id)
                             )
                           }}
-                          className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                         />
                         <span className="truncate">{String(doc?.title || 'Untitled')}</span>
                       </div>
@@ -203,7 +203,7 @@ export function ExamCreator(props: AnyProps) {
             <button
               type="button"
               onClick={() => setTopicEntries((prev) => [...prev, { name: '', count: undefined }])}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+              className="text-xs font-medium text-gray-700 hover:text-gray-900"
             >
               + Add Topic
             </button>
@@ -221,7 +221,7 @@ export function ExamCreator(props: AnyProps) {
                       setTopicEntries((prev) => prev.map((x, i) => (i === index ? { ...x, name: value } : x)))
                     }}
                     placeholder="Topic name"
-                    className="sm:col-span-3 rounded-lg border border-gray-300 px-3 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    className="sm:col-span-3 rounded-lg border border-gray-300 px-3 py-2 text-xs outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                   />
                   <div className="flex gap-2">
                     <input
@@ -234,7 +234,7 @@ export function ExamCreator(props: AnyProps) {
                         setTopicEntries((prev) => prev.map((x, i) => (i === index ? { ...x, count: value } : x)))
                       }}
                       placeholder="Q#"
-                      className="w-full rounded-lg border border-gray-300 px-2 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      className="w-full rounded-lg border border-gray-300 px-2 py-2 text-xs outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                     />
                     <button
                       type="button"
@@ -256,7 +256,7 @@ export function ExamCreator(props: AnyProps) {
             <select
               value={generateLanguage}
               onChange={(e) => setGenerateLanguage(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
             >
               <option value="en">English</option>
               <option value="az">Azerbaijani</option>
@@ -274,7 +274,7 @@ export function ExamCreator(props: AnyProps) {
               max={50}
               value={questionCount}
               onChange={(e) => setQuestionCount(Math.max(1, Math.min(50, Number(e.target.value || 10))))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
             />
           </div>
           <div>
@@ -285,7 +285,7 @@ export function ExamCreator(props: AnyProps) {
               max={300}
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(Number(e.target.value || 60))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
             />
           </div>
         </div>
@@ -314,7 +314,7 @@ export function ExamCreator(props: AnyProps) {
                       max={100}
                       value={questionTypeDistribution[key]}
                       onChange={(e) => setQuestionTypeDistribution(rebalance(questionTypeDistribution, key, Number(e.target.value), ['multiple_choice', 'true_false', 'multiple_select', 'fill_blank']) as typeof questionTypeDistribution)}
-                      className="w-14 rounded-md border border-gray-300 px-2 py-1 text-right text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      className="w-14 rounded-md border border-gray-300 px-2 py-1 text-right text-xs outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                     />
                     <span className="text-xs text-gray-500">%</span>
                   </div>
@@ -343,7 +343,7 @@ export function ExamCreator(props: AnyProps) {
                       max={100}
                       value={difficultyDistribution[key]}
                       onChange={(e) => setDifficultyDistribution(rebalance(difficultyDistribution, key, Number(e.target.value), ['easy', 'medium', 'hard']) as typeof difficultyDistribution)}
-                      className="w-14 rounded-md border border-gray-300 px-2 py-1 text-right text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      className="w-14 rounded-md border border-gray-300 px-2 py-1 text-right text-xs outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                     />
                     <span className="text-xs text-gray-500">%</span>
                   </div>
@@ -358,7 +358,7 @@ export function ExamCreator(props: AnyProps) {
             type="button"
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-violet-600 hover:to-indigo-600 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-60"
           >
             {isGenerating ? 'Generating...' : 'Generate Questions'}
           </button>
@@ -366,7 +366,7 @@ export function ExamCreator(props: AnyProps) {
       </div>
 
       {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
-      {message ? <p className="mt-3 text-sm text-emerald-600">{message}</p> : null}
+      {message ? <p className="mt-3 text-sm text-gray-700">{message}</p> : null}
     </div>
   )
 }

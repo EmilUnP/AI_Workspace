@@ -55,16 +55,16 @@ function FlagIcon({ countryCode, size = 24 }: { countryCode: string; size?: numb
 }
 
 const questionTypeColors: Record<string, string> = {
-  multiple_choice: 'bg-blue-100 text-blue-700',
-  true_false: 'bg-green-100 text-green-700',
-  multiple_select: 'bg-purple-100 text-purple-700',
-  fill_blank: 'bg-orange-100 text-orange-700',
+  multiple_choice: 'bg-gray-100 text-gray-700',
+  true_false: 'bg-gray-100 text-gray-700',
+  multiple_select: 'bg-gray-100 text-gray-700',
+  fill_blank: 'bg-gray-100 text-gray-700',
 }
 
 const difficultyColors: Record<DifficultyLevel, string> = {
-  easy: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-  medium: 'bg-amber-100 text-amber-700 border-amber-300',
-  hard: 'bg-red-100 text-red-700 border-red-300',
+  easy: 'bg-gray-100 text-gray-700 border-gray-300',
+  medium: 'bg-gray-100 text-gray-700 border-gray-300',
+  hard: 'bg-gray-200 text-gray-800 border-gray-400',
 }
 
 const QUESTIONS_PER_PAGE = 10
@@ -157,7 +157,7 @@ export function ExamLanguageSelector({
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
       {/* Header with Language Tabs */}
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -180,7 +180,7 @@ export function ExamLanguageSelector({
                         onClick={() => handleLanguageSwitch(langCode)}
                         className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
                           isCurrent
-                            ? 'bg-blue-100 ring-2 ring-blue-500 shadow-sm'
+                            ? 'bg-gray-200 ring-2 ring-gray-500'
                             : 'bg-gray-100 hover:bg-gray-200'
                         }`}
                         title={`${lang.name}${isPrimary ? ` ${tl('originalLabel', '(original)')}` : ''}`}
@@ -204,7 +204,7 @@ export function ExamLanguageSelector({
                 onClick={() => handleTopicFilter(null)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   selectedTopicFilter === null
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gray-900 text-white'
                     : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -216,7 +216,7 @@ export function ExamLanguageSelector({
                   onClick={() => handleTopicFilter(topic)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                     selectedTopicFilter === topic
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-gray-900 text-white'
                       : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -258,7 +258,7 @@ export function ExamLanguageSelector({
                       {question.topics.map((topic, topicIdx) => (
                         <span
                           key={topicIdx}
-                          className="rounded-full px-2 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200"
+                          className="rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200"
                           title={`${tl('topicLabel', 'Topic')}: ${topic}`}
                         >
                           {topic}
@@ -279,18 +279,18 @@ export function ExamLanguageSelector({
                         key={optIndex}
                         className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm ${
                           option === question.correctAnswer
-                            ? 'bg-green-50 border border-green-200 text-green-800'
+                            ? 'bg-gray-100 border border-gray-300 text-gray-800'
                             : 'bg-gray-50 border border-gray-100 text-gray-600'
                         }`}
                       >
                         <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                          option === question.correctAnswer ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                          option === question.correctAnswer ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-600'
                         }`}>
                           {String.fromCharCode(65 + optIndex)}
                         </span>
                         <span className="flex-1">{option}</span>
                         {option === question.correctAnswer && (
-                          <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          <CheckCircle className="h-4 w-4 text-gray-700 flex-shrink-0" />
                         )}
                       </div>
                     ))}
@@ -311,13 +311,13 @@ export function ExamLanguageSelector({
                             key={canon}
                             className={`flex-1 rounded-lg px-4 py-3 text-sm text-center font-medium ${
                               isCorrect
-                                ? 'bg-green-50 border border-green-200 text-green-800'
+                                ? 'bg-gray-100 border border-gray-300 text-gray-800'
                                 : 'bg-gray-50 border border-gray-100 text-gray-500'
                             }`}
                           >
                             {label}
                             {isCorrect && (
-                              <CheckCircle className="inline-block ml-2 h-4 w-4 text-green-600" />
+                              <CheckCircle className="inline-block ml-2 h-4 w-4 text-gray-700" />
                             )}
                           </div>
                         )
@@ -337,18 +337,18 @@ export function ExamLanguageSelector({
                           key={optIndex}
                           className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm ${
                             isCorrect
-                              ? 'bg-green-50 border border-green-200 text-green-800'
+                              ? 'bg-gray-100 border border-gray-300 text-gray-800'
                               : 'bg-gray-50 border border-gray-100 text-gray-600'
                           }`}
                         >
                           <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                            isCorrect ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                            isCorrect ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-600'
                           }`}>
                             {String.fromCharCode(65 + optIndex)}
                           </span>
                           <span className="flex-1">{option}</span>
                           {isCorrect && (
-                            <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                            <CheckCircle className="h-4 w-4 text-gray-700 flex-shrink-0" />
                           )}
                         </div>
                       )
@@ -358,16 +358,16 @@ export function ExamLanguageSelector({
 
                 {/* Fill Blank */}
                 {question.type === 'fill_blank' && (
-                  <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3">
-                    <span className="text-sm text-green-600 font-medium">{tl('correctAnswerLabel', 'Correct answer')} </span>
-                    <span className="text-sm text-green-800 font-semibold">{String(question.correctAnswer)}</span>
+                  <div className="rounded-lg bg-gray-100 border border-gray-300 px-4 py-3">
+                    <span className="text-sm text-gray-700 font-medium">{tl('correctAnswerLabel', 'Correct answer')} </span>
+                    <span className="text-sm text-gray-900 font-semibold">{String(question.correctAnswer)}</span>
                   </div>
                 )}
 
                 {/* Explanation */}
                 {question.explanation && (
-                  <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3">
-                    <p className="text-sm text-blue-700">
+                  <div className="mt-4 rounded-lg bg-gray-100 border border-gray-200 px-4 py-3">
+                    <p className="text-sm text-gray-700">
                       <strong className="font-medium">{tl('explanationLabel', 'Explanation')}</strong>{' '}
                       {question.explanation}
                     </p>
@@ -398,7 +398,7 @@ export function ExamLanguageSelector({
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-gray-900 text-white'
                       : 'hover:bg-gray-100 text-gray-600'
                   }`}
                 >

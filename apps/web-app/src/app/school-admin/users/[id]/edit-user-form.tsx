@@ -106,7 +106,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           name="full_name"
           required
           defaultValue={user.full_name || ''}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
           placeholder="Enter full name"
         />
       </div>
@@ -122,12 +122,12 @@ export function EditUserForm({ user }: EditUserFormProps) {
             onClick={() => setProfileType('teacher')}
             className={`flex items-center gap-2 rounded-lg border-2 p-3 transition-all ${
               profileType === 'teacher'
-                ? 'border-emerald-500 bg-emerald-50'
+                ? 'border-gray-400 bg-gray-100'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <BookOpen className={`h-5 w-5 ${profileType === 'teacher' ? 'text-emerald-600' : 'text-gray-400'}`} />
-            <span className={`text-sm font-medium ${profileType === 'teacher' ? 'text-emerald-700' : 'text-gray-700'}`}>
+            <BookOpen className={`h-5 w-5 ${profileType === 'teacher' ? 'text-gray-700' : 'text-gray-400'}`} />
+            <span className={`text-sm font-medium ${profileType === 'teacher' ? 'text-gray-800' : 'text-gray-700'}`}>
               Teacher
             </span>
           </button>
@@ -145,7 +145,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           id="approval_status"
           name="approval_status"
           defaultValue={user.approval_status}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
         >
           <option value="approved">Approved</option>
           <option value="pending">Pending</option>
@@ -173,7 +173,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
               name="organization_unit_id"
               key={`unit-select-${currentUnitId}-${structure.length}`}
               defaultValue={currentUnitId}
-              className="block w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
             >
               <option value="">No unit assigned</option>
               {flatStructure.map(({ unit, path }) => (
@@ -197,7 +197,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
               type="checkbox"
               checked={apiIntegrationEnabled}
               onChange={(e) => setApiIntegrationEnabled(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
             />
             <Key className="h-4 w-4 text-gray-500" />
             <span className="text-sm font-medium text-gray-700">
@@ -212,15 +212,15 @@ export function EditUserForm({ user }: EditUserFormProps) {
 
       {/* Error Message */}
       {error && (
-        <div className="rounded-md bg-red-50 p-3">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="rounded-md bg-gray-100 p-3">
+          <p className="text-sm text-gray-800">{error}</p>
         </div>
       )}
 
       {/* Success Message */}
       {success && (
-        <div className="rounded-md bg-green-50 p-3">
-          <p className="text-sm text-green-700">User updated successfully!</p>
+        <div className="rounded-md bg-gray-100 p-3">
+          <p className="text-sm text-gray-800">User updated successfully!</p>
         </div>
       )}
 
@@ -228,7 +228,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isPending ? (
           <>

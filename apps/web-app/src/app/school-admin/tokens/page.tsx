@@ -53,7 +53,7 @@ export default async function TeacherTokensPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Coins className="h-7 w-7 text-amber-500" />
+          <Coins className="h-7 w-7 text-gray-700" />
           {t('title')}
         </h1>
         <p className="mt-1 text-gray-500">
@@ -61,10 +61,10 @@ export default async function TeacherTokensPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
               <Coins className="h-6 w-6" />
             </div>
             <div>
@@ -72,13 +72,13 @@ export default async function TeacherTokensPage() {
               <p className="text-2xl font-bold text-gray-900">{balance.toLocaleString()} {t('tokens')}</p>
             </div>
           </div>
-          <Link href="/platform-owner/real-token-usage" className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+          <Link href="/platform-owner/real-token-usage" className="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black">
             {t('buyMore')}
           </Link>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-4 py-3 sm:px-6">
           <h2 className="text-lg font-semibold text-gray-900">{t('recentUsage')}</h2>
           <p className="mt-0.5 text-sm text-gray-500">{t('recentUsageSubtitle')}</p>
@@ -112,7 +112,7 @@ export default async function TeacherTokensPage() {
                       {formatActionType(tx.action_type)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium sm:px-6">
-                      <span className={tx.amount < 0 ? 'text-red-600' : 'text-green-600'}>
+                      <span className={tx.amount < 0 ? 'text-gray-800' : 'text-gray-700'}>
                         {tx.amount > 0 ? '+' : ''}{tx.amount}
                       </span>
                     </td>

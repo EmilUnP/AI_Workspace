@@ -87,7 +87,7 @@ export function AddUserDialog() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-700"
+        className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-black"
       >
         <Plus className="h-4 w-4" />
         Add User
@@ -97,23 +97,23 @@ export function AddUserDialog() {
         <div className="fixed inset-0 z-[100] overflow-y-auto">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/60 animate-in fade-in duration-200"
             onClick={() => !isPending && setIsOpen(false)}
           />
           
           {/* Dialog Container */}
           <div className="min-h-full flex items-center justify-center p-4">
-          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl border border-gray-200 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-amber-600 p-5 sm:p-6 text-white">
+            <div className="bg-gray-900 p-5 sm:p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
                     <UserPlus className="h-5 w-5" />
                   </div>
                   <div>
                     <h2 className="text-lg font-bold">Add New User</h2>
-                    <p className="text-orange-100 text-sm">Create a new teacher</p>
+                    <p className="text-gray-300 text-sm">Create a new teacher</p>
                   </div>
                 </div>
                 <button
@@ -139,17 +139,17 @@ export function AddUserDialog() {
                     onClick={() => setProfileType('teacher')}
                     className={`flex items-center gap-3 rounded-lg border-2 p-4 transition-all ${
                       profileType === 'teacher'
-                        ? 'border-emerald-500 bg-emerald-50'
+                        ? 'border-gray-400 bg-gray-100'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                      profileType === 'teacher' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'
+                      profileType === 'teacher' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500'
                     }`}>
                       <BookOpen className="h-5 w-5" />
                     </div>
                     <div className="text-left">
-                      <p className={`font-medium ${profileType === 'teacher' ? 'text-emerald-900' : 'text-gray-900'}`}>
+                      <p className={`font-medium ${profileType === 'teacher' ? 'text-gray-900' : 'text-gray-900'}`}>
                         Teacher
                       </p>
                       <p className="text-xs text-gray-500">Can create classes & exams</p>
@@ -171,7 +171,7 @@ export function AddUserDialog() {
                     id="full_name"
                     name="full_name"
                     required
-                    className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
                     placeholder="Enter full name"
                   />
                 </div>
@@ -189,7 +189,7 @@ export function AddUserDialog() {
                     id="email"
                     name="email"
                     required
-                    className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
                     placeholder="user@example.com"
                   />
                 </div>
@@ -208,7 +208,7 @@ export function AddUserDialog() {
                     name="password"
                     required
                     minLength={6}
-                    className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
                     placeholder="Minimum 6 characters"
                   />
                 </div>
@@ -228,7 +228,7 @@ export function AddUserDialog() {
                     <select
                       id="organization_unit_id"
                       name="organization_unit_id"
-                      className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
                     >
                       <option value="">No unit assigned</option>
                       {flatStructure.map(({ unit, path }) => (
@@ -246,7 +246,7 @@ export function AddUserDialog() {
 
               {/* Error Message */}
               {error && (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                <div className="rounded-lg bg-gray-100 p-3 text-sm text-gray-800">
                   {error}
                 </div>
               )}
@@ -267,7 +267,7 @@ export function AddUserDialog() {
                 type="submit"
                 form="add-user-form"
                 disabled={isPending}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-orange-600 text-white font-medium text-sm hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-70 transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-900 text-white font-medium text-sm hover:bg-black disabled:cursor-not-allowed disabled:opacity-70 transition-colors"
               >
                 {isPending ? (
                   <>

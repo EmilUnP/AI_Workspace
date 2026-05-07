@@ -36,7 +36,7 @@ export function SchoolAdminLayoutClient({
     <div className="flex h-screen bg-gray-50">
       {/* Desktop Sidebar - collapsed = icon strip, expanded = full */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 hidden bg-white shadow-lg transition-all duration-200 ease-in-out lg:block ${
+        className={`fixed inset-y-0 left-0 z-50 hidden bg-white border-r border-gray-200 transition-all duration-200 ease-in-out lg:block ${
           sidebarCollapsed ? 'w-16' : 'w-64'
         }`}
       >
@@ -47,7 +47,7 @@ export function SchoolAdminLayoutClient({
               sidebarCollapsed ? 'justify-center px-0' : 'gap-2 px-6'
             }`}
           >
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-orange-600">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             {!sidebarCollapsed && (
@@ -57,7 +57,7 @@ export function SchoolAdminLayoutClient({
             )}
           </div>
 
-          <DesktopNavigation navigation={navigation} accentColor="orange" collapsed={sidebarCollapsed} />
+          <DesktopNavigation navigation={navigation} accentColor="blue" collapsed={sidebarCollapsed} />
         </div>
       </aside>
 
@@ -67,12 +67,12 @@ export function SchoolAdminLayoutClient({
           sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
         }`}
       >
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm sm:px-6">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6">
           <div className="flex items-center gap-4">
             <MobileSidebar
               navigation={navigation}
               logo={logo}
-              accentColor="orange"
+              accentColor="blue"
             />
 
             {/* Desktop: collapse/expand sidebar button */}
@@ -91,7 +91,7 @@ export function SchoolAdminLayoutClient({
             </button>
 
             <div className="flex items-center gap-2 lg:hidden">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900">
                 <GraduationCap className="h-4 w-4 text-white" />
               </div>
               <span className="font-semibold text-gray-900">Eduator</span>

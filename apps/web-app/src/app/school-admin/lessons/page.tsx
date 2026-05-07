@@ -80,7 +80,7 @@ export default async function SchoolAdminLessonsPage({
             name="search"
             defaultValue={params.search}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
           />
         </form>
         
@@ -88,7 +88,7 @@ export default async function SchoolAdminLessonsPage({
           {/* Create Lesson Button */}
           <Link
             href="/school-admin/lessons/generate"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
           >
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">{t('generateLesson')}</span>
@@ -98,7 +98,7 @@ export default async function SchoolAdminLessonsPage({
       </div>
 
       {/* Lessons List */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         {lessons.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 sm:p-16">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
@@ -112,7 +112,7 @@ export default async function SchoolAdminLessonsPage({
             </p>
             <Link
               href="/school-admin/lessons/generate"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
             >
               <Sparkles className="h-4 w-4" />
               {t('createFirstLessonButton')}
@@ -130,7 +130,7 @@ export default async function SchoolAdminLessonsPage({
                         href={`/school-admin/lessons/${lesson.id}`}
                         className="flex items-center gap-3 min-w-0 flex-1"
                       >
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
                           <BookOpen className="h-5 w-5" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -219,7 +219,7 @@ export default async function SchoolAdminLessonsPage({
                           href={`/school-admin/lessons/${lesson.id}`}
                           className="flex items-center gap-3 hover:opacity-80 flex-1 min-w-0"
                         >
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
                             <BookOpen className="h-5 w-5" />
                           </div>
                           <div className="min-w-0">
@@ -317,7 +317,7 @@ export default async function SchoolAdminLessonsPage({
             <div className="text-center">
               <Link
                 href="/school-admin/lessons"
-                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="text-sm font-medium text-gray-700 hover:text-gray-900"
               >
                 {t('clearAllFilters')}
               </Link>

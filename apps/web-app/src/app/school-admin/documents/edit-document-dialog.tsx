@@ -106,7 +106,7 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600"
+        className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800"
         title={t.editDocument}
       >
         <Pencil className="h-4 w-4" />
@@ -114,14 +114,14 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
 
       {isOpen && !showDeleteConfirm ? (
         <div className="fixed inset-0 z-[100] overflow-y-auto">
-          <div className="fixed inset-0 animate-in fade-in bg-black/60 backdrop-blur-sm duration-200" onClick={() => !isPending && setIsOpen(false)} />
+          <div className="fixed inset-0 animate-in fade-in bg-black/60 duration-200" onClick={() => !isPending && setIsOpen(false)} />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
-              <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 text-white">
+              <div className="overflow-hidden rounded-2xl bg-white border border-gray-200">
+                <div className="bg-gray-900 p-5 text-white">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
                         <FileText className="h-5 w-5" />
                       </div>
                       <h3 className="text-lg font-bold">{t.editDocument}</h3>
@@ -133,7 +133,7 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
                 </div>
 
                 {error ? (
-                  <div className="mx-4 mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  <div className="mx-4 mt-4 flex items-center gap-2 rounded-xl border border-gray-300 bg-gray-100 p-3 text-sm text-gray-800">
                     <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                     {error}
                   </div>
@@ -148,7 +148,7 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
                       required
                       value={formData.title}
                       onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                       disabled={isPending}
                     />
                   </div>
@@ -160,14 +160,14 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
                       rows={3}
                       value={formData.description}
                       onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                      className="w-full resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      className="w-full resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition-all focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                       disabled={isPending}
                     />
                   </div>
                 </form>
 
                 <div className="flex flex-col-reverse gap-3 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                  <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50">
+                  <button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={isPending} className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50">
                     <Trash2 className="h-4 w-4" />
                     {t.editDeleteDocument}
                   </button>
@@ -175,7 +175,7 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
                     <button type="button" onClick={() => setIsOpen(false)} disabled={isPending} className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 sm:flex-none">
                       {t.editCancel}
                     </button>
-                    <button type="submit" form="edit-document-form" disabled={isPending} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-70 sm:flex-none">
+                    <button type="submit" form="edit-document-form" disabled={isPending} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black disabled:opacity-70 sm:flex-none">
                       {isPending ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -195,16 +195,16 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
 
       {showDeleteConfirm ? (
         <div className="fixed inset-0 z-[100] overflow-y-auto">
-          <div className="fixed inset-0 animate-in fade-in bg-black/60 backdrop-blur-sm duration-200" onClick={() => !isDeleting && setShowDeleteConfirm(false)} />
+          <div className="fixed inset-0 animate-in fade-in bg-black/60 duration-200" onClick={() => !isDeleting && setShowDeleteConfirm(false)} />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
-              <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="overflow-hidden rounded-2xl bg-white border border-gray-200">
                 <button onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="absolute right-4 top-4 z-10 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50">
                   <X className="h-5 w-5" />
                 </button>
 
                 <div className="p-6 sm:p-8">
-                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-gray-700">
                     <AlertTriangle className="h-8 w-8" />
                   </div>
                   <h3 className="mb-2 text-center text-xl font-bold text-gray-900">{t.editDeleteTitle}</h3>
@@ -217,7 +217,7 @@ export function EditDocumentDialog({ document, onUpdate, onDelete, translations 
                   <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50">
                     {t.editCancel}
                   </button>
-                  <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-70">
+                  <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:opacity-70">
                     {isDeleting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />

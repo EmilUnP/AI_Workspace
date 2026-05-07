@@ -45,7 +45,7 @@ export function UserRowActions({ userId, approvalStatus, userName }: UserRowActi
         {/* Edit Button */}
         <Link
           href={`/school-admin/users/${userId}`}
-          className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
           title="Edit User"
         >
           <Pencil className="h-4 w-4" />
@@ -58,7 +58,7 @@ export function UserRowActions({ userId, approvalStatus, userName }: UserRowActi
               type="button"
               onClick={handleApprove}
               disabled={isPending}
-              className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Approve User"
             >
               <Check className="h-4 w-4" />
@@ -67,7 +67,7 @@ export function UserRowActions({ userId, approvalStatus, userName }: UserRowActi
               type="button"
               onClick={handleReject}
               disabled={isPending}
-              className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Reject User"
             >
               <X className="h-4 w-4" />
@@ -80,7 +80,7 @@ export function UserRowActions({ userId, approvalStatus, userName }: UserRowActi
             type="button"
             onClick={handleApprove}
             disabled={isPending}
-            className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Approve User"
           >
             <Check className="h-4 w-4" />
@@ -91,7 +91,7 @@ export function UserRowActions({ userId, approvalStatus, userName }: UserRowActi
         <button
           type="button"
           onClick={() => setShowDeleteConfirm(true)}
-          className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
           title="Delete User"
         >
           <Trash2 className="h-4 w-4" />
@@ -103,18 +103,18 @@ export function UserRowActions({ userId, approvalStatus, userName }: UserRowActi
         <div className="fixed inset-0 z-[100] overflow-y-auto">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/60 animate-in fade-in duration-200"
             onClick={() => !isPending && setShowDeleteConfirm(false)}
           />
           
           {/* Dialog Container */}
           <div className="min-h-full flex items-center justify-center p-4">
             <div className="relative w-full max-w-md animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 {/* Content */}
                 <div className="p-6 sm:p-8">
                   {/* Icon */}
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600 mb-5">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-gray-700 mb-5">
                     <AlertTriangle className="h-8 w-8" />
                   </div>
 
@@ -143,7 +143,7 @@ export function UserRowActions({ userId, approvalStatus, userName }: UserRowActi
                     type="button"
                     onClick={handleDelete}
                     disabled={isPending}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-600 text-white font-medium text-sm hover:bg-red-700 transition-colors disabled:opacity-70"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-900 text-white font-medium text-sm hover:bg-black transition-colors disabled:opacity-70"
                   >
                     {isPending ? (
                       <>

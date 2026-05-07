@@ -26,7 +26,7 @@ export default async function ApiIntegrationPage() {
   const metadata = profileRow.metadata ?? null
   if (!metadata?.api_integration_enabled) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-gray-900">
         <h2 className="text-lg font-semibold">{t('notEnabled')}</h2>
         <p className="mt-2 text-sm">
           {t('notEnabledMessage')}
@@ -55,11 +55,11 @@ export default async function ApiIntegrationPage() {
         </h2>
         <ol className="flex flex-col gap-3 text-sm text-gray-700">
           <li className="flex items-start gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">1</span>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-800">1</span>
             <span>{t('step1')}</span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">2</span>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-800">2</span>
             <span>{t('step2')}</span>
           </li>
         </ol>

@@ -13,14 +13,14 @@ import {
 const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor: string; label: string }> = {
   admin: {
     icon: <Shield className="h-5 w-5" />,
-    color: 'text-red-700',
-    bgColor: 'bg-red-100',
+    color: 'text-gray-800',
+    bgColor: 'bg-gray-200',
     label: 'Admin',
   },
   operator: {
     icon: <Users className="h-5 w-5" />,
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-100',
+    color: 'text-gray-800',
+    bgColor: 'bg-gray-200',
     label: 'Operator',
   },
   user: {
@@ -89,7 +89,7 @@ export default async function UserDetailPage({
           </div>
         </div>
 
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-700">
           User editing actions are disabled in clean-backend mode.
         </div>
       </div>

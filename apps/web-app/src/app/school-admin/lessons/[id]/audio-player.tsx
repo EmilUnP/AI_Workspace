@@ -93,13 +93,13 @@ export function AudioPlayer({ audioUrl, sticky }: AudioPlayerProps) {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
   const bar = (
-    <div className="flex items-center gap-3 w-full min-w-0 rounded-xl bg-gradient-to-r from-slate-50 to-slate-50/80 px-4 py-2.5 shadow-sm ring-1 ring-slate-200/60">
+    <div className="flex items-center gap-3 w-full min-w-0 rounded-xl bg-gray-50 px-4 py-2.5 ring-1 ring-gray-200">
       <audio ref={audioRef} preload="metadata" />
       <button
         type="button"
         onClick={togglePlay}
         disabled={!isReady}
-        className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm"
+        className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-900 hover:bg-black text-white flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         aria-label={isPlaying ? 'Pause' : 'Play'}
       >
         {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
@@ -117,7 +117,7 @@ export function AudioPlayer({ audioUrl, sticky }: AudioPlayerProps) {
           onClick={onSeek}
         >
           <div
-            className="h-full rounded-full bg-blue-500 transition-[width] duration-150"
+            className="h-full rounded-full bg-gray-700 transition-[width] duration-150"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -138,7 +138,7 @@ export function AudioPlayer({ audioUrl, sticky }: AudioPlayerProps) {
 
   if (sticky) {
     return (
-      <div className="sticky top-0 z-20 py-2.5 -mx-4 px-4 sm:-mx-6 sm:px-6 bg-white/90 backdrop-blur-md border-b border-slate-200/80 mb-3 shadow-sm">
+      <div className="sticky top-0 z-20 py-2.5 -mx-4 px-4 sm:-mx-6 sm:px-6 bg-white border-b border-gray-200 mb-3">
         <div className="max-w-2xl mx-auto">{bar}</div>
       </div>
     )

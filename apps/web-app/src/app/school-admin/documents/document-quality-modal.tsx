@@ -76,7 +76,7 @@ export function DocumentQualityModal({ document, onClose, translations }: Docume
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" aria-hidden onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-xl border border-gray-200 bg-white shadow-xl" role="dialog" aria-labelledby="document-quality-title">
+      <div className="relative w-full max-w-md rounded-xl border border-gray-200 bg-white" role="dialog" aria-labelledby="document-quality-title">
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
           <div className="flex items-center gap-2">
             <Info className="h-5 w-5 text-gray-500" />
@@ -102,7 +102,7 @@ export function DocumentQualityModal({ document, onClose, translations }: Docume
             <div>
               <p className="text-sm font-medium text-gray-500">{t.qualityContentLanguage}</p>
               <div className="mt-1.5 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-blue-500" />
+                <Globe className="h-4 w-4 text-gray-600" />
                 <span className="text-sm font-medium capitalize text-gray-900">{document.content_language}</span>
               </div>
               <p className="mt-1 text-xs text-gray-500">{t.qualityContentLanguageHint}</p>
@@ -113,43 +113,43 @@ export function DocumentQualityModal({ document, onClose, translations }: Docume
             <p className="text-sm font-medium text-gray-500">{t.qualityProcessing}</p>
             <div className="mt-2 space-y-2">
               {quality === 'good' ? (
-                <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3">
-                  <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-600" />
+                <div className="flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-100 p-3">
+                  <CheckCircle className="h-5 w-5 flex-shrink-0 text-gray-700" />
                   <div>
-                    <p className="text-sm font-medium text-green-800">{t.qualityGood}</p>
-                    <p className="text-xs text-green-700">{t.qualityGoodDescription}</p>
+                    <p className="text-sm font-medium text-gray-800">{t.qualityGood}</p>
+                    <p className="text-xs text-gray-700">{t.qualityGoodDescription}</p>
                   </div>
                 </div>
               ) : null}
 
               {quality === 'low_quality' ? (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+                <div className="flex items-start gap-2 rounded-lg border border-gray-300 bg-gray-100 p-3">
+                  <AlertTriangle className="h-5 w-5 flex-shrink-0 text-gray-700" />
                   <div>
-                    <p className="text-sm font-medium text-amber-800">{t.qualityLow}</p>
-                    {document.quality_message ? <p className="text-xs text-amber-700">{document.quality_message}</p> : null}
-                    <p className="mt-1 text-xs text-amber-700">{t.qualityLowDescription}</p>
+                    <p className="text-sm font-medium text-gray-800">{t.qualityLow}</p>
+                    {document.quality_message ? <p className="text-xs text-gray-700">{document.quality_message}</p> : null}
+                    <p className="mt-1 text-xs text-gray-700">{t.qualityLowDescription}</p>
                   </div>
                 </div>
               ) : null}
 
               {quality === 'failed' || hasError ? (
-                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
-                  <XCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
+                <div className="flex items-start gap-2 rounded-lg border border-gray-300 bg-gray-100 p-3">
+                  <XCircle className="h-5 w-5 flex-shrink-0 text-gray-700" />
                   <div>
-                    <p className="text-sm font-medium text-red-800">{t.qualityFailedLimited}</p>
+                    <p className="text-sm font-medium text-gray-800">{t.qualityFailedLimited}</p>
                     {document.processing_error_message || document.quality_message ? (
-                      <p className="text-xs text-red-700">{document.processing_error_message || document.quality_message}</p>
+                      <p className="text-xs text-gray-700">{document.processing_error_message || document.quality_message}</p>
                     ) : null}
-                    <p className="mt-1 text-xs text-red-700">{t.qualityFailedDescription}</p>
+                    <p className="mt-1 text-xs text-gray-700">{t.qualityFailedDescription}</p>
                   </div>
                 </div>
               ) : null}
 
               {!quality && document.processing_status === 'processing' ? (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-                  <p className="text-sm font-medium text-blue-800">{t.qualityProcessingStatus}</p>
-                  <p className="text-xs text-blue-700">{t.qualityProcessingHint}</p>
+                <div className="rounded-lg border border-gray-200 bg-gray-100 p-3">
+                  <p className="text-sm font-medium text-gray-800">{t.qualityProcessingStatus}</p>
+                  <p className="text-xs text-gray-700">{t.qualityProcessingHint}</p>
                 </div>
               ) : null}
 

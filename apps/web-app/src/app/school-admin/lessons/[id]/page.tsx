@@ -108,14 +108,14 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
   const { contentText, images, miniTest, examples, objectives, centerText } = mapLessonToViewData(lesson)
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div className="flex items-start gap-4">
             <Link
               href="/school-admin/lessons"
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors mt-1 flex-shrink-0"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors mt-1 flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </Link>
@@ -137,7 +137,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                 )}
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    lesson.audio_url ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                    lesson.audio_url ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-600'
                   }`}
                 >
                   <Clock className="w-3 h-3" />
@@ -199,10 +199,10 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
         
         {/* Stats Bar */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-gray-700" />
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{lesson.duration_minutes || 45}</p>
@@ -211,10 +211,10 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <ImageIcon className="w-5 h-5 text-indigo-600" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <ImageIcon className="w-5 h-5 text-gray-700" />
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{images.length}</p>
@@ -223,10 +223,10 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                <FileQuestion className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <FileQuestion className="w-5 h-5 text-gray-700" />
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{miniTest.length}</p>
@@ -235,10 +235,10 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 border border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <Target className="w-5 h-5 text-emerald-600" />
+              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <Target className="w-5 h-5 text-gray-700" />
               </div>
               <div className="min-w-0">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{objectives.length}</p>
@@ -250,14 +250,14 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
         
         {/* Learning Objectives */}
         {objectives.length > 0 && (
-          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 sm:p-5 mb-6 border border-emerald-200">
-            <h3 className="font-semibold text-emerald-800 mb-3 flex items-center gap-2">
+          <div className="bg-white rounded-xl p-4 sm:p-5 mb-6 border border-gray-200">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <Target className="w-5 h-5" />
               {tl('learningObjectives', 'Learning objectives')}
             </h3>
             <ul className="space-y-2">
               {objectives.map((objective: string, index: number) => (
-                <li key={index} className="flex items-start gap-2 text-emerald-700">
+                <li key={index} className="flex items-start gap-2 text-gray-700">
                   <Target className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm sm:text-base">{objective}</span>
                 </li>

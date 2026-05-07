@@ -292,7 +292,7 @@ export default function GenerateLessonPage() {
                       key={doc.id}
                       className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer border transition-all ${
                         selectedDocumentIds.includes(doc.id)
-                          ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-400'
+                          ? 'border-gray-400 bg-gray-100 ring-1 ring-gray-400'
                           : 'border-transparent bg-white hover:bg-gray-50'
                       }`}
                     >
@@ -307,7 +307,7 @@ export default function GenerateLessonPage() {
                           )
                         }}
                         disabled={loading}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                       />
                       <span className="text-sm font-medium text-gray-900 truncate flex-1">
                         {doc.title}
@@ -319,13 +319,13 @@ export default function GenerateLessonPage() {
               )}
             </details>
             {selectedDocumentIds.length > 0 && (
-              <p className="mt-2 text-sm text-blue-600">
+              <p className="mt-2 text-sm text-gray-700">
                 {t('documentsSelected', { count: selectedDocumentIds.length })}
               </p>
             )}
             {documents.length === 0 && (
               <p className="mt-2 text-sm text-gray-500">
-                {t('noDocumentsText')} <Link href="/school-admin/documents" className="text-blue-600 hover:underline">{t('uploadDocument')}</Link>
+                {t('noDocumentsText')} <Link href="/school-admin/documents" className="text-gray-700 hover:underline">{t('uploadDocument')}</Link>
               </p>
             )}
           </div>
@@ -341,7 +341,7 @@ export default function GenerateLessonPage() {
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder={t('topicPlaceholder')}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all"
               disabled={loading}
             />
           </div>
@@ -358,7 +358,7 @@ export default function GenerateLessonPage() {
               onChange={(e) => setObjectives(e.target.value)}
               placeholder={t('objectivesPlaceholder')}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all resize-none"
               disabled={loading}
             />
           </div>
@@ -375,7 +375,7 @@ export default function GenerateLessonPage() {
               onChange={(e) => setGradeLevel(e.target.value)}
               placeholder="e.g. Grade 9, Undergraduate, PhD"
               disabled={loading}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
             />
           </div>
 
@@ -388,7 +388,7 @@ export default function GenerateLessonPage() {
                 {(() => {
                   const current = LANGUAGES.find((l) => l.code === language)
                   return current ? (
-                    <span className="text-blue-600 font-semibold" title={`Stored as: ${language}`}>
+                    <span className="text-gray-700 font-semibold" title={`Stored as: ${language}`}>
                       — {current.name} ({language})
                     </span>
                   ) : null
@@ -409,7 +409,7 @@ export default function GenerateLessonPage() {
                       title={`${lang.name} (${lang.code})`}
                       className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
                         isSelected
-                          ? 'bg-blue-100 ring-2 ring-blue-500 ring-offset-1'
+                          ? 'bg-gray-200 ring-2 ring-gray-500 ring-offset-1'
                           : 'hover:bg-gray-100'
                       }`}
                     >
@@ -436,7 +436,7 @@ export default function GenerateLessonPage() {
                     checked={includeImages}
                     onChange={(e) => setIncludeImages(e.target.checked)}
                     disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
@@ -451,7 +451,7 @@ export default function GenerateLessonPage() {
                     checked={includeAudio}
                     onChange={(e) => setIncludeAudio(e.target.checked)}
                     disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
@@ -466,7 +466,7 @@ export default function GenerateLessonPage() {
                     checked={centerText}
                     onChange={(e) => setCenterText(e.target.checked)}
                     disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
@@ -481,7 +481,7 @@ export default function GenerateLessonPage() {
                     checked={includeTables}
                     onChange={(e) => setIncludeTables(e.target.checked)}
                     disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 flex items-center gap-1.5">
@@ -496,7 +496,7 @@ export default function GenerateLessonPage() {
                     checked={includeFigures}
                     onChange={(e) => setIncludeFigures(e.target.checked)}
                     disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 flex items-center gap-1.5">
@@ -511,7 +511,7 @@ export default function GenerateLessonPage() {
                     checked={includeCharts}
                     onChange={(e) => setIncludeCharts(e.target.checked)}
                     disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 flex items-center gap-1.5">
@@ -533,7 +533,7 @@ export default function GenerateLessonPage() {
                         disabled={loading}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                           contentLength === len
-                            ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                            ? 'bg-gray-200 text-gray-900 ring-1 ring-gray-400'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
@@ -553,7 +553,7 @@ export default function GenerateLessonPage() {
                 return (
                   <>
                     <div className="flex items-center gap-3 mb-3">
-                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-700" />
                       <span className="font-medium text-gray-900">
                         {stepLabels[currentStep] || t('working')}
                       </span>
@@ -561,7 +561,7 @@ export default function GenerateLessonPage() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        className="bg-gray-700 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${percent}%` }}
                       />
                     </div>
@@ -597,31 +597,31 @@ export default function GenerateLessonPage() {
           
           {/* Success Display */}
           {currentStep === 'complete' && generatedLesson && (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
               <div className="relative">
                 {/* Animated checkmark */}
-                <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-5 animate-bounce">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-5 animate-bounce">
+                  <CheckCircle className="w-8 h-8 text-gray-700" />
                 </div>
                 
-                <h3 className="text-2xl font-bold text-green-800">{t('lessonGenerated')}</h3>
-                <p className="text-base text-green-700 mt-2">
+                <h3 className="text-2xl font-bold text-gray-900">{t('lessonGenerated')}</h3>
+                <p className="text-base text-gray-700 mt-2">
                   &quot;{generatedLesson.title}&quot;
                 </p>
                 
-                <div className="flex items-center justify-center gap-4 mt-4 text-sm text-green-600">
-                  <span className="flex items-center gap-1.5 bg-green-100 rounded-full px-3 py-1">
+                <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-700">
+                  <span className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
                     <ImageIcon className="w-4 h-4" />
                     {t('imagesCount', { count: generatedLesson.images?.length || 0 })}
                   </span>
-                  <span className="flex items-center gap-1.5 bg-green-100 rounded-full px-3 py-1">
+                  <span className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
                     <Brain className="w-4 h-4" />
                     {t('quizQuestionsCount', { count: generatedLesson.mini_test?.length || 0 })}
                   </span>
                 </div>
                 
                 {/* Redirect message */}
-                <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-600">
+                <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-700">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>{t('redirecting')}</span>
                 </div>
@@ -630,7 +630,7 @@ export default function GenerateLessonPage() {
                 <div className="mt-4 flex justify-center gap-3">
                   <Link
                     href={`/school-admin/lessons/${generatedLesson.id}`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors"
                   >
                     <BookOpen className="w-4 h-4" />
                     {t('viewLessonNow')}
@@ -656,7 +656,7 @@ export default function GenerateLessonPage() {
             <button
               onClick={handleGenerate}
               disabled={loading || !topic.trim()}
-              className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 bg-gray-900 text-white rounded-xl font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

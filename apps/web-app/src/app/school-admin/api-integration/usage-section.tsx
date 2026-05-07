@@ -79,9 +79,9 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
 
       {/* Summary cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
               <Zap className="h-5 w-5" />
             </div>
             <div>
@@ -90,29 +90,29 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
               <CheckCircle className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-700">{successCount}</p>
+              <p className="text-2xl font-bold text-gray-900">{successCount}</p>
               <p className="text-sm text-gray-500">Successful</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
               <XCircle className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-700">{errorCount}</p>
+              <p className="text-2xl font-bold text-gray-900">{errorCount}</p>
               <p className="text-sm text-gray-500">Failed</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
               <BarChart3 className="h-5 w-5" />
@@ -136,7 +136,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
       ) : (
         <>
           {/* Filters bar */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
             <div className="flex flex-wrap items-center gap-3">
               <Filter className="h-4 w-4 text-gray-500 shrink-0" />
               <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -145,7 +145,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                   <select
                     value={keyFilter}
                     onChange={(e) => setKeyFilter(e.target.value)}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                   >
                     <option value="all">All keys</option>
                     {byKey.map((k) => (
@@ -160,7 +160,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                   >
                     <option value="all">All</option>
                     <option value="success">Success</option>
@@ -174,7 +174,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                     placeholder="Search endpoint..."
                     value={endpointSearch}
                     onChange={(e) => setEndpointSearch(e.target.value)}
-                    className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:w-52"
+                    className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:ring-1 focus:ring-gray-300 sm:w-52"
                   />
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -182,7 +182,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                   <select
                     value={recentLimit}
                     onChange={(e) => setRecentLimit(Number(e.target.value))}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                   >
                     <option value={10}>10</option>
                     <option value={20}>20</option>
@@ -199,7 +199,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                     setEndpointSearch('')
                     setRecentLimit(20)
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-700"
+                  className="text-sm text-gray-700 hover:text-gray-900"
                 >
                   Clear filters
                 </button>
@@ -242,8 +242,8 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                       <th className="py-3 px-4 font-medium">Key name</th>
                       <th className="py-3 px-4 font-medium">Prefix</th>
                       <th className="py-3 px-4 text-right font-medium">Total</th>
-                      <th className="py-3 px-4 text-right font-medium text-green-600">OK</th>
-                      <th className="py-3 px-4 text-right font-medium text-red-600">Failed</th>
+                      <th className="py-3 px-4 text-right font-medium text-gray-700">OK</th>
+                      <th className="py-3 px-4 text-right font-medium text-gray-700">Failed</th>
                       <th className="py-3 px-4 text-right font-medium text-gray-500">Rate</th>
                     </tr>
                   </thead>
@@ -255,8 +255,8 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                           <td className="py-3 px-4 font-medium text-gray-900">{row.keyName}</td>
                           <td className="py-3 px-4 font-mono text-gray-500">{row.keyPrefix}…</td>
                           <td className="py-3 px-4 text-right">{row.total}</td>
-                          <td className="py-3 px-4 text-right text-green-600">{row.success}</td>
-                          <td className="py-3 px-4 text-right text-red-600">{row.error}</td>
+                          <td className="py-3 px-4 text-right text-gray-700">{row.success}</td>
+                          <td className="py-3 px-4 text-right text-gray-700">{row.error}</td>
                           <td className="py-3 px-4 text-right text-gray-600">{rate}%</td>
                         </tr>
                       )
@@ -299,8 +299,8 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                       <th className="py-3 px-4 font-medium">Method</th>
                       <th className="py-3 px-4 font-medium">Endpoint</th>
                       <th className="py-3 px-4 text-right font-medium">Total</th>
-                      <th className="py-3 px-4 text-right font-medium text-green-600">OK</th>
-                      <th className="py-3 px-4 text-right font-medium text-red-600">Failed</th>
+                      <th className="py-3 px-4 text-right font-medium text-gray-700">OK</th>
+                      <th className="py-3 px-4 text-right font-medium text-gray-700">Failed</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -311,8 +311,8 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                         </td>
                         <td className="py-3 px-4 font-mono text-gray-700 break-all">{row.endpoint}</td>
                         <td className="py-3 px-4 text-right">{row.total}</td>
-                        <td className="py-3 px-4 text-right text-green-600">{row.success}</td>
-                        <td className="py-3 px-4 text-right text-red-600">{row.error}</td>
+                        <td className="py-3 px-4 text-right text-gray-700">{row.success}</td>
+                        <td className="py-3 px-4 text-right text-gray-700">{row.error}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -361,8 +361,8 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                           <span
                             className={
                               row.status === 'success'
-                                ? 'rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700'
-                                : 'rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700'
+                                ? 'rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700'
+                                : 'rounded bg-gray-200 px-1.5 py-0.5 text-xs font-medium text-gray-800'
                             }
                           >
                             {row.statusCode ?? row.status}

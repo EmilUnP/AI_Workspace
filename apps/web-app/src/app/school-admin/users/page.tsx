@@ -7,12 +7,12 @@ import { redirect } from 'next/navigation'
 const roleConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   admin: {
     icon: <Shield className="h-3.5 w-3.5" />,
-    color: 'text-red-600',
+    color: 'text-gray-700',
     label: 'Admin',
   },
   operator: {
     icon: <Users className="h-3.5 w-3.5" />,
-    color: 'text-blue-600',
+    color: 'text-gray-700',
     label: 'Operator',
   },
   user: {
@@ -56,12 +56,12 @@ export default async function UsersPage({
         </div>
         <div className="hidden items-center gap-6 lg:flex">
           <div className="text-center">
-            <p className="text-2xl font-bold text-red-600">{stats.admins}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.admins}</p>
             <p className="text-xs text-gray-500">Admins</p>
           </div>
           <div className="h-8 w-px bg-gray-200" />
           <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600">{stats.operators}</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.operators}</p>
             <p className="text-xs text-gray-500">Operators</p>
           </div>
           <div className="h-8 w-px bg-gray-200" />
@@ -108,7 +108,7 @@ export default async function UsersPage({
             {(params.search || params.role) && (
               <Link
                 href="/school-admin/users"
-                className="mt-4 inline-flex items-center text-sm font-medium text-orange-600 hover:text-orange-700"
+                className="mt-4 inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
               >
                 Clear all filters
               </Link>
@@ -146,7 +146,7 @@ export default async function UsersPage({
                         <div className="min-w-0">
                           <Link 
                             href={`/school-admin/users/${user.id}`}
-                            className="font-medium text-gray-900 truncate hover:text-orange-600 hover:underline"
+                            className="font-medium text-gray-900 truncate hover:text-gray-700 hover:underline"
                           >
                             {user.full_name || 'Unnamed User'}
                           </Link>
@@ -177,7 +177,7 @@ export default async function UsersPage({
                       <div className="flex items-center justify-end">
                         <Link
                           href={`/school-admin/users/${user.id}`}
-                          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                          className="text-sm font-medium text-gray-700 hover:text-gray-900"
                         >
                           View
                         </Link>
@@ -195,7 +195,7 @@ export default async function UsersPage({
         <div className="text-center">
           <Link
             href="/school-admin/users"
-            className="text-sm font-medium text-orange-600 hover:text-orange-700"
+            className="text-sm font-medium text-gray-700 hover:text-gray-900"
           >
             Clear all filters
           </Link>

@@ -60,7 +60,7 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search users..."
-          className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-9 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-9 text-sm placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
         />
         {search && (
           <button
@@ -76,7 +76,7 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
       {/* Filters */}
       <div className="flex items-center gap-2">
         {activeFiltersCount > 0 && (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-800">
             {activeFiltersCount}
           </span>
         )}
@@ -84,7 +84,7 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
         <select
           value={currentParams.status || 'all'}
           onChange={(e) => updateFilters('status', e.target.value)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
         >
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
@@ -95,14 +95,14 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
         <select
           value={currentParams.role || 'all'}
           onChange={(e) => updateFilters('role', e.target.value)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
         >
           <option value="all">All Roles</option>
           <option value="teacher">Teacher</option>
         </select>
 
         {isPending && (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
         )}
       </div>
     </div>

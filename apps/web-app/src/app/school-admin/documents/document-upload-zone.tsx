@@ -145,9 +145,9 @@ export function DocumentUploadZone({ workspaceId, onUpload, onUploadSuccess, tra
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase()
-    if (ext === 'pdf') return <FileText className="h-6 w-6 text-red-500" />
-    if (ext === 'doc' || ext === 'docx') return <FileText className="h-6 w-6 text-blue-700" />
-    if (ext === 'md' || ext === 'markdown') return <FileCode className="h-6 w-6 text-blue-500" />
+    if (ext === 'pdf') return <FileText className="h-6 w-6 text-gray-700" />
+    if (ext === 'doc' || ext === 'docx') return <FileText className="h-6 w-6 text-gray-700" />
+    if (ext === 'md' || ext === 'markdown') return <FileCode className="h-6 w-6 text-gray-700" />
     return <File className="h-6 w-6 text-gray-500" />
   }
 
@@ -157,52 +157,52 @@ export function DocumentUploadZone({ workspaceId, onUpload, onUploadSuccess, tra
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`relative rounded-xl border-2 border-dashed transition-all duration-200 ${
-        isDragging ? 'border-blue-500 bg-blue-50' :
-        uploadStatus === 'error' ? 'border-red-300 bg-red-50' :
-        uploadStatus === 'success' ? 'border-green-300 bg-green-50' :
-        'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50'
+        isDragging ? 'border-gray-500 bg-gray-100' :
+        uploadStatus === 'error' ? 'border-gray-400 bg-gray-100' :
+        uploadStatus === 'success' ? 'border-gray-400 bg-gray-100' :
+        'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100/70'
       }`}
     >
       <label className="flex cursor-pointer flex-col items-center justify-center px-6 py-8">
         {uploadStatus === 'idle' ? (
           <>
-            <div className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${isDragging ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+            <div className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${isDragging ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-400'}`}>
               <Upload className="h-7 w-7" />
             </div>
             <p className="mt-4 text-sm font-medium text-gray-700">{isDragging ? t.dropFileHere : t.dragDropFile}</p>
-            <p className="mt-1 text-xs text-gray-500">or <span className="text-blue-600 hover:text-blue-700">{t.browseLabel}</span> {t.browseToUpload}</p>
+            <p className="mt-1 text-xs text-gray-500">or <span className="text-gray-700 hover:text-gray-900">{t.browseLabel}</span> {t.browseToUpload}</p>
             <p className="mt-2 text-xs text-gray-400">{t.uploadFileTypes}</p>
           </>
         ) : null}
 
         {uploadStatus === 'uploading' ? (
           <>
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
-              <Loader2 className="h-7 w-7 animate-spin text-blue-600" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200">
+              <Loader2 className="h-7 w-7 animate-spin text-gray-700" />
             </div>
             <div className="mt-4 flex items-center gap-2">
               {uploadedFileName ? getFileIcon(uploadedFileName) : null}
               <p className="text-sm font-medium text-gray-700">{uploadedFileName}</p>
             </div>
-            <p className="mt-1 text-xs text-blue-600">{t.uploading}</p>
+            <p className="mt-1 text-xs text-gray-700">{t.uploading}</p>
           </>
         ) : null}
 
         {uploadStatus === 'success' ? (
           <>
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-7 w-7 text-green-600" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200">
+              <CheckCircle className="h-7 w-7 text-gray-700" />
             </div>
-            <p className="mt-4 text-sm font-medium text-green-700">{t.uploadSuccess}</p>
+            <p className="mt-4 text-sm font-medium text-gray-800">{t.uploadSuccess}</p>
           </>
         ) : null}
 
         {uploadStatus === 'error' ? (
           <>
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-              <AlertCircle className="h-7 w-7 text-red-600" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200">
+              <AlertCircle className="h-7 w-7 text-gray-700" />
             </div>
-            <p className="mt-4 text-sm font-medium text-red-700">{errorMessage || t.uploadFailed}</p>
+            <p className="mt-4 text-sm font-medium text-gray-800">{errorMessage || t.uploadFailed}</p>
             <p className="mt-1 text-xs text-gray-500">{t.clickToRetry}</p>
           </>
         ) : null}

@@ -53,9 +53,9 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
           <Key className="h-5 w-5" />
         </div>
         <div>
@@ -67,7 +67,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-100 p-3 text-sm text-gray-800">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {error}
         </div>
@@ -75,18 +75,18 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
 
       {/* One-time new key display */}
       {newKeyResult && (
-        <div className="mb-6 rounded-lg border-2 border-amber-300 bg-amber-50 p-4">
-          <p className="text-sm font-semibold text-amber-900">
+        <div className="mb-6 rounded-lg border-2 border-gray-300 bg-gray-100 p-4">
+          <p className="text-sm font-semibold text-gray-900">
             Copy your new key now — you won&apos;t see it again.
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 rounded bg-amber-100 px-2 py-1.5 text-sm font-mono text-amber-900 break-all">
+            <code className="flex-1 rounded bg-gray-200 px-2 py-1.5 text-sm font-mono text-gray-900 break-all">
               {newKeyResult.key}
             </code>
             <button
               type="button"
               onClick={() => handleCopy('new', newKeyResult.key)}
-              className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
+              className="inline-flex items-center gap-1 rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-black"
             >
               {copiedId === 'new' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copiedId === 'new' ? 'Copied' : 'Copy'}
@@ -106,13 +106,13 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
             value={keyName}
             onChange={(e) => setKeyName(e.target.value)}
             placeholder="e.g. Production app"
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
           />
         </div>
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
           {isPending ? 'Creating...' : 'Create API key'}
@@ -142,7 +142,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
                   type="button"
                   onClick={() => handleRevoke(k.id)}
                   disabled={isPending}
-                  className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
                   title="Revoke key"
                 >
                   <Trash2 className="h-4 w-4" />

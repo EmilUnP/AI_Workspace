@@ -26,8 +26,8 @@ type DocumentStatusLevel = 'ok' | 'issues' | 'critical'
 type ExplorerItem = DocItem & { classes?: { id: string; name: string; class_code?: string | null } | null }
 
 function getFileIcon(fileType: string): ReactElement {
-  if (fileType === 'pdf') return <FileText className="h-5 w-5 text-red-500" />
-  if (fileType === 'markdown') return <FileCode className="h-5 w-5 text-blue-500" />
+  if (fileType === 'pdf') return <FileText className="h-5 w-5 text-gray-700" />
+  if (fileType === 'markdown') return <FileCode className="h-5 w-5 text-gray-700" />
   return <File className="h-5 w-5 text-gray-500" />
 }
 
@@ -59,16 +59,16 @@ function getDocumentStatusLevel(doc: ExplorerItem): DocumentStatusLevel {
 }
 
 function getStatusPillClasses(status: DocumentStatusLevel): string {
-  if (status === 'critical') return 'bg-red-50 text-red-700 border-red-200'
-  if (status === 'issues') return 'bg-amber-50 text-amber-700 border-amber-200'
-  return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  if (status === 'critical') return 'bg-gray-200 text-gray-800 border-gray-300'
+  if (status === 'issues') return 'bg-gray-100 text-gray-700 border-gray-300'
+  return 'bg-gray-100 text-gray-700 border-gray-200'
 }
 
 function getInfoButtonClasses(status: DocumentStatusLevel): string {
   const base = 'p-1.5 rounded-md transition-colors'
-  if (status === 'critical') return `${base} text-red-500 hover:text-red-600 hover:bg-red-50`
-  if (status === 'issues') return `${base} text-amber-500 hover:text-amber-600 hover:bg-amber-50`
-  return `${base} text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50`
+  if (status === 'critical') return `${base} text-gray-700 hover:text-gray-900 hover:bg-gray-100`
+  if (status === 'issues') return `${base} text-gray-700 hover:text-gray-900 hover:bg-gray-100`
+  return `${base} text-gray-700 hover:text-gray-900 hover:bg-gray-100`
 }
 
 function sortDocuments(docs: ExplorerItem[], sortBy: SortBy, dir: SortDir): ExplorerItem[] {
@@ -126,7 +126,7 @@ export function DocumentsExplorer({
 
   if (documents.length === 0) {
     return (
-      <div className="rounded-2xl border border-gray-200/80 bg-white p-16 text-center shadow-sm">
+      <div className="rounded-2xl border border-gray-200/80 bg-white p-16 text-center">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
           <FolderOpen className="h-8 w-8 text-gray-400" />
         </div>
@@ -138,7 +138,7 @@ export function DocumentsExplorer({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200/80 bg-white px-4 py-3">
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-gray-500">Group by</label>
           <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
@@ -161,7 +161,7 @@ export function DocumentsExplorer({
         </div>
       </div>
 
-        <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white">
           {grouped.map(({ key, label, documents: groupDocs }) => {
             const shouldShowHeader = groupBy !== 'none'
             const isExpanded = groupBy === 'none' || expandedGroups.has(key) || expandedGroups.size === 0
@@ -182,7 +182,7 @@ export function DocumentsExplorer({
                     className="flex w-full items-center gap-2 bg-gray-50/80 px-4 py-3 text-left transition-colors hover:bg-gray-100/80"
                   >
                     {isCollapsed ? <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />}
-                    <Folder className="h-4 w-4 flex-shrink-0 text-amber-500" />
+                    <Folder className="h-4 w-4 flex-shrink-0 text-gray-500" />
                     <span className="font-medium text-gray-800">{label}</span>
                     <span className="text-sm text-gray-500">({groupDocs.length})</span>
                   </button>
@@ -244,7 +244,7 @@ function DocumentRow({
           {doc.content_language ? (
             <>
               <span>·</span>
-              <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium capitalize text-blue-700">
+              <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium capitalize text-gray-700">
                 <Globe className="h-3 w-3" />
                 {doc.content_language}
               </span>
@@ -257,7 +257,7 @@ function DocumentRow({
         <button type="button" onClick={onInfo} className={getInfoButtonClasses(statusLevel)} title="Document info & quality">
           <Info className="h-4 w-4" />
         </button>
-        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" title="View">
+        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" title="View">
           <Eye className="h-4 w-4" />
         </a>
         <EditDocumentDialog document={doc} onUpdate={onUpdate} onDelete={onDelete} />

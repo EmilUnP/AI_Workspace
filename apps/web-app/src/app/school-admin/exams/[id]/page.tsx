@@ -136,8 +136,8 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
         {backLabel}
       </Link>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className={`px-6 py-6 sm:px-8 sm:py-7 ${exam.is_published ? 'bg-emerald-50/80 ring-1 ring-emerald-100' : 'bg-gray-50/80 ring-1 ring-gray-100'}`}>
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="px-6 py-6 sm:px-8 sm:py-7 bg-gray-50 ring-1 ring-gray-100">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-3">
@@ -165,7 +165,7 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
         <div className="border-t border-gray-100 bg-white px-6 py-4 sm:px-8">
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 ring-1 ring-blue-200/50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700 ring-1 ring-gray-200/70">
                 <FileText className="h-5 w-5" />
               </div>
               <div>
@@ -174,7 +174,7 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600 ring-1 ring-violet-200/50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700 ring-1 ring-gray-200/70">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
