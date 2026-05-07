@@ -23,6 +23,8 @@ interface GenerateInput {
   documentIds?: string[]
   organizationId: string
   questionCount: number
+  durationMinutes?: number
+  title?: string
   difficulty: 'easy' | 'medium' | 'hard' | 'mixed'
   language: string
   topics?: string[]
@@ -58,6 +60,8 @@ export async function generateExamFromDocuments(input: GenerateInput) {
       },
       body: JSON.stringify({
         documentIds: Array.isArray(input.documentIds) ? input.documentIds : [],
+        title: input.title,
+        durationMinutes: Number(input.durationMinutes || 60),
         language: input.language || 'en',
         questionCount: Number(input.questionCount || 10),
         topics: input.topics,

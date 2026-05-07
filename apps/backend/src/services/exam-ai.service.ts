@@ -13,6 +13,7 @@ const examSchema = z.object({
   subject: z.string().optional(),
   gradeLevel: z.string().optional(),
   language: z.string().default('en'),
+  durationMinutes: z.number().int().min(1).max(300).default(60),
   questionCount: z.number().int().min(1).max(50).default(10),
   topics: z.array(z.string().min(1)).optional(),
   customPrompt: z.string().optional(),
@@ -68,8 +69,8 @@ export class ExamAiService {
     }>(prompt)
 
     const { rows } = await this.app.db.query<{ id: string }>(
-      `INSERT INTO exams (user_id, title, description, subject, grade_level, questions, language)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7) RETURNING id`,
+      `INSERT INTO exams (user_id, title, description, subject, grade_level, questions, language, duration_minutes)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8) RETURNING id`,
       [
         userId,
         exam.title || data.title || 'Generated Exam',
@@ -77,7 +78,8 @@ export class ExamAiService {
         data.subject || null,
         data.gradeLevel || null,
         JSON.stringify(exam.questions || []),
-        data.language
+        data.language,
+        data.durationMinutes
       ]
     )
 

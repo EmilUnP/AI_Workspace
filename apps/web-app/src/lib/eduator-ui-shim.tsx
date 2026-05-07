@@ -120,7 +120,9 @@ export function ExamCreator(props: AnyProps) {
       const result = await props.onGenerateExam({
         documentIds: selectedDocumentIds,
         organizationId: String(props?.organizationId || 'global'),
+        title: title.trim() || undefined,
         questionCount,
+        durationMinutes,
         difficulty: 'mixed',
         language: generateLanguage,
         topics: topicEntries.map((x) => x.name.trim()).filter(Boolean),

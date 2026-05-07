@@ -86,6 +86,10 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
   if (!exam) {
     notFound()
   }
+  const tl = (key: string, fallback: string) => {
+    const value = t(key as never)
+    return value === key ? fallback : value
+  }
 
   const questions: UiQuestion[] = normalizeExamQuestionsForUi((exam.questions ?? []) as AnyQuestion[]).map((q) => ({
     id: String(q.id ?? ''),
@@ -123,7 +127,7 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
   ) as Record<string, UiQuestion[]>
 
   const backHref = '/school-admin/exams'
-  const backLabel = t('backToExams')
+  const backLabel = tl('backToExams', 'Back to exams')
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -144,12 +148,12 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
                 {exam.is_published ? (
                   <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/50">
                     <CheckCircle className="h-3.5 w-3.5" />
-                    {t('inClass')}
+                    {tl('inClass', 'In class')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200/50">
                     <Clock className="h-3.5 w-3.5" />
-                    {t('unused')}
+                    {tl('unused', 'Unused')}
                   </span>
                 )}
               </div>
@@ -185,13 +189,13 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{exam.duration_minutes || 60}</p>
-                <p className="text-xs text-gray-500">{t('minutesLabel')}</p>
+                <p className="text-xs text-gray-500">{tl('minutesLabel', 'minutes')}</p>
               </div>
             </div>
             <div className="ml-auto flex items-center gap-2 text-sm text-gray-500">
               <Calendar className="h-4 w-4 text-gray-400" />
               <span>
-                {t('createdLabel')} {new Date(exam.created_at).toLocaleDateString(locale, {
+                {tl('createdLabel', 'Created')} {new Date(exam.created_at).toLocaleDateString(locale, {
                   month: 'long',
                   day: 'numeric',
                   year: 'numeric',
