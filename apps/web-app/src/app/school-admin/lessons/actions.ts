@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@eduator/auth/supabase/server'
-import { tokenRepository } from '@eduator/db/repositories/tokens'
 
 interface UpdateLessonInput {
   title?: string
@@ -140,22 +139,8 @@ export async function regenerateAudio(lessonId: string) {
       return { error: 'No content to generate audio from' }
     }
 
-    const tokenDeduct = await tokenRepository.deductTokensForAction(
-      profile.id,
-      'lesson_audio',
-      {}
-    )
-    if (!tokenDeduct.success) {
-      return { error: 'Insufficient tokens' }
-    }
-
     const { generateLessonAudioWithUsage } = await import('@/lib/eduator-tts-generator-shim')
     let audioUrl: string | null
-    let ttsUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } = {
-      prompt_tokens: 0,
-      completion_tokens: 0,
-      total_tokens: 0,
-    }
     try {
       const ttsResult = await generateLessonAudioWithUsage(
         lessonId,
@@ -164,32 +149,13 @@ export async function regenerateAudio(lessonId: string) {
         lesson.language || 'English'
       )
       audioUrl = ttsResult.audioUrl
-      ttsUsage = ttsResult.usage
     } catch (aiError) {
-      if ((tokenDeduct.cost ?? 0) > 0) {
-        await tokenRepository.addTokens(profile.id, tokenDeduct.cost!, 'refund', undefined, { reason: 'ai_failed' }).catch(() => {})
-      }
       throw aiError
     }
 
     if (!audioUrl) {
-      if ((tokenDeduct.cost ?? 0) > 0) {
-        await tokenRepository.addTokens(profile.id, tokenDeduct.cost!, 'refund', undefined, { reason: 'ai_failed' }).catch(() => {})
-      }
       return { error: 'Failed to generate audio' }
     }
-
-    await tokenRepository
-      .attachMetadataToLatestUsageTransaction(profile.id, 'lesson_audio', {
-        input_tokens: ttsUsage.prompt_tokens,
-        output_tokens: ttsUsage.completion_tokens,
-        prompt_tokens: ttsUsage.prompt_tokens,
-        completion_tokens: ttsUsage.completion_tokens,
-        total_tokens: ttsUsage.total_tokens,
-        model_used: 'gemini_tts',
-        reference_id: lessonId,
-      })
-      .catch(() => {})
 
     // Update lesson with new audio URL
     const { error: updateError } = await adminSupabase

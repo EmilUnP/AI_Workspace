@@ -579,18 +579,8 @@ export default function GenerateLessonPage() {
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 xl:col-span-2">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-red-800">
-                  {error.includes('Not enough tokens') || error.includes('Your balance:') ? t('notEnoughTokens') : t('generationFailed')}
-                </h3>
+                <h3 className="text-sm font-medium text-red-800">{t('generationFailed')}</h3>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
-                {(error.includes('Not enough tokens') || error.includes('Your balance:')) && (
-                  <Link
-                    href="/school-admin/tokens"
-                    className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-red-700 hover:text-red-800 underline"
-                  >
-                    {t('viewTokens')}
-                  </Link>
-                )}
               </div>
             </div>
           )}
