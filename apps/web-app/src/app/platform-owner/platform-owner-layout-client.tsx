@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { GraduationCap, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { UserNav } from './user-nav'
 import { MobileSidebar, DesktopNavigation } from '../components/mobile-sidebar'
+import { LanguageSwitcher } from '../components/language-switcher'
+import { useTranslations } from 'next-intl'
 
 interface NavItem {
   name: string
@@ -27,6 +29,7 @@ export function PlatformOwnerLayoutClient({
   profile,
   children,
 }: PlatformOwnerLayoutClientProps) {
+  const t = useTranslations('platformOwner')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const displayProfile = {
@@ -56,7 +59,7 @@ export function PlatformOwnerLayoutClient({
               <div className="min-w-0">
                 <span className="text-lg font-bold text-gray-900">Eduator</span>
                 <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">
-                  Platform Owner
+                  {t('rolePlatformOwner')}
                 </span>
               </div>
             )}
@@ -105,6 +108,7 @@ export function PlatformOwnerLayoutClient({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            <LanguageSwitcher compact />
             <UserNav profile={displayProfile} />
           </div>
         </header>

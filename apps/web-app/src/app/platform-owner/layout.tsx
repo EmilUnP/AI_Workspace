@@ -2,20 +2,22 @@ import { getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 import { GraduationCap } from 'lucide-react'
 import { PlatformOwnerLayoutClient } from './platform-owner-layout-client'
-
-const navigation = [
-  { name: 'Dashboard', href: '/platform-owner', icon: 'LayoutDashboard' },
-  { name: 'Users', href: '/platform-owner/users', icon: 'Users' },
-]
+import { getTranslations } from 'next-intl/server'
 
 export default async function PlatformOwnerLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const t = await getTranslations('platformOwner')
   const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
   if (user.role !== 'admin') redirect('/app')
+
+  const navigation = [
+    { name: t('navDashboard'), href: '/platform-owner', icon: 'LayoutDashboard' },
+    { name: t('navUsers'), href: '/platform-owner/users', icon: 'Users' },
+  ]
 
   const displayProfile = {
     full_name: user.email?.split('@')[0] || 'Admin',
@@ -29,7 +31,7 @@ export default async function PlatformOwnerLayout({
       </div>
       <div>
         <span className="text-lg font-bold text-gray-900">Eduator</span>
-        <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">Platform Owner</span>
+        <span className="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{t('rolePlatformOwner')}</span>
       </div>
     </div>
   )
@@ -45,7 +47,7 @@ export default async function PlatformOwnerLayout({
         <p className="truncate text-sm font-medium text-gray-900">
           {displayProfile.full_name || 'Admin'}
         </p>
-        <p className="truncate text-xs text-gray-500">Platform Owner</p>
+        <p className="truncate text-xs text-gray-500">{t('rolePlatformOwner')}</p>
       </div>
     </div>
   )

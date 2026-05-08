@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { GraduationCap, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { UserNav } from './user-nav'
 import { MobileSidebar, DesktopNavigation } from '../components/mobile-sidebar'
+import { LanguageSwitcher } from '../components/language-switcher'
 
 interface NavItem {
   name: string
@@ -99,6 +100,7 @@ export function SchoolAdminLayoutClient({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            <LanguageSwitcher compact />
             <UserNav profile={displayProfile} />
           </div>
         </header>

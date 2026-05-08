@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { GraduationCap, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { LanguageSwitcher } from '@/app/components/language-switcher'
 
 export interface LoginFormProps {
   error: string
@@ -14,6 +15,9 @@ export function LoginForm({ error }: LoginFormProps) {
     <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-12">
       <div className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mx-auto w-full">
+          <div className="mb-4 flex justify-end">
+            <LanguageSwitcher compact />
+          </div>
           <Link href="/" className="flex items-center justify-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-900">
               <GraduationCap className="h-6 w-6 text-white" />

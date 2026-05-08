@@ -2,6 +2,7 @@ import { listUsers } from '@/lib/backend-auth'
 import { Users, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
 const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
 
@@ -56,29 +57,12 @@ const createOperatorAction = async (formData: FormData) => {
 
   redirect(buildRedirectUrl('success', 'Operator user created successfully.'))
 }
-const roleConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  admin: {
-    icon: <Shield className="h-3.5 w-3.5" />,
-    color: 'text-red-600',
-    label: 'Admin',
-  },
-  operator: {
-    icon: <Users className="h-3.5 w-3.5" />,
-    color: 'text-blue-600',
-    label: 'Operator',
-  },
-  user: {
-    icon: <Users className="h-3.5 w-3.5" />,
-    color: 'text-gray-600',
-    label: 'User',
-  },
-}
-
 export default async function UsersPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string; message?: string }>
 }) {
+  const t = await getTranslations('platformOwner')
   const params = await searchParams
   const allUsers = await listUsers({ limit: 200, offset: 0 })
   const users = allUsers
@@ -88,30 +72,47 @@ export default async function UsersPage({
     operators: allUsers.filter((u) => u.role === 'operator').length,
     regular: allUsers.filter((u) => u.role === 'user').length,
   }
+  const roleConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+    admin: {
+      icon: <Shield className="h-3.5 w-3.5" />,
+      color: 'text-red-600',
+      label: t('roleAdmin'),
+    },
+    operator: {
+      icon: <Users className="h-3.5 w-3.5" />,
+      color: 'text-blue-600',
+      label: t('roleOperator'),
+    },
+    user: {
+      icon: <Users className="h-3.5 w-3.5" />,
+      color: 'text-gray-600',
+      label: t('roleUser'),
+    },
+  }
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-          <p className="mt-1 text-sm text-gray-500">{stats.total} users in backend database</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('usersTitle')}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t('usersSubtitle', { count: stats.total })}</p>
         </div>
         {/* Quick Stats */}
         <div className="hidden items-center gap-6 lg:flex">
           <div className="text-center">
             <p className="text-2xl font-bold text-red-600">{stats.admins}</p>
-            <p className="text-xs text-gray-500">Admins</p>
+            <p className="text-xs text-gray-500">{t('roleAdmin')}</p>
           </div>
           <div className="h-8 w-px bg-gray-200" />
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600">{stats.operators}</p>
-            <p className="text-xs text-gray-500">Operators</p>
+            <p className="text-xs text-gray-500">{t('roleOperator')}</p>
           </div>
           <div className="h-8 w-px bg-gray-200" />
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-700">{stats.regular}</p>
-            <p className="text-xs text-gray-500">Users</p>
+            <p className="text-xs text-gray-500">{t('usersTitle')}</p>
           </div>
         </div>
       </div>
@@ -119,7 +120,7 @@ export default async function UsersPage({
       <form action={createOperatorAction} className="rounded-lg border border-gray-200 bg-white p-4">
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-xs font-medium text-gray-500">Email</label>
+            <label htmlFor="email" className="text-xs font-medium text-gray-500">{t('email')}</label>
             <input
               id="email"
               name="email"
@@ -129,7 +130,7 @@ export default async function UsersPage({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-xs font-medium text-gray-500">Password</label>
+            <label htmlFor="password" className="text-xs font-medium text-gray-500">{t('password')}</label>
             <input
               id="password"
               name="password"
@@ -140,7 +141,7 @@ export default async function UsersPage({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="manual_note" className="text-xs font-medium text-gray-500">Manual note</label>
+            <label htmlFor="manual_note" className="text-xs font-medium text-gray-500">{t('manualNote')}</label>
             <input
               id="manual_note"
               name="manual_note"
@@ -148,7 +149,7 @@ export default async function UsersPage({
               className="rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           </div>
-          <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">Add operator</button>
+          <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">{t('addOperator')}</button>
         </div>
       </form>
 
@@ -169,24 +170,24 @@ export default async function UsersPage({
         {users.length === 0 ? (
           <div className="p-12 text-center">
             <Users className="mx-auto h-12 w-12 text-gray-300" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No users found</h3>
-            <p className="mt-2 text-sm text-gray-500">Add your first operator using the form above.</p>
+            <h3 className="mt-4 text-lg font-medium text-gray-900">{t('noUsersFound')}</h3>
+            <p className="mt-2 text-sm text-gray-500">{t('addFirstOperatorHint')}</p>
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="py-3 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:pl-6">
-                  Email
+                  {t('email')}
                 </th>
                 <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">
-                  Role
+                  {t('role')}
                 </th>
                 <th scope="col" className="hidden px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">
-                  Manual note
+                  {t('manualNote')}
                 </th>
                 <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t('actions')}</span>
                 </th>
               </tr>
             </thead>
@@ -223,7 +224,7 @@ export default async function UsersPage({
                           href={`/platform-owner/users/${user.id}`}
                           className="text-sm font-medium text-red-600 hover:text-red-700"
                         >
-                          View
+                          {t('view')}
                         </Link>
                       </div>
                     </td>

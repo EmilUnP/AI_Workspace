@@ -3,6 +3,7 @@
 import { Search, X } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface UserFiltersProps {
   currentParams: {
@@ -14,6 +15,7 @@ interface UserFiltersProps {
 }
 
 export function UserFilters({ currentParams }: UserFiltersProps) {
+  const t = useTranslations('platformOwner')
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
@@ -62,7 +64,7 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search users..."
+          placeholder={t('searchUsers')}
           className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-9 text-sm placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         />
         {search && (
@@ -90,9 +92,9 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
           onChange={(e) => updateFilters('source', e.target.value)}
           className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         >
-          <option value="all">All Sources</option>
-          <option value="erp">🏢 ERP Users</option>
-          <option value="api">🔗 API Users</option>
+          <option value="all">{t('allSources')}</option>
+          <option value="erp">🏢 {t('erpUsers')}</option>
+          <option value="api">🔗 {t('apiUsers')}</option>
         </select>
         
         <select
@@ -100,10 +102,10 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
           onChange={(e) => updateFilters('status', e.target.value)}
           className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         >
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
+          <option value="all">{t('allStatus')}</option>
+          <option value="pending">{t('pending')}</option>
+          <option value="approved">{t('approved')}</option>
+          <option value="rejected">{t('rejected')}</option>
         </select>
 
         <select
@@ -111,10 +113,10 @@ export function UserFilters({ currentParams }: UserFiltersProps) {
           onChange={(e) => updateFilters('role', e.target.value)}
           className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
         >
-          <option value="all">All Roles</option>
-          <option value="platform_owner">Platform Owner</option>
-          <option value="school_superadmin">School Admin</option>
-          <option value="teacher">Teacher</option>
+          <option value="all">{t('allRoles')}</option>
+          <option value="platform_owner">{t('rolePlatformOwner')}</option>
+          <option value="school_superadmin">{t('roleSchoolAdmin')}</option>
+          <option value="teacher">{t('roleTeacher')}</option>
         </select>
 
         {isPending && (

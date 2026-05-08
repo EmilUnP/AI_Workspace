@@ -9,6 +9,7 @@ import {
   Shield,
   Users,
 } from 'lucide-react'
+import { getTranslations, getLocale } from 'next-intl/server'
 
 const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor: string; label: string }> = {
   admin: {
@@ -45,6 +46,8 @@ export default async function UserDetailPage({
   params: Promise<{ id: string }>
   searchParams: Promise<{ status?: string; message?: string }>
 }) {
+  const t = await getTranslations('platformOwner')
+  const locale = await getLocale()
   const { id } = await params
   const query = await searchParams
   const user = await getUserById(id)
@@ -100,6 +103,12 @@ export default async function UserDetailPage({
   }
 
   const role = roleConfig[user.role] || roleConfig.user
+  const localizedRoleLabel =
+    user.role === 'admin'
+      ? t('roleAdmin')
+      : user.role === 'operator'
+        ? t('roleOperator')
+        : t('roleUser')
 
   return (
     <div className="space-y-6">
@@ -109,7 +118,7 @@ export default async function UserDetailPage({
         className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Users
+        {t('backToUsers')}
       </Link>
 
       {/* Header */}
@@ -135,7 +144,7 @@ export default async function UserDetailPage({
             <div className="mt-2 flex items-center gap-2">
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${role.bgColor} ${role.color}`}>
                 {role.icon}
-                {role.label}
+                {localizedRoleLabel}
               </span>
             </div>
           </div>
@@ -146,10 +155,10 @@ export default async function UserDetailPage({
       {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-1">
         <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-sm font-semibold text-gray-900">Update Password</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t('updatePassword')}</h2>
           <form action={updatePasswordAction} className="mt-4 flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
-              <label htmlFor="password" className="text-xs font-medium text-gray-500">New password</label>
+              <label htmlFor="password" className="text-xs font-medium text-gray-500">{t('newPassword')}</label>
               <input
                 id="password"
                 name="password"
@@ -160,7 +169,7 @@ export default async function UserDetailPage({
               />
             </div>
             <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">
-              Update password
+              {t('updatePasswordButton')}
             </button>
           </form>
           {query.message ? (
@@ -179,24 +188,24 @@ export default async function UserDetailPage({
         {/* User Info */}
         <div className="lg:col-span-1">
           <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <h2 className="text-sm font-semibold text-gray-900">User Information</h2>
+            <h2 className="text-sm font-semibold text-gray-900">{t('userInformation')}</h2>
             
             <dl className="mt-4 space-y-4">
               <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">User ID</dt>
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('userId')}</dt>
                 <dd className="mt-1 text-sm text-gray-900 font-mono">{user.id}</dd>
               </div>
               
               <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Auth ID</dt>
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('authId')}</dt>
                 <dd className="mt-1 text-sm text-gray-900 font-mono truncate">{user.id}</dd>
               </div>
               
               <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Joined</dt>
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('joined')}</dt>
                 <dd className="mt-1 text-sm text-gray-900 flex items-center gap-1.5">
                   <Calendar className="h-4 w-4 text-gray-400" />
-                  {new Date(user.created_at || Date.now()).toLocaleDateString('en-US', {
+                  {new Date(user.created_at || Date.now()).toLocaleDateString(locale === 'az' ? 'az-AZ' : 'en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -205,15 +214,15 @@ export default async function UserDetailPage({
               </div>
 
               <div>
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Manual Note</dt>
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('manualNote')}</dt>
                 <dd className="mt-1 text-sm text-gray-900">{user.manual_note || '-'}</dd>
               </div>
               
               {user.updated_at ? (
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Updated</dt>
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('lastUpdated')}</dt>
                   <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(user.updated_at).toLocaleDateString('en-US', {
+                    {new Date(user.updated_at).toLocaleDateString(locale === 'az' ? 'az-AZ' : 'en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

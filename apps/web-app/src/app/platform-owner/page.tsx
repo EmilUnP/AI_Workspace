@@ -1,6 +1,7 @@
 import { listUsers } from '@/lib/backend-auth'
 import { Users, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
 async function getDashboardStats() {
   const users = await listUsers({ limit: 200, offset: 0 })
@@ -16,18 +17,19 @@ async function getDashboardStats() {
 }
 
 export default async function PlatformOwnerDashboard() {
+  const t = await getTranslations('platformOwner')
   const stats = await getDashboardStats()
   
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Platform Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('dashboardTitle')}</h1>
           <p className="mt-1 text-gray-500">
-            Overview of your educational platform
+            {t('dashboardSubtitle')}
           </p>
         </div>
-        <Link href="/platform-owner/users" className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"><Plus className="h-4 w-4" />Manage Users</Link>
+        <Link href="/platform-owner/users" className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"><Plus className="h-4 w-4" />{t('manageUsers')}</Link>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -38,7 +40,7 @@ export default async function PlatformOwnerDashboard() {
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Total Users</p>
+            <p className="text-sm font-medium text-gray-500">{t('totalUsers')}</p>
             <p className="mt-1 text-3xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
           </div>
         </div>
@@ -48,7 +50,7 @@ export default async function PlatformOwnerDashboard() {
             <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-gray-700">AI</div>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Admins / Operators</p>
+            <p className="text-sm font-medium text-gray-500">{t('adminsOperators')}</p>
             <p className="mt-1 text-3xl font-bold text-gray-900">
               {stats.adminCount} / {stats.operatorCount}
             </p>
@@ -59,8 +61,8 @@ export default async function PlatformOwnerDashboard() {
       <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Recent Users</h3>
-              <p className="mt-1 text-sm text-gray-500">Latest registrations across the platform</p>
+              <h3 className="text-lg font-semibold text-gray-900">{t('recentUsers')}</h3>
+              <p className="mt-1 text-sm text-gray-500">{t('recentUsersSubtitle')}</p>
             </div>
           </div>
           
@@ -68,7 +70,7 @@ export default async function PlatformOwnerDashboard() {
             {stats.recentUsers.length === 0 ? (
               <div className="py-8 text-center">
                 <Users className="mx-auto h-12 w-12 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-500">No users yet</p>
+                <p className="mt-2 text-sm text-gray-500">{t('noUsersYet')}</p>
               </div>
             ) : (
               stats.recentUsers.map((user: any) => (

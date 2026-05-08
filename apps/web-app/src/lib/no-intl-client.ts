@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react' 
 import { createT } from './t'
+import { getClientLocale } from './i18n'
 
 export const NextIntlClientProvider = ({
   children,
@@ -11,6 +12,6 @@ export const NextIntlClientProvider = ({
 }
 
 export const useTranslations = (namespace?: string) => {
-  return createT(namespace)
+  return createT(namespace, getClientLocale())
 }
 

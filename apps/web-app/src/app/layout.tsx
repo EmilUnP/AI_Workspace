@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
+import { getLocale } from '@/lib/no-intl-server'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
@@ -15,8 +16,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocale()
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={inter.className}>
         <Providers>{children}</Providers>
       </body>
