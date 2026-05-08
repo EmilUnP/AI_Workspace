@@ -2,6 +2,7 @@ import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { getLocale } from 'next-intl/server'
 import {
   BookOpen,
   Search,
@@ -87,10 +88,11 @@ export default async function SchoolAdminEducationPlansPage({
   const { adminId, workspaceId } = adminData
   const params = await searchParams
 
-  const [plans, stats, t] = await Promise.all([
+  const [plans, stats, t, locale] = await Promise.all([
     getPlans(adminId, workspaceId, params),
     getPlanStats(adminId, workspaceId),
     getTranslations('teacherEducationPlans'),
+    getLocale(),
   ])
   const hasFilters = !!(params.search || params.shared)
 
@@ -177,7 +179,7 @@ export default async function SchoolAdminEducationPlansPage({
                   </Link>
                   <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
                     <span>
-                      {new Date(plan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(plan.created_at).toLocaleDateString(locale === 'az' ? 'az-AZ' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                     <EducationPlanRowActionsAny
                       planId={plan.id}
@@ -228,7 +230,7 @@ export default async function SchoolAdminEducationPlansPage({
                       {plan.period_months} {t('months')} · {plan.sessions_per_week}{t('timesPerWeek')}, {plan.hours_per_session}{t('hours')}
                     </td>
                     <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
-                      {new Date(plan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(plan.created_at).toLocaleDateString(locale === 'az' ? 'az-AZ' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
                       <div className="flex items-center justify-end gap-2">

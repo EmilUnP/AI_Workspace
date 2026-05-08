@@ -495,7 +495,7 @@ export class DocumentRagService {
   private normalizeLanguageCode(raw: string): string {
     const value = raw.trim().toLowerCase()
     if (!value) return ''
-    const isoMatch = value.match(/\b(en|ru|tr|az|ar|es|fr|de|uk|fa)\b/)
+    const isoMatch = value.match(/\b(en|ru|tr|)\b/)
     if (isoMatch?.[1]) return isoMatch[1]
     const aliases: Record<string, string> = {
       english: 'en',
@@ -503,13 +503,7 @@ export class DocumentRagService {
       turkish: 'tr',
       azerbaijani: 'az',
       azeri: 'az',
-      arabic: 'ar',
-      spanish: 'es',
-      french: 'fr',
-      german: 'de',
-      ukrainian: 'uk',
-      persian: 'fa',
-      farsi: 'fa',
+
     }
     for (const [name, code] of Object.entries(aliases)) {
       if (value === name || value.includes(name)) return code

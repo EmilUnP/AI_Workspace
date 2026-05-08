@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   createConversation,
   deleteConversation,
@@ -34,6 +35,7 @@ type DocItem = {
 }
 
 export function ChatClient() {
+  const t = useTranslations('teacherChat')
   const [conversations, setConversations] = useState<ChatConversation[]>([])
   const [activeId, setActiveId] = useState<string>('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -110,11 +112,11 @@ export function ChatClient() {
 
   const handleNewConversation = async () => {
     setError('')
-    const title = newBotName.trim() || 'New Conversation'
+    const title = newBotName.trim() || t('newConversationDefault')
     const docIds = newBotDocId ? [newBotDocId] : []
     const result = await createConversation({ title, document_ids: docIds })
     if (result.error || !result.data) {
-      setError(result.error || 'Failed to create conversation')
+      setError(result.error || t('createConversationFailed'))
       return
     }
     const created = result.data as ChatConversation
@@ -192,7 +194,7 @@ export function ChatClient() {
           <input
             value={newBotName}
             onChange={(e) => setNewBotName(e.target.value)}
-            placeholder="Bot name"
+            placeholder={t('botNamePlaceholder')}
             className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-gray-400"
           />
           <select
@@ -200,10 +202,10 @@ export function ChatClient() {
             onChange={(e) => setNewBotDocId(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-gray-400"
           >
-            <option value="">Core file (optional)</option>
+            <option value="">{t('coreFileOptional')}</option>
             {documents.map((doc) => (
               <option key={doc.id} value={doc.id}>
-                {doc.title || doc.file_name || 'Untitled'}
+                {doc.title || doc.file_name || t('untitled')}
               </option>
             ))}
           </select>
@@ -212,14 +214,14 @@ export function ChatClient() {
             onClick={handleNewConversation}
             className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-black"
           >
-            Create bot
+            {t('createBot')}
           </button>
         </div>
         <div className="space-y-1 lg:max-h-[calc(100vh-290px)] lg:overflow-y-auto pr-1">
           {loading ? (
-            <p className="px-2 py-1 text-sm text-gray-500">Loading...</p>
+            <p className="px-2 py-1 text-sm text-gray-500">{t('loading')}</p>
           ) : conversations.length === 0 ? (
-            <p className="px-2 py-1 text-sm text-gray-500">No conversations yet.</p>
+            <p className="px-2 py-1 text-sm text-gray-500">{t('noConversationsYet')}</p>
           ) : (
             conversations.map((conv) => (
               <div key={conv.id} className="flex items-center gap-1">
@@ -232,13 +234,13 @@ export function ChatClient() {
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  {conv.title || 'Untitled'}
+                  {conv.title || t('untitled')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDeleteTargetId(conv.id)}
                   className="rounded-md px-2 py-2 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  aria-label="Delete conversation"
+                  aria-label={t('deleteConversation')}
                 >
                   x
                 </button>
@@ -252,7 +254,7 @@ export function ChatClient() {
         <div className="border-b border-gray-200 px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-semibold text-gray-900">
-              {activeConversation?.title || 'Chat'}
+              {activeConversation?.title || t('chatTitleFallback')}
             </h2>
             {activeId && (
               <>
@@ -266,10 +268,10 @@ export function ChatClient() {
                   }
                   className="min-w-[220px] rounded-md border border-gray-300 px-2 py-1 text-xs outline-none focus:border-gray-400"
                 >
-                  <option value="">No core file</option>
+                  <option value="">{t('noCoreFile')}</option>
                   {documents.map((doc) => (
                     <option key={doc.id} value={doc.id}>
-                      {doc.title || doc.file_name || 'Untitled'}
+                      {doc.title || doc.file_name || t('untitled')}
                     </option>
                   ))}
                 </select>
@@ -278,7 +280,7 @@ export function ChatClient() {
                   onClick={handleSaveCoreFile}
                   className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100"
                 >
-                  Save core file
+                  {t('saveCoreFile')}
                 </button>
               </>
             )}
@@ -288,7 +290,7 @@ export function ChatClient() {
         <div className="space-y-3 overflow-y-auto p-4 lg:flex-1 lg:min-h-0">
           {messages.length === 0 ? (
             <p className="text-sm text-gray-500">
-              {activeId ? 'Send a message to start.' : 'Create or select a conversation.'}
+              {activeId ? t('sendMessageToStart') : t('createOrSelectConversation')}
             </p>
           ) : (
             messages.map((msg) => (
@@ -312,7 +314,7 @@ export function ChatClient() {
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder={activeId ? 'Type your message...' : 'Create a conversation first'}
+              placeholder={activeId ? t('typeMessage') : t('createConversationFirst')}
               disabled={!activeId || sending}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100"
             />
@@ -322,7 +324,7 @@ export function ChatClient() {
               disabled={!activeId || sending || !text.trim()}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
             >
-              {sending ? 'Sending...' : 'Send'}
+              {sending ? t('sending') : t('send')}
             </button>
           </div>
         </div>
@@ -331,22 +333,22 @@ export function ChatClient() {
       {deleteTargetId ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-xl bg-white p-4">
-            <h3 className="text-sm font-semibold text-gray-900">Delete bot</h3>
-            <p className="mt-2 text-sm text-gray-600">Are you sure you want to delete this chatbot?</p>
+            <h3 className="text-sm font-semibold text-gray-900">{t('deleteBotTitle')}</h3>
+            <p className="mt-2 text-sm text-gray-600">{t('deleteBotConfirm')}</p>
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setDeleteTargetId('')}
                 className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteConversation(deleteTargetId)}
                 className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-black"
               >
-                Yes, delete
+                {t('yesDelete')}
               </button>
             </div>
           </div>

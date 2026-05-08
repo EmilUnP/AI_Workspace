@@ -130,10 +130,6 @@ const LANGUAGE_NAMES: Record<string, string> = {
   az: 'Azerbaijani',
   ru: 'Russian',
   tr: 'Turkish',
-  de: 'German',
-  fr: 'French',
-  es: 'Spanish',
-  ar: 'Arabic',
 }
 
 /** Normalize language input: accept 2-letter code (preferred) or full name; return display name for prompts. */
@@ -171,10 +167,6 @@ function normalizeLanguageCode(language?: string): string {
     azeri: 'az',
     russian: 'ru',
     turkish: 'tr',
-    german: 'de',
-    french: 'fr',
-    spanish: 'es',
-    arabic: 'ar',
   }
   return byName[raw] || 'en'
 }

@@ -23,14 +23,11 @@ import { LessonRowActions } from './lesson-row-actions'
 const PaginationFooterAny = PaginationFooter as any
 
 const LANGUAGE_TO_COUNTRY: Record<string, string> = {
-  en: 'gb', tr: 'tr', de: 'de', fr: 'fr', es: 'es', it: 'it', pt: 'pt', ru: 'ru',
-  ar: 'sa', zh: 'cn', ja: 'jp', ko: 'kr', nl: 'nl', pl: 'pl', uk: 'ua', az: 'az',
+  en: 'gb', tr: 'tr',  ru: 'ru',  az: 'az',
 }
 
 const LANGUAGE_NAMES: Record<string, string> = {
-  en: 'English', tr: 'Turkish', de: 'German', fr: 'French', es: 'Spanish',
-  it: 'Italian', pt: 'Portuguese', ru: 'Russian', ar: 'Arabic', zh: 'Chinese',
-  ja: 'Japanese', ko: 'Korean', nl: 'Dutch', pl: 'Polish', uk: 'Ukrainian', az: 'Azerbaijani',
+  en: 'English', tr: 'Turkish',  ru: 'Russian',  az: 'Azerbaijani',
 }
 
 function getLanguageDisplay(lang: string): { countryCode: string; label: string } {

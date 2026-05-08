@@ -60,7 +60,7 @@ async function detectLanguage(content: string): Promise<string> {
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: AI_MODELS.TEXT })
     
-    const prompt = `Detect the primary language of the following text. Return ONLY the language name in English (e.g., "English", "Russian", "Azerbaijani", "Arabic", "Turkish", etc.).
+    const prompt = `Detect the primary language of the following text. Return ONLY the language name in English (e.g., "English", "Russian", "Azerbaijani", "Turkish", etc.).
 
 Text:
 ${content.substring(0, 1000)}
@@ -74,10 +74,7 @@ Language:`
     const normalized = text.toLowerCase()
     if (normalized.includes("russian") || normalized.includes("русский")) return "Russian"
     if (normalized.includes("azerbaijani") || normalized.includes("azərbaycan")) return "Azerbaijani"
-    if (normalized.includes("arabic") || normalized.includes("عربي")) return "Arabic"
     if (normalized.includes("turkish") || normalized.includes("türkçe")) return "Turkish"
-    if (normalized.includes("german") || normalized.includes("deutsch")) return "German"
-    if (normalized.includes("spanish") || normalized.includes("español")) return "Spanish"
     if (normalized.includes("english")) return "English"
     
     return text || "English"

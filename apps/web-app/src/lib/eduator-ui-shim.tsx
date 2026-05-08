@@ -247,16 +247,18 @@ export function EducationPlanCreateForm(props: AnyProps) {
 
         <section className="space-y-1">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">{t('baseOnDocuments', 'Source document')}</h3>
-          <label className="text-sm font-medium text-gray-700">Select one document *</label>
+          <label className="text-sm font-medium text-gray-700">{t('selectOneDocument', 'Select one document *')}</label>
           <select value={selectedDocumentId} onChange={(e) => setSelectedDocumentId(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
-            <option value="">Choose document</option>
+            <option value="">{t('chooseDocument', 'Choose document')}</option>
             {documents.map((doc) => (
               <option key={String(doc.id)} value={String(doc.id)}>
                 {String(doc.title || doc.file_name || 'Untitled')}
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-500">{documents.length} available document(s)</p>
+          <p className="text-xs text-gray-500">
+            {documents.length} {t('availableDocumentsSuffix', 'available document(s)')}
+          </p>
         </section>
       </div>
 
@@ -362,6 +364,7 @@ export function AudioPlayer() { return null }
 export function LessonActions() { return null }
 export function RichTextWithMath({ children }: { children?: ReactNode }) { return <>{children ?? null}</> }
 export function ExamCreator(props: AnyProps) {
+  const tr = (key: string, fallback: string) => String(props?.translations?.[key] || fallback)
   const [title, setTitle] = useState('')
   const [durationMinutes, setDurationMinutes] = useState(60)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -430,11 +433,11 @@ export function ExamCreator(props: AnyProps) {
 
   const handleGenerate = async () => {
     if (!props?.onGenerateExam || typeof props.onGenerateExam !== 'function') {
-      setError('Generate action is unavailable.')
+      setError(tr('generateActionUnavailable', 'Generate action is unavailable.'))
       return
     }
     if (selectedDocumentIds.length === 0) {
-      setError('Please select at least one document.')
+      setError(tr('selectAtLeastOneDocument', 'Please select at least one document.'))
       return
     }
     setIsGenerating(true)
@@ -462,9 +465,9 @@ export function ExamCreator(props: AnyProps) {
         window.location.href = `/school-admin/exams/${String(result.examId)}`
         return
       }
-      setMessage('Questions generated. You can now save exam.')
+      setMessage(tr('questionsGenerated', 'Questions generated. You can now save exam.'))
     } catch {
-      setError('Failed to generate exam.')
+      setError(tr('generateExamFailed', 'Failed to generate exam.'))
     } finally {
       setIsGenerating(false)
     }
@@ -472,25 +475,25 @@ export function ExamCreator(props: AnyProps) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-gray-900">AI Generate</h2>
-      <p className="mt-1 text-sm text-gray-500">Create questions from documents</p>
+      <h2 className="text-lg font-semibold text-gray-900">{tr('aiGenerateTitle', 'AI Generate')}</h2>
+      <p className="mt-1 text-sm text-gray-500">{tr('aiGenerateSubtitle', 'Create questions from documents')}</p>
 
       <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">Exam title</label>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">{tr('examTitle', 'Exam title')}</label>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Network Operating Systems - Midterm"
+          placeholder={tr('examTitlePlaceholder', 'e.g. Network Operating Systems - Midterm')}
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
         />
-        <p className="mt-1 text-xs text-gray-500">Leave empty to auto-generate from selected documents.</p>
+        <p className="mt-1 text-xs text-gray-500">{tr('examTitleHint', 'Leave empty to auto-generate from selected documents.')}</p>
 
         <div className="mt-4">
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">Select documents</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">{tr('selectDocuments', 'Select documents')}</label>
           <div className="max-h-36 overflow-auto rounded-lg border border-gray-200 bg-white">
             <div className="divide-y divide-gray-100">
               {documents.length === 0 ? (
-                <p className="p-3 text-xs text-gray-500">No documents available.</p>
+                <p className="p-3 text-xs text-gray-500">{tr('noDocumentsAvailable', 'No documents available.')}</p>
               ) : (
                 documents.map((doc: AnyProps) => {
                   const id = String(doc?.id || '')
@@ -508,7 +511,7 @@ export function ExamCreator(props: AnyProps) {
                           }}
                           className="h-3.5 w-3.5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                         />
-                        <span className="truncate">{String(doc?.title || 'Untitled')}</span>
+                        <span className="truncate">{String(doc?.title || tr('untitled', 'Untitled'))}</span>
                       </div>
                       <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-500">
                         {String(doc?.file_type || 'text')}
@@ -523,17 +526,17 @@ export function ExamCreator(props: AnyProps) {
 
         <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium text-gray-700">Topics (Optional)</p>
+            <p className="text-xs font-medium text-gray-700">{tr('topicsOptional', 'Topics (Optional)')}</p>
             <button
               type="button"
               onClick={() => setTopicEntries((prev) => [...prev, { name: '', count: undefined }])}
               className="text-xs font-medium text-gray-700 hover:text-gray-900"
             >
-              + Add Topic
+              {tr('addTopic', '+ Add Topic')}
             </button>
           </div>
           {topicEntries.length === 0 ? (
-            <p className="text-xs text-gray-500">Leave empty to generate from all document content.</p>
+            <p className="text-xs text-gray-500">{tr('topicsHint', 'Leave empty to generate from all document content.')}</p>
           ) : (
             <div className="space-y-2">
               {topicEntries.map((entry, index) => (
@@ -544,7 +547,7 @@ export function ExamCreator(props: AnyProps) {
                       const value = e.target.value
                       setTopicEntries((prev) => prev.map((x, i) => (i === index ? { ...x, name: value } : x)))
                     }}
-                    placeholder="Topic name"
+                    placeholder={tr('topicNamePlaceholder', 'Topic name')}
                     className="sm:col-span-3 rounded-lg border border-gray-300 px-3 py-2 text-xs outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                   />
                   <div className="flex gap-2">
@@ -557,7 +560,7 @@ export function ExamCreator(props: AnyProps) {
                         const value = raw ? Math.max(1, Number(raw)) : undefined
                         setTopicEntries((prev) => prev.map((x, i) => (i === index ? { ...x, count: value } : x)))
                       }}
-                      placeholder="Q#"
+                    placeholder={tr('questionCountShort', 'Q#')}
                       className="w-full rounded-lg border border-gray-300 px-2 py-2 text-xs outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                     />
                     <button
@@ -576,7 +579,7 @@ export function ExamCreator(props: AnyProps) {
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Language</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">{tr('language', 'Language')}</label>
             <select
               value={generateLanguage}
               onChange={(e) => setGenerateLanguage(e.target.value)}
@@ -586,12 +589,10 @@ export function ExamCreator(props: AnyProps) {
               <option value="az">Azerbaijani</option>
               <option value="tr">Turkish</option>
               <option value="ru">Russian</option>
-              <option value="de">German</option>
-              <option value="ar">Arabic</option>
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Total Questions</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">{tr('totalQuestions', 'Total Questions')}</label>
             <input
               type="number"
               min={1}
@@ -602,7 +603,7 @@ export function ExamCreator(props: AnyProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Minutes</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">{tr('minutes', 'Minutes')}</label>
             <input
               type="number"
               min={5}
@@ -618,16 +619,16 @@ export function ExamCreator(props: AnyProps) {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Question types</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{tr('questionTypes', 'Question types')}</p>
                 <span className="text-[11px] font-semibold text-gray-500">
                   {questionTypeDistribution.multiple_choice + questionTypeDistribution.true_false + questionTypeDistribution.multiple_select + questionTypeDistribution.fill_blank}%
                 </span>
               </div>
               {([
-                ['multiple_choice', 'Multiple Choice'],
-                ['true_false', 'True/False'],
-                ['multiple_select', 'Multiple Select'],
-                ['fill_blank', 'Fill in the Blank'],
+                ['multiple_choice', tr('multipleChoice', 'Multiple Choice')],
+                ['true_false', tr('trueFalse', 'True/False')],
+                ['multiple_select', tr('multipleSelect', 'Multiple Select')],
+                ['fill_blank', tr('fillBlank', 'Fill in the Blank')],
               ] as const).map(([key, label]) => (
                 <div key={key} className="mb-2 flex items-center justify-between gap-3">
                   <label className="text-xs text-gray-600">{label}</label>
@@ -648,15 +649,15 @@ export function ExamCreator(props: AnyProps) {
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Difficulty levels</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{tr('difficultyLevels', 'Difficulty levels')}</p>
                 <span className="text-[11px] font-semibold text-gray-500">
                   {difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard}%
                 </span>
               </div>
               {([
-                ['easy', 'Easy'],
-                ['medium', 'Medium'],
-                ['hard', 'Hard'],
+                ['easy', tr('difficultyEasy', 'Easy')],
+                ['medium', tr('difficultyMedium', 'Medium')],
+                ['hard', tr('difficultyHard', 'Hard')],
               ] as const).map(([key, label]) => (
                 <div key={key} className="mb-2 flex items-center justify-between gap-3">
                   <label className="text-xs text-gray-600">{label}</label>
@@ -684,7 +685,7 @@ export function ExamCreator(props: AnyProps) {
             disabled={isGenerating}
             className="inline-flex w-full items-center justify-center rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-60"
           >
-            {isGenerating ? 'Generating...' : 'Generate Questions'}
+            {isGenerating ? tr('generating', 'Generating...') : tr('generateQuestions', 'Generate Questions')}
           </button>
         </div>
       </div>
@@ -703,7 +704,39 @@ export type QuestionType = string
 export type Question = Record<string, any>
 export type ExamCreatorTranslations = Record<string, string>
 export type ExamCreatorProps = AnyProps
-export const DEFAULT_EXAM_CREATOR_TRANSLATIONS: ExamCreatorTranslations = {}
+export const DEFAULT_EXAM_CREATOR_TRANSLATIONS: ExamCreatorTranslations = {
+  generateActionUnavailable: 'Generate action is unavailable.',
+  selectAtLeastOneDocument: 'Please select at least one document.',
+  questionsGenerated: 'Questions generated. You can now save exam.',
+  generateExamFailed: 'Failed to generate exam.',
+  aiGenerateTitle: 'AI Generate',
+  aiGenerateSubtitle: 'Create questions from documents',
+  examTitle: 'Exam title',
+  examTitlePlaceholder: 'e.g. Network Operating Systems - Midterm',
+  examTitleHint: 'Leave empty to auto-generate from selected documents.',
+  selectDocuments: 'Select documents',
+  noDocumentsAvailable: 'No documents available.',
+  untitled: 'Untitled',
+  topicsOptional: 'Topics (Optional)',
+  addTopic: '+ Add Topic',
+  topicsHint: 'Leave empty to generate from all document content.',
+  topicNamePlaceholder: 'Topic name',
+  questionCountShort: 'Q#',
+  language: 'Language',
+  totalQuestions: 'Total Questions',
+  minutes: 'Minutes',
+  questionTypes: 'Question types',
+  multipleChoice: 'Multiple Choice',
+  trueFalse: 'True/False',
+  multipleSelect: 'Multiple Select',
+  fillBlank: 'Fill in the Blank',
+  difficultyLevels: 'Difficulty levels',
+  difficultyEasy: 'Easy',
+  difficultyMedium: 'Medium',
+  difficultyHard: 'Hard',
+  generating: 'Generating...',
+  generateQuestions: 'Generate Questions',
+}
 
 export type DocumentUploadTranslations = Record<string, string>
 export type DocumentsExplorerTranslations = Record<string, string>
