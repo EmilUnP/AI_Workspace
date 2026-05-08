@@ -8,6 +8,14 @@ Backend-only service with local PostgreSQL and JWT authentication.
 - Single clean API under `/v1/*`
 - Core domains: auth, users, documents, AI
 
+## What This Backend Owns
+
+- User auth and role handling
+- Document metadata and file access
+- RAG processing pipeline (extract/chunk/embed/retrieve)
+- AI generation endpoints (chat, lessons, exams, education plans, translation/media helpers)
+- Per-user Gemini API key management (encrypted at rest)
+
 ## Local Setup
 1. Create `apps/backend/.env.local` from `apps/backend/.env.example`.
 2. Ensure PostgreSQL is running and `DATABASE_URL` is valid.
@@ -42,6 +50,12 @@ JWT Bearer token required for protected endpoints.
 - `POST /v1/auth/login`
 - `POST /v1/auth/refresh`
 - `GET /v1/auth/me` (protected)
+
+### User AI Key Endpoints (Protected)
+
+- `GET /v1/users/me/ai-keys/gemini`
+- `PUT /v1/users/me/ai-keys/gemini`
+- `DELETE /v1/users/me/ai-keys/gemini`
 
 ## Endpoint Reference
 
@@ -108,3 +122,15 @@ Use `apps/backend/requests.http` for quick local calls and adapt port if needed.
 ## Full API Docs
 - Detailed human-readable docs: `apps/backend/API_DOCUMENTATION.md`
 - OpenAPI spec (Swagger/Postman import): `apps/backend/openapi.yaml`
+
+## Troubleshooting
+
+- **401 Unauthorized**
+  - Ensure `Authorization: Bearer <access_token>` is sent.
+  - Verify token is from `/v1/auth/login` in this same backend environment.
+- **Gemini key missing**
+  - AI endpoints may return `MISSING_GEMINI_API_KEY`.
+  - Add key from `/school-admin/api-integration` in the web app.
+- **Document processing issues**
+  - Confirm `AI_STORAGE_DIR` exists and backend process can read/write it.
+  - Verify `file_type` is one of supported parser types.

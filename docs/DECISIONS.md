@@ -25,3 +25,18 @@
 - Sanitize extracted text for DB safety.
 - Use safe JSON serialization for chunks/embeddings.
 - Reason: prevent processing failures from malformed text/JSON payloads.
+
+## 6) Per-user Gemini key in DB (encrypted)
+
+- Gemini keys are stored per user in database, encrypted before persistence.
+- Reason: avoid shared global key coupling and support user-scoped billing/control.
+
+## 7) Structured AI configuration errors
+
+- Missing-key situations return structured API payload (`error`, `code`, `hint`) instead of generic internal error.
+- Reason: improve operator UX and reduce support/debug time.
+
+## 8) Remove token product surfaces from active web app
+
+- Token pages/settings/usage UI removed from school-admin and platform-owner active routes.
+- Reason: simplify product scope and reduce maintenance overhead during migration stabilization.

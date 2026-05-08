@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.2.0 - 2026-05-08
+
+### Changed
+
+- Added per-user Gemini API key management:
+  - new backend key storage with encryption
+  - new authenticated routes for save/status/delete of Gemini key
+  - API Integration tab in school-admin for Gemini key management
+- Wired AI services to use user-specific Gemini key resolution.
+- Added explicit missing-key errors with API-friendly payload:
+  - `code: MISSING_GEMINI_API_KEY`
+  - actionable hint in response
+- Refined school-admin and education plan flows:
+  - list/detail UX cleanup
+  - plan parsing/display improvements
+  - chat and tokens pages stabilization updates
+- Removed token-oriented product surfaces from active web app flows:
+  - removed school-admin tokens page
+  - removed platform-owner token settings and real token usage routes/UI
+  - removed related token-side nav entries and token-shim dependencies
+- Removed legacy `/auth/signup` redirect page as part of route cleanup.
+- Restored and documented local launcher script flow via `npm run dev:all`.
+- Bumped project versioning and docs/openapi baseline to `0.2.0`.
+
 ## 0.1.0 - 2026-05-01
 
 ### Changed

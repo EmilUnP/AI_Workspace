@@ -19,11 +19,21 @@ Most errors return:
 { "error": "Message" }
 ```
 
+Some operational errors include structured metadata:
+
+```json
+{
+  "error": "Message",
+  "code": "ERROR_CODE",
+  "hint": "Actionable next step"
+}
+```
+
 Validation errors (Zod) are normalized by the global error handler:
 
 ```json
 {
-  "error": "Validation error",
+  "error": "Validation failed",
   "issues": [{ "path": ["field"], "message": "..." }]
 }
 ```
@@ -125,6 +135,50 @@ Response:
   "items": [
     { "id": "uuid", "email": "user@local.dev", "role": "user", "created_at": "..." }
   ]
+}
+```
+
+---
+
+## 2.1) User AI Key Management
+
+### GET `/v1/users/me/ai-keys/gemini` (Protected)
+Get Gemini key status for authenticated user.
+
+Response:
+```json
+{
+  "hasKey": true,
+  "keyHint": "abcd"
+}
+```
+
+### PUT `/v1/users/me/ai-keys/gemini` (Protected)
+Save or update Gemini key for authenticated user.
+
+Request:
+```json
+{
+  "apiKey": "AIza..."
+}
+```
+
+Response:
+```json
+{
+  "hasKey": true,
+  "keyHint": "abcd"
+}
+```
+
+### DELETE `/v1/users/me/ai-keys/gemini` (Protected)
+Delete Gemini key for authenticated user.
+
+Response:
+```json
+{
+  "hasKey": false,
+  "keyHint": null
 }
 ```
 
@@ -236,6 +290,15 @@ Response:
 {
   "documentId": "uuid",
   "chunks": ["...", "..."]
+}
+```
+
+Missing Gemini key example:
+```json
+{
+  "error": "Gemini API key is missing for this user.",
+  "code": "MISSING_GEMINI_API_KEY",
+  "hint": "Open /school-admin/api-integration and save your Gemini API key."
 }
 ```
 

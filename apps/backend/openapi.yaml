@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Eduator Clean Backend API
-  version: 0.1.0
+  version: 0.2.0
   description: Clean backend API contract for local PostgreSQL + JWT stack.
 servers:
   - url: http://localhost:4000

@@ -4,7 +4,6 @@ import { GraduationCap } from 'lucide-react'
 import { SchoolAdminLayoutClient } from './school-admin-layout-client'
 
 const baseNavigation = [
-  { name: 'Dashboard', href: '/school-admin', icon: 'LayoutDashboard' },
   { name: 'Documents', href: '/school-admin/documents', icon: 'FolderOpen' },
   { name: 'Exams', href: '/school-admin/exams', icon: 'FileText' },
   { name: 'Lessons', href: '/school-admin/lessons', icon: 'GraduationCap' },
