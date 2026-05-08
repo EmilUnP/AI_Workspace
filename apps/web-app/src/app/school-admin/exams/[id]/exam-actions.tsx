@@ -62,7 +62,7 @@ export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fro
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isPending}
                 className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
-                aria-label="Close"
+                aria-label={tl('close', 'Close')}
               >
                 <X className="h-5 w-5" />
               </button>

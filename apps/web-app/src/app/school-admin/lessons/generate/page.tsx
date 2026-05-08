@@ -136,7 +136,7 @@ export default function GenerateLessonPage() {
             const title =
               (typeof doc.title === 'string' && doc.title.trim()) ||
               (typeof doc.file_name === 'string' && doc.file_name.trim()) ||
-              'Untitled document'
+              t('untitledDocument')
             const fileType = typeof doc.file_type === 'string' ? doc.file_type : 'file'
             const fileName = typeof doc.file_name === 'string' ? doc.file_name : title
 
@@ -159,7 +159,7 @@ export default function GenerateLessonPage() {
   
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      setError('Please enter a lesson topic.')
+      setError(t('missingTopicError'))
       return
     }
 
@@ -215,7 +215,7 @@ export default function GenerateLessonPage() {
           errorData.error ||
           errorData.message ||
           issueText ||
-          `Failed to generate lesson (${response.status})`
+          t('generateFailedWithStatus', { status: response.status })
         throw new Error(message)
       }
       
@@ -239,7 +239,7 @@ export default function GenerateLessonPage() {
       }, 1500)
       
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to generate lesson'
+      const errorMessage = err instanceof Error ? err.message : t('generateFailedGeneric')
       setError(errorMessage)
       setCurrentStep('error')
       console.error('Error generating lesson:', err)
@@ -278,9 +278,9 @@ export default function GenerateLessonPage() {
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-sm text-gray-700">
                 <span className="truncate">
                   {selectedDocumentIds.length > 0
-                    ? `${selectedDocumentIds.length} document(s) selected`
+                    ? t('selectedDocumentsSummary', { selected: selectedDocumentIds.length })
                     : documents.length > 0
-                      ? `Select from ${documents.length} available document(s)`
+                      ? t('selectDocumentsSummary', { count: documents.length })
                       : t('noDocumentsText')}
                 </span>
                 <ChevronDown className="h-4 w-4 text-gray-500 transition-transform group-open:rotate-180" />
@@ -373,7 +373,7 @@ export default function GenerateLessonPage() {
               type="text"
               value={gradeLevel}
               onChange={(e) => setGradeLevel(e.target.value)}
-              placeholder="e.g. Grade 9, Undergraduate, PhD"
+              placeholder={t('gradeLevelPlaceholder')}
               disabled={loading}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
             />

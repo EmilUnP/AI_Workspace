@@ -132,7 +132,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                 {lesson.duration_minutes && (
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
-                    {lesson.duration_minutes} min
+                    {lesson.duration_minutes} {tl('minuteShort', 'min')}
                   </span>
                 )}
                 <span
@@ -141,7 +141,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                   }`}
                 >
                   <Clock className="w-3 h-3" />
-                  {lesson.audio_url ? 'Audio ready' : 'Audio processing'}
+                  {lesson.audio_url ? tl('audioReady', 'Audio ready') : tl('audioProcessing', 'Audio processing')}
                 </span>
               </div>
               {lesson.documents && (

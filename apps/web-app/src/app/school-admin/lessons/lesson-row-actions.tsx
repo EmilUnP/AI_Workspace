@@ -4,12 +4,14 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, Trash2, Loader2, AlertTriangle, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface LessonRowActionsProps {
   lessonId: string
 }
 
 export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
+  const t = useTranslations('teacherLessons')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -26,7 +28,7 @@ export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
         <Link
           href={`/school-admin/lessons/${lessonId}`}
           className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-          title="View lesson"
+          title={t('viewLesson')}
         >
           <Eye className="h-4 w-4" />
         </Link>
@@ -35,7 +37,7 @@ export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
           onClick={() => setShowDeleteConfirm(true)}
           disabled={isPending}
           className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-60"
-          title="Delete lesson"
+          title={t('deleteLesson')}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -54,7 +56,7 @@ export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isPending}
                 className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
-                aria-label="Close"
+                aria-label={t('close')}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -62,9 +64,9 @@ export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-700 ring-1 ring-gray-200/70">
                   <AlertTriangle className="h-7 w-7" />
                 </div>
-                <h3 className="mt-5 text-lg font-semibold text-gray-900">Delete lesson</h3>
+                <h3 className="mt-5 text-lg font-semibold text-gray-900">{t('deleteLessonTitle')}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                  Are you sure you want to delete this lesson?
+                  {t('deleteLessonConfirm')}
                 </p>
               </div>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:gap-3">
@@ -73,7 +75,7 @@ export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
                   disabled={isPending}
                   className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   onClick={handleDelete}
@@ -83,12 +85,12 @@ export function LessonRowActions({ lessonId }: LessonRowActionsProps) {
                   {isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Deleting...</span>
+                      <span>{t('deleting')}</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4" />
-                      <span>Delete lesson</span>
+                      <span>{t('deleteLesson')}</span>
                     </>
                   )}
                 </button>

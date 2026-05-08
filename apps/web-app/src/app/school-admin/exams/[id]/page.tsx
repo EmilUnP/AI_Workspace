@@ -170,7 +170,7 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{questions.length}</p>
-                <p className="text-xs text-gray-500">Questions total</p>
+                <p className="text-xs text-gray-500">{tl('questions', 'Questions')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
