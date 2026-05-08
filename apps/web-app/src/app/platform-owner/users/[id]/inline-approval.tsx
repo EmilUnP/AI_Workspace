@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, X } from 'lucide-react'
 import { approveUser, rejectUser } from './actions'
+import { useTranslations } from 'next-intl'
 
 interface ApproveRejectButtonsProps {
   userId: string
@@ -11,6 +12,7 @@ interface ApproveRejectButtonsProps {
 }
 
 export function ApproveRejectButtons({ userId, approvalStatus }: ApproveRejectButtonsProps) {
+  const t = useTranslations('platformOwner')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -42,7 +44,7 @@ export function ApproveRejectButtons({ userId, approvalStatus }: ApproveRejectBu
           className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Check className="h-3.5 w-3.5" />
-          Approve
+          {t('approve')}
         </button>
       )}
       {approvalStatus !== 'rejected' && (
@@ -53,7 +55,7 @@ export function ApproveRejectButtons({ userId, approvalStatus }: ApproveRejectBu
           className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <X className="h-3.5 w-3.5" />
-          Reject
+          {t('reject')}
         </button>
       )}
     </div>

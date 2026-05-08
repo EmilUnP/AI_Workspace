@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { Trash2, Loader2, AlertTriangle, X } from 'lucide-react'
 import { deleteUser } from './actions'
+import { useTranslations } from 'next-intl'
 
 interface DeleteUserButtonProps {
   userId: string
@@ -10,6 +11,7 @@ interface DeleteUserButtonProps {
 }
 
 export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
+  const t = useTranslations('platformOwner')
   const [showConfirm, setShowConfirm] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -27,7 +29,7 @@ export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
         className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
       >
         <Trash2 className="h-4 w-4" />
-        Delete User
+        {t('deleteUser')}
       </button>
 
       {/* Confirmation Modal */}
@@ -61,12 +63,12 @@ export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
 
                   {/* Title */}
                   <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-                    Delete User
+                    {t('deleteUser')}
                   </h3>
 
                   {/* Message */}
                   <p className="text-gray-600 text-center text-sm sm:text-base leading-relaxed">
-                    Are you sure you want to delete <strong className="font-semibold">{userName}</strong>? This action cannot be undone and all associated data will be removed.
+                    {t('deleteUserConfirm', { userName })}
                   </p>
                 </div>
 
@@ -78,7 +80,7 @@ export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
                     disabled={isPending}
                     className="flex-1 px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button
                     type="button"
@@ -89,12 +91,12 @@ export function DeleteUserButton({ userId, userName }: DeleteUserButtonProps) {
                     {isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Deleting...
+                        {t('deleting')}
                       </>
                     ) : (
                       <>
                         <Trash2 className="h-4 w-4" />
-                        Delete User
+                        {t('deleteUser')}
                       </>
                     )}
                   </button>

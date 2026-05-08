@@ -4,8 +4,10 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserPlus, X, Mail, User, Lock, AlertCircle, CheckCircle } from 'lucide-react'
 import { createSchoolAdmin } from './[id]/actions'
+import { useTranslations } from 'next-intl'
 
 export function CreateSchoolAdminDialog() {
+  const t = useTranslations('platformOwner')
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -67,7 +69,7 @@ export function CreateSchoolAdminDialog() {
         className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700"
       >
         <UserPlus className="h-4 w-4" />
-        Add School Admin
+        {t('addSchoolAdmin')}
       </button>
 
       {isOpen && (
@@ -85,8 +87,8 @@ export function CreateSchoolAdminDialog() {
                       <UserPlus className="h-5 w-5" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-bold">Create School Admin</h2>
-                      <p className="text-sm text-red-100">Directly from Users</p>
+                      <h2 className="text-lg font-bold">{t('createSchoolAdmin')}</h2>
+                      <p className="text-sm text-red-100">{t('directlyFromUsers')}</p>
                     </div>
                   </div>
                   <button
@@ -105,8 +107,8 @@ export function CreateSchoolAdminDialog() {
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900">School admin created</h3>
-                  <p className="mt-2 text-sm text-gray-600">{formData.email} can now log in.</p>
+                  <h3 className="mt-4 text-lg font-semibold text-gray-900">{t('schoolAdminCreated')}</h3>
+                  <p className="mt-2 text-sm text-gray-600">{t('canNowLogIn', { email: formData.email })}</p>
                 </div>
               ) : (
                 <>
@@ -119,7 +121,7 @@ export function CreateSchoolAdminDialog() {
                     )}
 
                     <label className="block text-sm">
-                      <span className="mb-1.5 block font-medium text-gray-700">Full Name</span>
+                      <span className="mb-1.5 block font-medium text-gray-700">{t('fullName')}</span>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <input
@@ -127,13 +129,13 @@ export function CreateSchoolAdminDialog() {
                           value={formData.full_name}
                           onChange={(event) => setFormData((prev) => ({ ...prev, full_name: event.target.value }))}
                           className="block w-full rounded-xl border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                          placeholder="Jane Doe"
+                          placeholder={t('fullNamePlaceholder')}
                         />
                       </div>
                     </label>
 
                     <label className="block text-sm">
-                      <span className="mb-1.5 block font-medium text-gray-700">Email Address</span>
+                      <span className="mb-1.5 block font-medium text-gray-700">{t('emailAddress')}</span>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <input
@@ -142,13 +144,13 @@ export function CreateSchoolAdminDialog() {
                           value={formData.email}
                           onChange={(event) => setFormData((prev) => ({ ...prev, email: event.target.value }))}
                           className="block w-full rounded-xl border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                          placeholder="admin@school.edu"
+                          placeholder={t('emailAddressPlaceholder')}
                         />
                       </div>
                     </label>
 
                     <label className="block text-sm">
-                      <span className="mb-1.5 block font-medium text-gray-700">Password</span>
+                      <span className="mb-1.5 block font-medium text-gray-700">{t('password')}</span>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <input
@@ -158,7 +160,7 @@ export function CreateSchoolAdminDialog() {
                           value={formData.password}
                           onChange={(event) => setFormData((prev) => ({ ...prev, password: event.target.value }))}
                           className="block w-full rounded-xl border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                          placeholder="Minimum 8 characters"
+                          placeholder={t('passwordMinPlaceholder')}
                         />
                       </div>
                     </label>
@@ -170,7 +172,7 @@ export function CreateSchoolAdminDialog() {
                       onClick={closeDialog}
                       className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
-                      Cancel
+                      {t('cancel')}
                     </button>
                     <button
                       type="submit"
@@ -178,7 +180,7 @@ export function CreateSchoolAdminDialog() {
                       disabled={isPending}
                       className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {isPending ? 'Creating...' : 'Create Admin'}
+                      {isPending ? t('creating') : t('createAdmin')}
                     </button>
                   </div>
                 </>
