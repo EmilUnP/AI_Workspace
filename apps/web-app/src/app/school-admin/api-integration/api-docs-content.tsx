@@ -1,6 +1,7 @@
 'use client'
 
 import { BookOpen, Sparkles } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { QUESTION_TYPES, SUPPORTED_LANGUAGES } from '@eduator/config'
 
 interface ApiDocsContentProps {
@@ -8,6 +9,7 @@ interface ApiDocsContentProps {
 }
 
 export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
+  const t = useTranslations('teacherApiIntegration')
   const loginUrl = `${apiBaseUrl}/auth/login`
   const documentsUrl = `${apiBaseUrl}/documents`
   const examsGenerateUrl = `${apiBaseUrl}/ai/exams/generate`
@@ -19,20 +21,20 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   return (
     <section>
       <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">
-        API documentation
+        {t('apiDocumentation')}
       </h2>
-      <p className="text-sm text-gray-600 mb-2">Authentication currently uses JWT access tokens.</p>
+      <p className="text-sm text-gray-600 mb-2">{t('jwtAuthDescription')}</p>
       <p className="text-sm text-gray-600 mb-6">
-        Base URL: <code className="rounded bg-gray-100 px-2 py-1 font-mono text-sm">{apiBaseUrl}</code>
+        {t('baseUrlLabel')}: <code className="rounded bg-gray-100 px-2 py-1 font-mono text-sm">{apiBaseUrl}</code>
       </p>
 
       <div className="space-y-8">
         <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4">
-            <h3 className="text-lg font-semibold text-gray-900">Quick start (working now)</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('quickStartWorkingNow')}</h3>
           </div>
           <div className="p-6 space-y-4 text-sm text-gray-700">
-            <p>1) Login and get <code className="bg-gray-100 px-1">tokens.accessToken</code>.</p>
+            <p>{t('quickStartStep1')} <code className="bg-gray-100 px-1">tokens.accessToken</code>.</p>
             <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${loginUrl} \\
   -H "Content-Type: application/json" \\
@@ -41,12 +43,12 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
     "password": "your-password"
   }'`}
             </pre>
-            <p>2) Use the access token in every protected request:</p>
+            <p>{t('quickStartStep2')}</p>
             <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`Authorization: Bearer ACCESS_TOKEN`}
             </pre>
             <p>
-              Interactive backend docs:{' '}
+              {t('interactiveBackendDocs')}:{' '}
               <a className="underline text-gray-800 hover:text-black" href="http://127.0.0.1:4000/v1/docs" target="_blank" rel="noreferrer">
                 http://127.0.0.1:4000/v1/docs
               </a>
@@ -56,7 +58,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
 
         <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white px-6 py-4">
-            <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('documents')}</h3>
           </div>
           <div className="p-6 space-y-6">
             <div>
@@ -80,15 +82,15 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /documents</h4>
-              <p className="text-sm text-gray-600">List documents for the authenticated user.</p>
+              <p className="text-sm text-gray-600">{t('listDocumentsForUser')}</p>
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /documents/:id</h4>
-              <p className="text-sm text-gray-600">Get one document by ID.</p>
+              <p className="text-sm text-gray-600">{t('getDocumentById')}</p>
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /documents/:id/file</h4>
-              <p className="text-sm text-gray-600">Stream the original document file if available.</p>
+              <p className="text-sm text-gray-600">{t('streamOriginalDocumentFile')}</p>
             </div>
           </div>
         </article>
@@ -101,7 +103,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <Sparkles className="h-4 w-4 text-amber-500" aria-hidden />
             </div>
             <h3 className="mt-2 text-lg font-semibold text-gray-900 flex items-center gap-2">
-              Generate exam
+              {t('generateExam')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
               Real route: <code className="bg-gray-100 px-1">POST /v1/ai/exams/generate</code>. You can provide
@@ -148,7 +150,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <Sparkles className="h-4 w-4 text-amber-500" aria-hidden />
             </div>
             <h3 className="mt-2 text-lg font-semibold text-gray-900 flex items-center gap-2">
-              Generate lesson
+              {t('generateLesson')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
               Real route: <code className="bg-gray-100 px-1">POST /v1/ai/lessons/generate</code>. This endpoint supports rich generation:
@@ -219,7 +221,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <code className="text-sm font-mono text-gray-700">/lessons/:id</code>
             </div>
             <h3 className="mt-2 text-lg font-semibold text-gray-900 flex items-center gap-2">
-              Lesson retrieval
+              {t('lessonRetrieval')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
               <strong>GET /v1/lessons</strong> gives list-level metadata. <strong>GET /v1/lessons/:id</strong> gives the full lesson including generated content, images, mini-test, and audio URL.
@@ -249,6 +251,30 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
                 <li>If audio_url is relative (for local fallback), media can be fetched via <code className="bg-gray-100 px-1">GET /v1/lessons/:id/media/:file</code></li>
               </ul>
             </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Lesson media contract (images + audio)</h4>
+              <p className="text-sm text-gray-600 mb-2">
+                Third-party apps should render lesson media directly from the lesson payload. Treat <code className="bg-gray-100 px-1">audio_url</code> as async: poll lesson details until it becomes non-null.
+              </p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`{
+  "lesson": {
+    "id": "lesson-uuid",
+    "title": "Fractions Basics",
+    "content": { "text": "..." },
+    "images": [
+      {
+        "url": "http://127.0.0.1:4000/v1/lessons/lesson-uuid/media/image_0.png",
+        "alt": "Fractions pie chart",
+        "description": "Educational image prompt",
+        "position": "top"
+      }
+    ],
+    "audio_url": "http://127.0.0.1:4000/v1/lessons/lesson-uuid/media/audio.wav"
+  }
+}`}
+              </pre>
+            </div>
           </div>
         </article>
 
@@ -256,7 +282,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
           <div className="border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white px-6 py-4">
             <div className="flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-indigo-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Education plans</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('educationPlans')}</h3>
             </div>
             <p className="mt-1 text-sm text-gray-600">
               Real route: <code className="bg-gray-100 px-1">POST /v1/ai/education-plans/generate</code>.
@@ -286,10 +312,10 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
 
         <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4">
-            <h3 className="text-lg font-semibold text-gray-900">Reference</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('reference')}</h3>
           </div>
           <div className="p-6 text-sm text-gray-600 space-y-2">
-            <p>Supported language codes: {languagesList}</p>
+            <p>{t('supportedLanguageCodes')}: {languagesList}</p>
             <p>
               API docs UI: <code className="bg-gray-100 px-1">/v1/docs</code>
             </p>
@@ -304,7 +330,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
       <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-5 flex items-start gap-3 mt-8">
         <BookOpen className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
         <div className="text-sm text-blue-900">
-          <p className="font-medium">Authentication</p>
+          <p className="font-medium">{t('authentication')}</p>
           <p className="mt-1 text-blue-800">
             Send <code className="rounded bg-blue-100 px-1 font-mono">Authorization: Bearer ACCESS_TOKEN</code> on every protected route.
             Access token comes from <code className="rounded bg-blue-100 px-1 font-mono">POST /v1/auth/login</code>.

@@ -11,7 +11,6 @@ const API_BASE_V1 = `${API_BASE}/v1`
 
 export default async function ApiIntegrationPage() {
   const t = await getTranslations('teacherApiIntegration')
-  const title = t('title') === 'title' ? 'API Integration' : t('title')
   const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
   if (user.role !== 'operator' && user.role !== 'admin') redirect('/app')
@@ -37,7 +36,7 @@ export default async function ApiIntegrationPage() {
     <div className="w-full max-w-none space-y-8">
       <header>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          {title}
+          {t('title')}
         </h1>
       </header>
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { BarChart3, CheckCircle, XCircle, Key, Zap, Clock, Filter, Search, ChevronDown, ArrowUpDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import type { UsageStats } from './api-integration-client'
 
 interface UsageSectionProps {
@@ -13,6 +14,7 @@ type KeySort = 'total' | 'name'
 type EndpointSort = 'total' | 'endpoint'
 
 export function UsageSection({ usageStats }: UsageSectionProps) {
+  const t = useTranslations('teacherApiIntegration')
   const { totalRequests, successCount, errorCount, byKey, byEndpoint, recent } = usageStats
 
   const [keyFilter, setKeyFilter] = useState<string>('all')
@@ -69,11 +71,9 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-1">
-          Usage analytics
-        </h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-1">{t('usageAnalytics')}</h2>
         <p className="text-sm text-gray-600">
-          Track API usage by key and endpoint. Filter and sort to see what matters.
+          {t('usageAnalyticsDescription')}
         </p>
       </div>
 
@@ -86,7 +86,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{totalRequests}</p>
-              <p className="text-sm text-gray-500">Total requests</p>
+              <p className="text-sm text-gray-500">{t('totalRequests')}</p>
             </div>
           </div>
         </div>
@@ -97,7 +97,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{successCount}</p>
-              <p className="text-sm text-gray-500">Successful</p>
+              <p className="text-sm text-gray-500">{t('successful')}</p>
             </div>
           </div>
         </div>
@@ -108,7 +108,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{errorCount}</p>
-              <p className="text-sm text-gray-500">Failed</p>
+              <p className="text-sm text-gray-500">{t('failed')}</p>
             </div>
           </div>
         </div>
@@ -119,7 +119,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-700">{successRate}%</p>
-              <p className="text-sm text-gray-500">Success rate</p>
+              <p className="text-sm text-gray-500">{t('successRate')}</p>
             </div>
           </div>
         </div>
@@ -128,9 +128,9 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
       {totalRequests === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
           <BarChart3 className="mx-auto h-12 w-12 text-gray-400" />
-          <p className="mt-3 text-sm font-medium text-gray-600">No usage yet</p>
+          <p className="mt-3 text-sm font-medium text-gray-600">{t('noUsageYet')}</p>
           <p className="mt-1 text-sm text-gray-500">
-            When you call the API with your key, requests will appear here.
+            {t('usageWillAppear')}
           </p>
         </div>
       ) : (
@@ -141,13 +141,13 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
               <Filter className="h-4 w-4 text-gray-500 shrink-0" />
               <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <label className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="whitespace-nowrap">Key</span>
+                  <span className="whitespace-nowrap">{t('key')}</span>
                   <select
                     value={keyFilter}
                     onChange={(e) => setKeyFilter(e.target.value)}
                     className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                   >
-                    <option value="all">All keys</option>
+                    <option value="all">{t('allKeys')}</option>
                     {byKey.map((k) => (
                       <option key={k.keyId} value={k.keyId}>
                         {k.keyName} ({k.keyPrefix}…)
@@ -156,29 +156,29 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                   </select>
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="whitespace-nowrap">Status (recent)</span>
+                  <span className="whitespace-nowrap">{t('statusRecent')}</span>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                     className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
                   >
-                    <option value="all">All</option>
-                    <option value="success">Success</option>
-                    <option value="error">Failed</option>
+                    <option value="all">{t('all')}</option>
+                    <option value="success">{t('success')}</option>
+                    <option value="error">{t('failed')}</option>
                   </select>
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-600">
                   <Search className="h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search endpoint..."
+                    placeholder={t('searchEndpoint')}
                     value={endpointSearch}
                     onChange={(e) => setEndpointSearch(e.target.value)}
                     className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:ring-1 focus:ring-gray-300 sm:w-52"
                   />
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="whitespace-nowrap">Recent</span>
+                  <span className="whitespace-nowrap">{t('recent')}</span>
                   <select
                     value={recentLimit}
                     onChange={(e) => setRecentLimit(Number(e.target.value))}
@@ -201,7 +201,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                   }}
                   className="text-sm text-gray-700 hover:text-gray-900"
                 >
-                  Clear filters
+                  {t('clearFilters')}
                 </button>
               )}
             </div>
@@ -213,23 +213,23 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
               <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
                   <Key className="h-4 w-4 text-gray-500" />
-                  By API key
+                  {t('byApiKey')}
                 </h3>
                 <div className="flex items-center gap-1 text-sm text-gray-500">
-                  <span>Sort:</span>
+                  <span>{t('sort')}</span>
                   <button
                     type="button"
                     onClick={() => setKeySort(keySort === 'total' ? 'name' : 'total')}
                     className="flex items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 text-gray-700"
                   >
-                    {keySort === 'total' ? 'Total' : 'Name'}
+                    {keySort === 'total' ? t('total') : t('name')}
                     <ChevronDown className={`h-4 w-4 transition ${keySortDesc ? '' : 'rotate-180'}`} />
                   </button>
                   <button
                     type="button"
                     onClick={() => setKeySortDesc((d) => !d)}
                     className="rounded p-1 hover:bg-gray-100"
-                    title={keySortDesc ? 'Descending' : 'Ascending'}
+                    title={keySortDesc ? t('descending') : t('ascending')}
                   >
                     <ArrowUpDown className="h-4 w-4" />
                   </button>
@@ -239,12 +239,12 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead>
                     <tr className="bg-gray-50/80 text-left text-gray-500">
-                      <th className="py-3 px-4 font-medium">Key name</th>
-                      <th className="py-3 px-4 font-medium">Prefix</th>
-                      <th className="py-3 px-4 text-right font-medium">Total</th>
+                      <th className="py-3 px-4 font-medium">{t('keyName')}</th>
+                      <th className="py-3 px-4 font-medium">{t('prefix')}</th>
+                      <th className="py-3 px-4 text-right font-medium">{t('total')}</th>
                       <th className="py-3 px-4 text-right font-medium text-gray-700">OK</th>
                       <th className="py-3 px-4 text-right font-medium text-gray-700">Failed</th>
-                      <th className="py-3 px-4 text-right font-medium text-gray-500">Rate</th>
+                      <th className="py-3 px-4 text-right font-medium text-gray-500">{t('rate')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -273,7 +273,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
               <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
                   <BarChart3 className="h-4 w-4 text-gray-500" />
-                  By endpoint
+                  {t('byEndpoint')}
                 </h3>
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <button
@@ -281,7 +281,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                     onClick={() => setEndpointSort(endpointSort === 'total' ? 'endpoint' : 'total')}
                     className="flex items-center gap-1 rounded px-2 py-1 hover:bg-gray-100 text-gray-700"
                   >
-                    {endpointSort === 'total' ? 'Total' : 'Endpoint'}
+                    {endpointSort === 'total' ? t('total') : t('endpoint')}
                   </button>
                   <button
                     type="button"
@@ -296,9 +296,9 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead>
                     <tr className="bg-gray-50/80 text-left text-gray-500">
-                      <th className="py-3 px-4 font-medium">Method</th>
-                      <th className="py-3 px-4 font-medium">Endpoint</th>
-                      <th className="py-3 px-4 text-right font-medium">Total</th>
+                      <th className="py-3 px-4 font-medium">{t('method')}</th>
+                      <th className="py-3 px-4 font-medium">{t('endpoint')}</th>
+                      <th className="py-3 px-4 text-right font-medium">{t('total')}</th>
                       <th className="py-3 px-4 text-right font-medium text-gray-700">OK</th>
                       <th className="py-3 px-4 text-right font-medium text-gray-700">Failed</th>
                     </tr>
@@ -319,7 +319,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                 </table>
               </div>
               {filteredByEndpoint.length === 0 && endpointSearch && (
-                <p className="py-4 text-center text-sm text-gray-500">No endpoints match &quot;{endpointSearch}&quot;</p>
+                <p className="py-4 text-center text-sm text-gray-500">{t('noEndpointsMatch', { query: endpointSearch })}</p>
               )}
             </div>
           )}
@@ -330,21 +330,22 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
               <div className="border-b border-gray-100 px-6 py-4">
                 <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
                   <Clock className="h-4 w-4 text-gray-500" />
-                  Recent requests
+                  {t('recentRequests')}
                 </h3>
                 <p className="mt-1 text-xs text-gray-500">
-                  Showing up to {recentLimit} • Status filter: {statusFilter === 'all' ? 'All' : statusFilter === 'success' ? 'Success only' : 'Failed only'}
-                  {endpointSearch && ` • Endpoint contains "${endpointSearch}"`}
+                  {t('showingUpTo', { count: recentLimit })} • {t('statusFilter')}:{' '}
+                  {statusFilter === 'all' ? t('all') : statusFilter === 'success' ? t('successOnly') : t('failedOnly')}
+                  {endpointSearch ? ` • ${t('endpointContains', { query: endpointSearch })}` : ''}
                 </p>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead>
                     <tr className="bg-gray-50/80 text-left text-gray-500">
-                      <th className="py-3 px-4 font-medium">When</th>
-                      <th className="py-3 px-4 font-medium">Method</th>
-                      <th className="py-3 px-4 font-medium">Endpoint</th>
-                      <th className="py-3 px-4 font-medium">Status</th>
+                      <th className="py-3 px-4 font-medium">{t('when')}</th>
+                      <th className="py-3 px-4 font-medium">{t('method')}</th>
+                      <th className="py-3 px-4 font-medium">{t('endpoint')}</th>
+                      <th className="py-3 px-4 font-medium">{t('status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -374,7 +375,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                 </table>
               </div>
               {filteredRecent.length === 0 && (statusFilter !== 'all' || endpointSearch) && (
-                <p className="py-4 text-center text-sm text-gray-500">No recent requests match the current filters.</p>
+                <p className="py-4 text-center text-sm text-gray-500">{t('noRecentRequestsMatch')}</p>
               )}
             </div>
           )}

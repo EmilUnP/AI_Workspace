@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Key, Plus, Copy, Trash2, Check, AlertCircle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { createApiKey, revokeApiKey } from './actions'
 import type { TeacherApiKeyRow } from '@eduator/db'
 
@@ -11,6 +12,7 @@ interface ApiKeysSectionProps {
 }
 
 export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
+  const t = useTranslations('teacherApiIntegration')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +25,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
     setError(null)
     setNewKeyResult(null)
     const formData = new FormData()
-    formData.set('name', keyName.trim() || 'My API Key')
+    formData.set('name', keyName.trim() || t('defaultApiKeyName'))
     startTransition(async () => {
       const result = await createApiKey(null, formData)
       if (result.error) {
@@ -43,7 +45,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
   }
 
   const handleRevoke = (keyId: string) => {
-    if (!confirm('Revoke this API key? It will stop working immediately.')) return
+    if (!confirm(t('revokeApiKeyConfirm'))) return
     setError(null)
     startTransition(async () => {
       const result = await revokeApiKey(keyId)
@@ -59,9 +61,9 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
           <Key className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Your API keys</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('yourApiKeys')}</h2>
           <p className="text-sm text-gray-600 mt-0.5">
-            Manage integration keys for app workflows. Keep keys secret and rotate regularly.
+            {t('manageApiKeysDescription')}
           </p>
         </div>
       </div>
@@ -77,7 +79,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
       {newKeyResult && (
         <div className="mb-6 rounded-lg border-2 border-gray-300 bg-gray-100 p-4">
           <p className="text-sm font-semibold text-gray-900">
-            Copy your new key now — you won&apos;t see it again.
+            {t('copyNewKeyNow')}
           </p>
           <div className="mt-2 flex items-center gap-2">
             <code className="flex-1 rounded bg-gray-200 px-2 py-1.5 text-sm font-mono text-gray-900 break-all">
@@ -89,7 +91,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
               className="inline-flex items-center gap-1 rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-black"
             >
               {copiedId === 'new' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copiedId === 'new' ? 'Copied' : 'Copy'}
+              {copiedId === 'new' ? t('copied') : t('copy')}
             </button>
           </div>
         </div>
@@ -98,14 +100,14 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
       <form onSubmit={handleCreate} className="mb-6 flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1">
           <label htmlFor="key_name" className="block text-sm font-medium text-gray-700 mb-1">
-            Key name
+            {t('keyName')}
           </label>
           <input
             id="key_name"
             type="text"
             value={keyName}
             onChange={(e) => setKeyName(e.target.value)}
-            placeholder="e.g. Production app"
+            placeholder={t('keyNamePlaceholder')}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
           />
         </div>
@@ -115,14 +117,14 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
           className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
-          {isPending ? 'Creating...' : 'Create API key'}
+          {isPending ? t('creating') : t('createApiKey')}
         </button>
       </form>
 
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Existing keys</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-2">{t('existingKeys')}</h3>
         {initialKeys.length === 0 ? (
-          <p className="text-sm text-gray-500">No keys yet. Create one above to get started.</p>
+          <p className="text-sm text-gray-500">{t('noKeysYet')}</p>
         ) : (
           <ul className="space-y-2">
             {initialKeys.map((k) => (
@@ -134,8 +136,8 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
                   <span className="font-medium text-gray-900">{k.name}</span>
                   <span className="ml-2 font-mono text-xs text-gray-500">{k.key_prefix}…</span>
                   <span className="ml-2 text-xs text-gray-400">
-                    Created {new Date(k.created_at).toLocaleDateString()}
-                    {k.last_used_at && ` · Last used ${new Date(k.last_used_at).toLocaleDateString()}`}
+                    {t('created')} {new Date(k.created_at).toLocaleDateString()}
+                    {k.last_used_at && ` · ${t('lastUsed')} ${new Date(k.last_used_at).toLocaleDateString()}`}
                   </span>
                 </div>
                 <button
@@ -143,7 +145,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
                   onClick={() => handleRevoke(k.id)}
                   disabled={isPending}
                   className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
-                  title="Revoke key"
+                  title={t('revokeKey')}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

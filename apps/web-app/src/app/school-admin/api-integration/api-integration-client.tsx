@@ -30,14 +30,12 @@ export interface ApiIntegrationClientProps {
 
 export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl, geminiKeyStatus }: ApiIntegrationClientProps) {
   const t = useTranslations('teacherApiIntegration')
-  const keysTabLabel = t('keysTab') === 'keysTab' ? 'Keys & Docs' : t('keysTab')
-  const usageTabLabel = t('usageTab') === 'usageTab' ? 'Usage' : t('usageTab')
   const [activeTab, setActiveTab] = useState<'keys-docs' | 'gemini-key' | 'usage'>('keys-docs')
 
   const TABS = [
-    { id: 'keys-docs' as const, label: keysTabLabel, icon: BookOpen },
-    { id: 'gemini-key' as const, label: 'Gemini Key', icon: Sparkles },
-    { id: 'usage' as const, label: usageTabLabel, icon: BarChart3 },
+    { id: 'keys-docs' as const, label: t('keysTab'), icon: BookOpen },
+    { id: 'gemini-key' as const, label: t('geminiTab'), icon: Sparkles },
+    { id: 'usage' as const, label: t('usageTab'), icon: BarChart3 },
   ]
 
   return (

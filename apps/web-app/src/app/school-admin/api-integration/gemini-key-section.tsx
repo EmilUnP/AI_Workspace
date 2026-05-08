@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { AlertCircle, KeyRound, Trash2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { deleteGeminiKey, saveGeminiKey } from './actions'
 
 type GeminiKeySectionProps = {
@@ -10,6 +11,7 @@ type GeminiKeySectionProps = {
 }
 
 export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySectionProps) {
+  const t = useTranslations('teacherApiIntegration')
   const [apiKey, setApiKey] = useState('')
   const [hasKey, setHasKey] = useState(initialHasKey)
   const [keyHint, setKeyHint] = useState<string | null>(initialKeyHint)
@@ -29,12 +31,12 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
       setHasKey(Boolean(result.hasKey))
       setKeyHint(result.keyHint ?? null)
       setApiKey('')
-      setMessage('Gemini API key saved successfully.')
+      setMessage(t('geminiKeySaved'))
     })
   }
 
   const handleDelete = () => {
-    if (!confirm('Delete your Gemini key? AI features will stop until you add a new one.')) return
+    if (!confirm(t('deleteGeminiKeyConfirm'))) return
     setError(null)
     setMessage(null)
     startTransition(async () => {
@@ -45,7 +47,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
       }
       setHasKey(false)
       setKeyHint(null)
-      setMessage('Gemini API key removed.')
+      setMessage(t('geminiKeyRemoved'))
     })
   }
 
@@ -56,9 +58,9 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
           <KeyRound className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Personal Gemini key</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('personalGeminiKey')}</h2>
           <p className="mt-0.5 text-sm text-gray-600">
-            This key is saved per user and used for AI features in your account.
+            {t('personalGeminiKeyDescription')}
           </p>
         </div>
       </div>
@@ -78,7 +80,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
 
       <div className="space-y-3">
         <label htmlFor="gemini_key" className="block text-sm font-medium text-gray-700">
-          Gemini API key
+          {t('geminiApiKey')}
         </label>
         <input
           id="gemini_key"
@@ -96,7 +98,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
             disabled={isPending || apiKey.trim().length === 0}
             className="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
           >
-            {isPending ? 'Saving...' : hasKey ? 'Update key' : 'Save key'}
+            {isPending ? t('saving') : hasKey ? t('updateKey') : t('saveKey')}
           </button>
           {hasKey && (
             <button
@@ -106,7 +108,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
               className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" />
-              Delete key
+              {t('deleteKey')}
             </button>
           )}
         </div>
@@ -115,10 +117,10 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
       <div className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
         {hasKey ? (
           <span>
-            Active key: ending with <span className="font-mono text-gray-800">{keyHint ?? '****'}</span>
+            {t('activeKeyEndingWith')} <span className="font-mono text-gray-800">{keyHint ?? '****'}</span>
           </span>
         ) : (
-          <span>No key saved yet. Add your key to use AI features.</span>
+          <span>{t('noGeminiKeySaved')}</span>
         )}
       </div>
     </div>
