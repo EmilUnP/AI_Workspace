@@ -2,32 +2,30 @@ import { getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 import { GraduationCap } from 'lucide-react'
 import { SchoolAdminLayoutClient } from './school-admin-layout-client'
-
-const baseNavigation = [
-  { name: 'Documents', href: '/school-admin/documents', icon: 'FolderOpen' },
-  { name: 'Exams', href: '/school-admin/exams', icon: 'FileText' },
-  { name: 'Lessons', href: '/school-admin/lessons', icon: 'GraduationCap' },
-  { name: 'Education Plans', href: '/school-admin/education-plans', icon: 'CalendarRange' },
-  { name: 'AI Tutor', href: '/school-admin/chat', icon: 'MessageSquare' },
-  { name: 'API Integration', href: '/school-admin/api-integration', icon: 'Key' },
-]
+import { getTranslations } from 'next-intl/server'
 
 export default async function SchoolAdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const t = await getTranslations('schoolAdmin')
   const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
   if (user.role !== 'operator' && user.role !== 'admin') redirect('/app')
-  const navigation = baseNavigation
+  const navigation = [
+    { name: t('navDocuments'), href: '/school-admin/documents', icon: 'FolderOpen' },
+    { name: t('navExams'), href: '/school-admin/exams', icon: 'FileText' },
+    { name: t('navLessons'), href: '/school-admin/lessons', icon: 'GraduationCap' },
+    { name: t('navEducationPlans'), href: '/school-admin/education-plans', icon: 'CalendarRange' },
+    { name: t('navAiTutor'), href: '/school-admin/chat', icon: 'MessageSquare' },
+    { name: t('navApiIntegration'), href: '/school-admin/api-integration', icon: 'Key' },
+  ]
 
   const displayProfile = {
     full_name: user.email?.split('@')[0] || 'Operator',
     email: user.email,
   }
-
-  const workspaceName = 'Global Workspace'
 
   const logo = (
     <div className="flex items-center gap-2">

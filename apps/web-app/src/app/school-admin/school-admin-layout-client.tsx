@@ -5,6 +5,7 @@ import { GraduationCap, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { UserNav } from './user-nav'
 import { MobileSidebar, DesktopNavigation } from '../components/mobile-sidebar'
 import { LanguageSwitcher } from '../components/language-switcher'
+import { useTranslations } from 'next-intl'
 
 interface NavItem {
   name: string
@@ -26,6 +27,7 @@ export function SchoolAdminLayoutClient({
   profile,
   children,
 }: SchoolAdminLayoutClientProps) {
+  const tc = useTranslations('common')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const displayProfile = {
@@ -81,8 +83,8 @@ export function SchoolAdminLayoutClient({
               type="button"
               onClick={() => setSidebarCollapsed((c) => !c)}
               className="hidden items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:inline-flex"
-              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={sidebarCollapsed ? tc('expandSidebar') : tc('collapseSidebar')}
+              title={sidebarCollapsed ? tc('expandSidebar') : tc('collapseSidebar')}
             >
               {sidebarCollapsed ? (
                 <PanelLeft className="h-5 w-5" />

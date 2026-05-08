@@ -38,7 +38,9 @@ const translations: I18nTable = {
       signOut: 'Sign out',
       language: 'Language',
       english: 'English',
-      azerbaijani: 'Azerbaijani'
+      azerbaijani: 'Azerbaijani',
+      expandSidebar: 'Expand sidebar',
+      collapseSidebar: 'Collapse sidebar'
     },
     login: {
       emailLabel: 'Email',
@@ -116,6 +118,15 @@ const translations: I18nTable = {
       editUser: 'Edit User',
       approveUser: 'Approve User',
       rejectUser: 'Reject User'
+    },
+    schoolAdmin: {
+      navDocuments: 'Documents',
+      navExams: 'Exams',
+      navLessons: 'Lessons',
+      navEducationPlans: 'Education Plans',
+      navAiTutor: 'AI Tutor',
+      navApiIntegration: 'API Integration',
+      roleOperator: 'Operator'
     }
   },
   az: {
@@ -124,7 +135,9 @@ const translations: I18nTable = {
       signOut: 'Çıxış',
       language: 'Dil',
       english: 'İngilis',
-      azerbaijani: 'Azərbaycan'
+      azerbaijani: 'Azərbaycan',
+      expandSidebar: 'Yan paneli aç',
+      collapseSidebar: 'Yan paneli yığ'
     },
     login: {
       emailLabel: 'E-poçt',
@@ -202,6 +215,15 @@ const translations: I18nTable = {
       editUser: 'İstifadəçini redaktə et',
       approveUser: 'İstifadəçini təsdiqlə',
       rejectUser: 'İstifadəçini rədd et'
+    },
+    schoolAdmin: {
+      navDocuments: 'Sənədlər',
+      navExams: 'İmtahanlar',
+      navLessons: 'Dərslər',
+      navEducationPlans: 'Tədris planları',
+      navAiTutor: 'AI müəllim',
+      navApiIntegration: 'API inteqrasiyası',
+      roleOperator: 'Operator'
     }
   }
 }
