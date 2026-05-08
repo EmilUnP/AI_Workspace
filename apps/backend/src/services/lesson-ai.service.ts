@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { generateLessonImagesWithUsage, type LessonImage } from './lesson-media.service.js'
 import { DocumentRagService } from './document-rag.service.js'
 import { generateLessonAudioWithUsage } from './lesson-media.service.js'
+import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 
 const AI_MODELS = {
   LESSON: 'gemini-2.5-flash',
@@ -55,6 +56,7 @@ const getRelevantContentFromDocuments = async (
 }
 
 let currentRagUserId = ''
+let currentGeminiApiKey = ''
 
 // Types for generated lesson content
 export interface GeneratedLesson {
@@ -200,6 +202,7 @@ function sanitizeExplanation(explanation: unknown): string {
 
 // Utility to get API key
 function getApiKey(): string {
+  if (currentGeminiApiKey) return currentGeminiApiKey
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
     throw new Error('Missing GOOGLE_GENERATIVE_AI_KEY or GOOGLE_GEMINI_API_KEY environment variable')
@@ -1003,6 +1006,7 @@ export class LessonAiService {
 
   async generate(userId: string, input: unknown) {
     currentRagUserId = userId
+    currentGeminiApiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const body = (input ?? {}) as {
       documentId?: string
       documentIds?: string[]
@@ -1064,6 +1068,8 @@ export class LessonAiService {
       const wrapped = new Error(`Lesson generation failed: ${message}`) as Error & { statusCode?: number }
       wrapped.statusCode = 500
       throw wrapped
+    } finally {
+      currentGeminiApiKey = ''
     }
 
     try {

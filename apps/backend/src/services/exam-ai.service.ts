@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { generateJson } from '../ai/gemini.js'
 import { DocumentRagService } from './document-rag.service.js'
+import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { FastifyInstance } from 'fastify'
 
 const questionTypeEnum = z.enum(['multiple_choice', 'true_false', 'multiple_select', 'fill_blank'])
@@ -62,11 +63,12 @@ export class ExamAiService {
 
     const prompt = this.buildGenerationPrompt(data, contextText)
 
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const exam = await generateJson<{
       title: string
       description: string
       questions: Array<Record<string, unknown>>
-    }>(prompt)
+    }>(prompt, 'gemini-2.5-flash', { apiKey })
 
     const normalizedQuestions = this.normalizeGeneratedQuestions(exam.questions || [])
 
@@ -88,15 +90,18 @@ export class ExamAiService {
     return { id: rows[0].id, ...exam, questions: normalizedQuestions }
   }
 
-  async translate(input: unknown) {
+  async translate(userId: string, input: unknown) {
     const data = translateSchema.parse(input)
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const translated = await generateJson<{ questions: Array<Record<string, unknown>> }>(
       [
         `Translate all exam questions to language: ${data.targetLanguage}.`,
         'Preserve structure and question ids if present.',
         'Output JSON object: {"questions":[...]}',
         `Questions JSON:\n${JSON.stringify(data.questions)}`
-      ].join('\n\n')
+      ].join('\n\n'),
+      'gemini-2.5-flash',
+      { apiKey }
     )
     return translated
   }

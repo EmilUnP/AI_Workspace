@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { generateJson } from '../ai/gemini.js'
 import { DocumentRagService } from './document-rag.service.js'
+import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { FastifyInstance } from 'fastify'
 
 const planSchema = z.object({
@@ -26,6 +27,7 @@ export class EducationPlanAiService {
       topK: 8
     })
 
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const content = await generateJson<Array<Record<string, unknown>>>(
       `Generate weekly education plan content in ${data.language}.
 Plan name: ${data.name}
@@ -33,7 +35,7 @@ Period months: ${data.periodMonths}
 Sessions/week: ${data.sessionsPerWeek}
 Hours/session: ${data.hoursPerSession}
 Context:\n${retrieved.chunks.join('\n\n')}`
-    )
+    , 'gemini-2.5-flash', { apiKey })
 
     const { rows } = await this.app.db.query<{ id: string }>(
       `INSERT INTO education_plans (user_id, name, period_months, sessions_per_week, hours_per_session, document_ids, content)

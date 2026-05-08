@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, BarChart3 } from 'lucide-react'
+import { BookOpen, BarChart3, Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { ApiKeysSection } from './api-keys-section'
 import { ApiDocsContent } from './api-docs-content'
 import { UsageSection } from './usage-section'
+import { GeminiKeySection } from './gemini-key-section'
 import type { TeacherApiKeyRow } from '@eduator/db'
 
 export type UsageStats = {
@@ -21,16 +22,21 @@ export interface ApiIntegrationClientProps {
   keys: TeacherApiKeyRow[]
   usageStats: UsageStats
   apiBaseUrl: string
+  geminiKeyStatus: {
+    hasKey: boolean
+    keyHint: string | null
+  }
 }
 
-export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl }: ApiIntegrationClientProps) {
+export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl, geminiKeyStatus }: ApiIntegrationClientProps) {
   const t = useTranslations('teacherApiIntegration')
   const keysTabLabel = t('keysTab') === 'keysTab' ? 'Keys & Docs' : t('keysTab')
   const usageTabLabel = t('usageTab') === 'usageTab' ? 'Usage' : t('usageTab')
-  const [activeTab, setActiveTab] = useState<'keys-docs' | 'usage'>('keys-docs')
+  const [activeTab, setActiveTab] = useState<'keys-docs' | 'gemini-key' | 'usage'>('keys-docs')
 
   const TABS = [
     { id: 'keys-docs' as const, label: keysTabLabel, icon: BookOpen },
+    { id: 'gemini-key' as const, label: 'Gemini Key', icon: Sparkles },
     { id: 'usage' as const, label: usageTabLabel, icon: BarChart3 },
   ]
 
@@ -68,6 +74,9 @@ export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl }: ApiIntegr
       )}
 
       {activeTab === 'usage' && <UsageSection usageStats={usageStats} />}
+      {activeTab === 'gemini-key' && (
+        <GeminiKeySection initialHasKey={geminiKeyStatus.hasKey} initialKeyHint={geminiKeyStatus.keyHint} />
+      )}
     </div>
   )
 }

@@ -15,8 +15,8 @@ export async function aiRoutes(app: FastifyInstance) {
   const lessonService = new LessonAiService(app)
   const examService = new ExamAiService(app)
   const planService = new EducationPlanAiService(app)
-  const translatorService = new TranslatorAiService()
-  const mediaService = new MediaAiService()
+  const translatorService = new TranslatorAiService(app)
+  const mediaService = new MediaAiService(app)
 
   app.post('/ai/requests', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
@@ -131,7 +131,7 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post('/ai/exams/translate', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const result = await examService.translate(request.body)
+    const result = await examService.translate(userId, request.body)
     reply.send(result)
   })
 
@@ -143,7 +143,9 @@ export async function aiRoutes(app: FastifyInstance) {
   })
 
   app.post('/ai/translate', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const result = await translatorService.translate(request.body)
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+    const result = await translatorService.translate(userId, request.body)
     reply.send(result)
   })
 
@@ -158,7 +160,9 @@ export async function aiRoutes(app: FastifyInstance) {
   })
 
   app.post('/ai/image/generate', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const result = await mediaService.image(request.body)
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+    const result = await mediaService.image(userId, request.body)
     reply.send(result)
   })
 }

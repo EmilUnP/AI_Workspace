@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { generateText } from '../ai/gemini.js'
 import { DocumentRagService } from './document-rag.service.js'
+import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { FastifyInstance } from 'fastify'
 
 const sendSchema = z.object({
@@ -138,22 +139,28 @@ export class TeacherChatbotService {
       [conversationId, data.message]
     )
 
-    let context = ''
-    for (const id of data.documentIds) {
-      const retrieved = await this.rag.retrieve(userId, { documentId: id, query: data.message, topK: 3 })
-      context += `\n\n[Doc:${id}]\n${retrieved.chunks.join('\n')}`
-    }
+    const docIds = data.documentIds.slice(0, 3)
+    const retrievedDocs = await Promise.all(
+      docIds.map(async (id) => {
+        const retrieved = await this.rag.retrieve(userId, { documentId: id, query: data.message, topK: 2 })
+        const chunks = (retrieved.chunks || []).slice(0, 2).map((chunk) => String(chunk).slice(0, 700))
+        return `\n\n[Doc:${id}]\n${chunks.join('\n')}`
+      })
+    )
+    const context = retrievedDocs.join('').slice(0, 3000)
 
     const style = data.shortAnswer
       ? 'Respond briefly in 1-4 bullet points. Keep it short and practical.'
       : 'Respond with detailed guidance.'
-    const reply = await generateText(
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const replyRaw = await generateText(
       `You are Eduator teacher assistant. ${style}
 If the user asks a direct definition, answer in max 3 short bullets.
 Avoid long introductions and avoid repeating the same idea.
 User question: ${data.message}
 Relevant context:${context}`
-    )
+    , 'gemini-2.5-flash', { apiKey })
+    const reply = String(replyRaw || '').trim().slice(0, 1600)
 
     const { rows: msgRows } = await this.app.db.query<{ id: string; content: string }>(
       `INSERT INTO teacher_chat_messages (conversation_id, role, content, metadata)

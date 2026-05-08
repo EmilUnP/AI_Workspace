@@ -8,6 +8,7 @@ import WordExtractor from 'word-extractor'
 import pdfParse from '@cedrugs/pdf-parse'
 import { generateEmbedding, generateText } from '../ai/gemini.js'
 import { env } from '../config/env.js'
+import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 
 const querySchema = z.object({
   documentId: z.uuid(),
@@ -74,9 +75,10 @@ export class DocumentRagService {
     }
     const text = await this.ensureExtractedText(doc)
     const chunks = this.chunkText(text, 4000, 400)
-    const embeddings = await this.ensureEmbeddings(doc.id, chunks)
-    const queryForSearch = await this.translateQueryIfNeeded(data.query, doc.content_language)
-    const queryVec = await generateEmbedding(queryForSearch)
+    const embeddings = await this.ensureEmbeddings(doc.id, chunks, userId)
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const queryForSearch = await this.translateQueryIfNeeded(data.query, doc.content_language, apiKey)
+    const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
     let relevant: string[]
     try {
       relevant = this.pickTopChunks(chunks, embeddings, queryVec, data.topK)
@@ -113,11 +115,12 @@ export class DocumentRagService {
     const doc = await this.getDoc(userId, documentId)
     if (!doc) return []
     const text = await this.ensureExtractedText(doc)
-    const { chunks, embeddings } = await this.getDocumentChunks(doc.id, text)
+    const { chunks, embeddings } = await this.getDocumentChunks(doc.id, text, userId)
     if (chunks.length === 0) return []
-    const queryForSearch = await this.translateQueryIfNeeded(query, doc.content_language)
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const queryForSearch = await this.translateQueryIfNeeded(query, doc.content_language, apiKey)
     try {
-      const queryVec = await generateEmbedding(queryForSearch)
+      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
       if (embeddings && embeddings.length === chunks.length) {
         return this.pickTopChunks(chunks, embeddings, queryVec, Math.max(1, topK))
       }
@@ -169,7 +172,8 @@ export class DocumentRagService {
     try {
       const text = await this.ensureExtractedText(doc)
       const chunks = this.chunkText(text, 4000, 400)
-      const embeddings = await this.generateChunkEmbeddings(chunks)
+      const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+      const embeddings = await this.generateChunkEmbeddings(chunks, apiKey)
       const quality = this.validateTextQuality(text, chunks)
       const contentLanguage = await this.detectLanguage(text)
 
@@ -388,7 +392,7 @@ export class DocumentRagService {
     return chunks.filter((c) => c.length > 100)
   }
 
-  private async getDocumentChunks(documentId: string, documentText: string): Promise<DocumentChunksData> {
+  private async getDocumentChunks(documentId: string, documentText: string, userId: string): Promise<DocumentChunksData> {
     const { rows } = await this.app.db.query<Pick<DocRow, 'text_chunks' | 'chunk_embeddings' | 'extracted_text'>>(
       `SELECT text_chunks, chunk_embeddings, extracted_text FROM documents WHERE id = $1 LIMIT 1`,
       [documentId]
@@ -412,14 +416,14 @@ export class DocumentRagService {
     const chunks = this.chunkText(documentText, 4000, 400)
     if (chunks.length === 0) return { chunks: [], embeddings: null }
 
-    const embeddings = await this.ensureEmbeddings(documentId, chunks)
+    const embeddings = await this.ensureEmbeddings(documentId, chunks, userId)
     if (Array.isArray(embeddings) && embeddings.length === chunks.length) {
       return { chunks, embeddings }
     }
     return { chunks, embeddings: null }
   }
 
-  private async ensureEmbeddings(documentId: string, chunks: string[]) {
+  private async ensureEmbeddings(documentId: string, chunks: string[], userId: string) {
     const { rows } = await this.app.db.query<Pick<DocRow, 'chunk_embeddings'>>(
       `SELECT chunk_embeddings FROM documents WHERE id = $1`,
       [documentId]
@@ -427,7 +431,8 @@ export class DocumentRagService {
     const existing = rows[0]?.chunk_embeddings
     if (Array.isArray(existing) && existing.length === chunks.length) return existing
 
-    const embeddings = await this.generateChunkEmbeddings(chunks)
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const embeddings = await this.generateChunkEmbeddings(chunks, apiKey)
     await this.app.db.query(`UPDATE documents SET text_chunks = $2::jsonb, chunk_embeddings = $3::jsonb WHERE id = $1`, [
       documentId,
       this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]'),
@@ -547,12 +552,13 @@ export class DocumentRagService {
     if (heuristic && heuristic !== 'en') return heuristic
 
     try {
+      const fallbackApiKey = env.GOOGLE_GEMINI_API_KEY
       const answer = await generateText(
         `Detect dominant language of the following text.
 Return ONLY a 2-letter ISO 639-1 code (like en, ru, az, tr, ar, es, fr, de).
 Text:
 ${sample}`
-      )
+      , 'gemini-2.5-flash', fallbackApiKey ? { apiKey: fallbackApiKey } : undefined)
       const normalized = this.normalizeLanguageCode(answer)
       if (normalized) return normalized
     } catch {
@@ -563,26 +569,28 @@ ${sample}`
     return heuristic || this.detectLanguageByScript(sample) || 'en'
   }
 
-  private async translateQueryIfNeeded(query: string, contentLanguage: string | null) {
+  private async translateQueryIfNeeded(query: string, contentLanguage: string | null, apiKey?: string) {
     if (!contentLanguage) return query
     const target = contentLanguage.toLowerCase()
     if (target.startsWith('en')) return query
     try {
       const translated = await generateText(
         `Translate this search query into ${target}. Return only the translated text:\n${query}`
-      )
+      , 'gemini-2.5-flash', apiKey ? { apiKey } : undefined)
       return translated || query
     } catch {
       return query
     }
   }
 
-  private async generateChunkEmbeddings(chunks: string[]) {
+  private async generateChunkEmbeddings(chunks: string[], apiKey?: string) {
     const embeddings: number[][] = []
     const batchSize = 8
     for (let i = 0; i < chunks.length; i += batchSize) {
       const batch = chunks.slice(i, i + batchSize)
-      const batchEmbeddings = await Promise.all(batch.map((chunk) => generateEmbedding(chunk)))
+      const batchEmbeddings = await Promise.all(
+        batch.map((chunk) => generateEmbedding(chunk, 'gemini-embedding-001', apiKey ? { apiKey } : undefined))
+      )
       embeddings.push(...batchEmbeddings)
     }
     return embeddings
