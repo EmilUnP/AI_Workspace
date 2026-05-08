@@ -2,7 +2,6 @@
 
 import { createClient as createServerClient } from '@eduator/auth/supabase/server'
 import { createAdminClient } from '@/lib/eduator-auth-admin-shim'
-import { tokenRepository } from '@eduator/db/repositories/tokens'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
@@ -264,10 +263,6 @@ export async function createSchoolAdmin(formData: FormData) {
     .eq('user_id', authData.user.id)
     .single()
   const createdProfileRow = createdProfile as { id?: string } | null
-
-  if (createdProfileRow?.id) {
-    await tokenRepository.grantInitialTokensForNewUser(createdProfileRow.id)
-  }
 
   revalidatePath('/platform-owner/users')
 
