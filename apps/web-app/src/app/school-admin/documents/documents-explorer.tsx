@@ -24,6 +24,105 @@ type SortBy = 'name' | 'date' | 'type' | 'size'
 type SortDir = 'asc' | 'desc'
 type DocumentStatusLevel = 'ok' | 'issues' | 'critical'
 type ExplorerItem = DocItem & { classes?: { id: string; name: string; class_code?: string | null } | null }
+interface ExplorerTranslations {
+  allDocuments: string
+  noClass: string
+  noDocumentsYet: string
+  noDocumentsHint: string
+  groupBy: string
+  groupNone: string
+  groupDate: string
+  groupClass: string
+  sortBy: string
+  sortName: string
+  sortDate: string
+  sortType: string
+  sortSize: string
+  statusReady: string
+  statusProcessing: string
+  statusFailed: string
+  statusPending: string
+  documentInfoQuality: string
+  view: string
+  qualityDocumentInfo: string
+  qualityDocument: string
+  qualityContentLanguage: string
+  qualityContentLanguageHint: string
+  qualityProcessing: string
+  qualityGood: string
+  qualityGoodDescription: string
+  qualityLow: string
+  qualityLowDescription: string
+  qualityFailedLimited: string
+  qualityFailedDescription: string
+  qualityProcessingStatus: string
+  qualityProcessingHint: string
+  qualityPendingUnknown: string
+  qualityRagStats: string
+  qualityTokens: string
+  qualityChunks: string
+  qualityTokensPerChunk: string
+  editDocument: string
+  editTitle: string
+  editDescription: string
+  editDeleteDocument: string
+  editCancel: string
+  editSaving: string
+  editSaveChanges: string
+  editDeleteTitle: string
+  editDeleteConfirm: string
+  editDeleting: string
+}
+
+const DEFAULT_EXPLORER_TRANSLATIONS: ExplorerTranslations = {
+  allDocuments: 'All documents',
+  noClass: 'No class',
+  noDocumentsYet: 'No documents yet',
+  noDocumentsHint: 'Drag and drop a file above to upload your first document.',
+  groupBy: 'Group by',
+  groupNone: 'None',
+  groupDate: 'Date',
+  groupClass: 'Class',
+  sortBy: 'Sort by',
+  sortName: 'Name',
+  sortDate: 'Date',
+  sortType: 'Type',
+  sortSize: 'Size',
+  statusReady: 'Ready',
+  statusProcessing: 'Processing',
+  statusFailed: 'Failed',
+  statusPending: 'Pending',
+  documentInfoQuality: 'Document info & quality',
+  view: 'View',
+  qualityDocumentInfo: 'Document info',
+  qualityDocument: 'Document',
+  qualityContentLanguage: 'Content language',
+  qualityContentLanguageHint: 'Detected automatically. Used for cross-language RAG query translation.',
+  qualityProcessing: 'Quality & processing',
+  qualityGood: 'Good',
+  qualityGoodDescription: 'Text was extracted and chunked successfully. This document is suitable for exams and lessons.',
+  qualityLow: 'Low quality',
+  qualityLowDescription: 'AI-generated content may be less accurate. Prefer documents with selectable text and fewer images.',
+  qualityFailedLimited: 'Failed / limited',
+  qualityFailedDescription: 'This document may not be used reliably for generating exams or lessons. Try re-uploading a PDF with selectable text.',
+  qualityProcessingStatus: 'Processing...',
+  qualityProcessingHint: 'Quality will be available shortly.',
+  qualityPendingUnknown: 'Pending or unknown.',
+  qualityRagStats: 'RAG stats',
+  qualityTokens: 'Tokens',
+  qualityChunks: 'Chunks',
+  qualityTokensPerChunk: '~Tokens/chunk',
+  editDocument: 'Edit Document',
+  editTitle: 'Title',
+  editDescription: 'Description',
+  editDeleteDocument: 'Delete Document',
+  editCancel: 'Cancel',
+  editSaving: 'Saving...',
+  editSaveChanges: 'Save Changes',
+  editDeleteTitle: 'Delete Document',
+  editDeleteConfirm: 'Are you sure you want to delete "{title}"? This action cannot be undone and the file will be permanently removed.',
+  editDeleting: 'Deleting...',
+}
 
 function getFileIcon(fileType: string): ReactElement {
   if (fileType === 'pdf') return <FileText className="h-5 w-5 text-gray-700" />
@@ -87,11 +186,14 @@ export function DocumentsExplorer({
   documents,
   onUpdate,
   onDelete,
+  translations,
 }: {
   documents: ExplorerItem[]
   onUpdate: (input: { documentId: string; title: string; description?: string | null; tags?: string[] | null }) => Promise<{ error?: string; success?: boolean }>
   onDelete: (documentId: string) => Promise<{ error?: string; success?: boolean }>
+  translations?: Partial<ExplorerTranslations> | Record<string, string>
 }) {
+  const t: ExplorerTranslations = { ...DEFAULT_EXPLORER_TRANSLATIONS, ...(translations || {}) }
   const [groupBy, setGroupBy] = useState<GroupBy>('none')
   const [sortBy, setSortBy] = useState<SortBy>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -101,7 +203,7 @@ export function DocumentsExplorer({
   const sorted = useMemo(() => sortDocuments(documents, sortBy, sortDir), [documents, sortBy, sortDir])
 
   const grouped = useMemo(() => {
-    if (groupBy === 'none') return [{ key: '_', label: 'All documents', documents: sorted }]
+    if (groupBy === 'none') return [{ key: '_', label: t.allDocuments, documents: sorted }]
 
     const map = new Map<string, ExplorerItem[]>()
     for (const doc of sorted) {
@@ -114,10 +216,10 @@ export function DocumentsExplorer({
 
     return Array.from(map.entries()).map(([key, groupDocs]) => {
       let label = key
-      if (groupBy === 'class') label = key === '_none' ? 'No class' : (groupDocs[0]?.classes?.name ?? key)
+      if (groupBy === 'class') label = key === '_none' ? t.noClass : (groupDocs[0]?.classes?.name ?? key)
       return { key, label, documents: groupDocs }
     })
-  }, [sorted, groupBy])
+  }, [sorted, groupBy, t.allDocuments, t.noClass])
 
   useEffect(() => {
     if (groupBy === 'none') setExpandedGroups(new Set())
@@ -130,8 +232,8 @@ export function DocumentsExplorer({
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
           <FolderOpen className="h-8 w-8 text-gray-400" />
         </div>
-        <h3 className="mt-5 text-lg font-semibold text-gray-900">No documents yet</h3>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">Drag and drop a file above to upload your first document.</p>
+        <h3 className="mt-5 text-lg font-semibold text-gray-900">{t.noDocumentsYet}</h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">{t.noDocumentsHint}</p>
       </div>
     )
   }
@@ -140,20 +242,20 @@ export function DocumentsExplorer({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200/80 bg-white px-4 py-3">
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-500">Group by</label>
+          <label className="text-xs font-medium text-gray-500">{t.groupBy}</label>
           <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
-            <option value="none">None</option>
-            <option value="date">Date</option>
-            <option value="class">Class</option>
+            <option value="none">{t.groupNone}</option>
+            <option value="date">{t.groupDate}</option>
+            <option value="class">{t.groupClass}</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-500">Sort by</label>
+          <label className="text-xs font-medium text-gray-500">{t.sortBy}</label>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
-            <option value="name">Name</option>
-            <option value="date">Date</option>
-            <option value="type">Type</option>
-            <option value="size">Size</option>
+            <option value="name">{t.sortName}</option>
+            <option value="date">{t.sortDate}</option>
+            <option value="type">{t.sortType}</option>
+            <option value="size">{t.sortSize}</option>
           </select>
           <button type="button" onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))} className="rounded-lg border border-gray-200 bg-gray-50 p-1.5 text-gray-600 hover:bg-gray-100">
             {sortDir === 'asc' ? <ArrowUpDown className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
@@ -193,6 +295,7 @@ export function DocumentsExplorer({
                       <DocumentRow
                         key={doc.id}
                         doc={doc}
+                        translations={t}
                         onInfo={() => setQualityModalDocument(doc)}
                         onUpdate={onUpdate}
                         onDelete={onDelete}
@@ -205,27 +308,35 @@ export function DocumentsExplorer({
           })}
         </div>
 
-      {qualityModalDocument ? <DocumentQualityModal document={qualityModalDocument} onClose={() => setQualityModalDocument(null)} /> : null}
+      {qualityModalDocument ? (
+        <DocumentQualityModal
+          document={qualityModalDocument}
+          onClose={() => setQualityModalDocument(null)}
+          translations={t}
+        />
+      ) : null}
     </div>
   )
 }
 
 function DocumentRow({
   doc,
+  translations,
   onInfo,
   onUpdate,
   onDelete,
 }: {
   doc: ExplorerItem
+  translations: ExplorerTranslations
   onInfo: () => void
   onUpdate: (input: { documentId: string; title: string; description?: string | null; tags?: string[] | null }) => Promise<{ error?: string; success?: boolean }>
   onDelete: (documentId: string) => Promise<{ error?: string; success?: boolean }>
 }) {
   const statusLevel = getDocumentStatusLevel(doc)
   const statusLabel =
-    doc.processing_status === 'completed' ? 'Ready' :
-    doc.processing_status === 'processing' ? 'Processing' :
-    doc.processing_status === 'failed' ? 'Failed' : 'Pending'
+    doc.processing_status === 'completed' ? translations.statusReady :
+    doc.processing_status === 'processing' ? translations.statusProcessing :
+    doc.processing_status === 'failed' ? translations.statusFailed : translations.statusPending
 
   return (
     <div className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-gray-50/80">
@@ -254,13 +365,18 @@ function DocumentRow({
       </div>
       <div className="flex flex-shrink-0 items-center gap-2">
         <span className={`hidden items-center rounded-md border px-2 py-0.5 text-xs font-medium sm:inline-flex ${getStatusPillClasses(statusLevel)}`}>{statusLabel}</span>
-        <button type="button" onClick={onInfo} className={getInfoButtonClasses(statusLevel)} title="Document info & quality">
+        <button type="button" onClick={onInfo} className={getInfoButtonClasses(statusLevel)} title={translations.documentInfoQuality}>
           <Info className="h-4 w-4" />
         </button>
-        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" title="View">
+        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" title={translations.view}>
           <Eye className="h-4 w-4" />
         </a>
-        <EditDocumentDialog document={doc} onUpdate={onUpdate} onDelete={onDelete} />
+        <EditDocumentDialog
+          document={doc}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          translations={translations}
+        />
       </div>
     </div>
   )

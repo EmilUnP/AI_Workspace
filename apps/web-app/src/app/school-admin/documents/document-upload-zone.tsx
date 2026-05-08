@@ -9,6 +9,7 @@ const UPLOAD_ERROR_USER_MESSAGE = 'Upload failed. Please try again.'
 export interface DocumentUploadTranslations {
   dropFileHere: string
   dragDropFile: string
+  uploadOr: string
   browseLabel: string
   browseToUpload: string
   uploadFileTypes: string
@@ -23,6 +24,7 @@ export interface DocumentUploadTranslations {
 const DEFAULT_UPLOAD_TRANSLATIONS: DocumentUploadTranslations = {
   dropFileHere: 'Drop file here',
   dragDropFile: 'Drag & drop a file here',
+  uploadOr: 'or',
   browseLabel: 'browse',
   browseToUpload: 'to upload',
   uploadFileTypes: 'PDF, Word (.doc, .docx), Markdown, or Text up to 15MB',
@@ -170,7 +172,7 @@ export function DocumentUploadZone({ workspaceId, onUpload, onUploadSuccess, tra
               <Upload className="h-7 w-7" />
             </div>
             <p className="mt-4 text-sm font-medium text-gray-700">{isDragging ? t.dropFileHere : t.dragDropFile}</p>
-            <p className="mt-1 text-xs text-gray-500">or <span className="text-gray-700 hover:text-gray-900">{t.browseLabel}</span> {t.browseToUpload}</p>
+            <p className="mt-1 text-xs text-gray-500">{t.uploadOr} <span className="text-gray-700 hover:text-gray-900">{t.browseLabel}</span> {t.browseToUpload}</p>
             <p className="mt-2 text-xs text-gray-400">{t.uploadFileTypes}</p>
           </>
         ) : null}

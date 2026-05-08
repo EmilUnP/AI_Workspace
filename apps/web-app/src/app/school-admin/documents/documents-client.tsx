@@ -113,6 +113,7 @@ export function DocumentsClient({ workspaceId, initialDocuments, uploadTranslati
         documents={documents}
         onUpdate={updateDocument}
         onDelete={deleteDocument}
+        translations={explorerTranslations}
       />
     </div>
   )

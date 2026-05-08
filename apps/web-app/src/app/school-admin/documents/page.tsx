@@ -1,6 +1,7 @@
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
 import { DocumentsClient } from './documents-client'
+import { getTranslations } from 'next-intl/server'
 
 type DocumentFileType = 'pdf' | 'markdown' | 'text' | 'doc' | 'docx'
 
@@ -67,6 +68,7 @@ async function getDocuments() {
 
 
 export default async function SchoolAdminDocumentsPage() {
+  const t = await getTranslations('schoolAdmin')
   const user = await getCurrentUser()
   if (!user) {
     redirect('/auth/login')
@@ -77,13 +79,74 @@ export default async function SchoolAdminDocumentsPage() {
 
   const documents = await getDocuments()
 
-  const uploadTranslations = {}
-  const explorerTranslations = {}
+  const uploadTranslations = {
+    dropFileHere: t('dropFileHere'),
+    dragDropFile: t('dragDropFile'),
+    uploadOr: t('uploadOr'),
+    browseLabel: t('browseLabel'),
+    browseToUpload: t('browseToUpload'),
+    uploadFileTypes: t('uploadFileTypes'),
+    uploading: t('uploading'),
+    uploadSuccess: t('uploadSuccess'),
+    uploadFailed: t('uploadFailed'),
+    clickToRetry: t('clickToRetry'),
+    uploadInvalidType: t('uploadInvalidType'),
+    uploadTooLarge: t('uploadTooLarge'),
+  }
+  const explorerTranslations = {
+    allDocuments: t('allDocuments'),
+    noClass: t('noClass'),
+    noDocumentsYet: t('noDocumentsYet'),
+    noDocumentsHint: t('noDocumentsHint'),
+    groupBy: t('groupBy'),
+    groupNone: t('groupNone'),
+    groupDate: t('groupDate'),
+    groupClass: t('groupClass'),
+    sortBy: t('sortBy'),
+    sortName: t('sortName'),
+    sortDate: t('sortDate'),
+    sortType: t('sortType'),
+    sortSize: t('sortSize'),
+    statusReady: t('statusReady'),
+    statusProcessing: t('statusProcessing'),
+    statusFailed: t('statusFailed'),
+    statusPending: t('statusPending'),
+    documentInfoQuality: t('documentInfoQuality'),
+    view: t('view'),
+    qualityDocumentInfo: t('qualityDocumentInfo'),
+    qualityDocument: t('qualityDocument'),
+    qualityContentLanguage: t('qualityContentLanguage'),
+    qualityContentLanguageHint: t('qualityContentLanguageHint'),
+    qualityProcessing: t('qualityProcessing'),
+    qualityGood: t('qualityGood'),
+    qualityGoodDescription: t('qualityGoodDescription'),
+    qualityLow: t('qualityLow'),
+    qualityLowDescription: t('qualityLowDescription'),
+    qualityFailedLimited: t('qualityFailedLimited'),
+    qualityFailedDescription: t('qualityFailedDescription'),
+    qualityProcessingStatus: t('qualityProcessingStatus'),
+    qualityProcessingHint: t('qualityProcessingHint'),
+    qualityPendingUnknown: t('qualityPendingUnknown'),
+    qualityRagStats: t('qualityRagStats'),
+    qualityTokens: t('qualityTokens'),
+    qualityChunks: t('qualityChunks'),
+    qualityTokensPerChunk: t('qualityTokensPerChunk'),
+    editDocument: t('editDocument'),
+    editTitle: t('editTitle'),
+    editDescription: t('editDescription'),
+    editDeleteDocument: t('editDeleteDocument'),
+    editCancel: t('editCancel'),
+    editSaving: t('editSaving'),
+    editSaveChanges: t('editSaveChanges'),
+    editDeleteTitle: t('editDeleteTitle'),
+    editDeleteConfirm: t('editDeleteConfirm'),
+    editDeleting: t('editDeleting'),
+  }
 
   return (
     <div className="min-h-[60vh]">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Document Library</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{t('documentsTitle')}</h1>
       </div>
 
       {/* Upload + Explorer */}

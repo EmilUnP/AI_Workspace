@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { getLocale } from '@/lib/no-intl-server'
+import { NextIntlClientProvider } from 'next-intl'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
@@ -21,7 +22,9 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider locale={locale}>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )
