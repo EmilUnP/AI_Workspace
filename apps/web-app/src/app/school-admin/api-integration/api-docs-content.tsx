@@ -45,6 +45,12 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`Authorization: Bearer ACCESS_TOKEN`}
             </pre>
+            <p>
+              Interactive backend docs:{' '}
+              <a className="underline text-gray-800 hover:text-black" href="http://127.0.0.1:4000/v1/docs" target="_blank" rel="noreferrer">
+                http://127.0.0.1:4000/v1/docs
+              </a>
+            </p>
           </div>
         </article>
 
@@ -127,7 +133,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
     "language": "en",
     "questionCount": 10,
     "questionTypes": ["multiple_choice", "true_false"],
-    "difficultyDistribution": { "easy": 30, "medium": 50, "hard": 20 }
+    "difficultyDistribution": { "easy": 3, "medium": 5, "hard": 2 }
   }'`}
               </pre>
             </div>
@@ -290,9 +296,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             <p>
               For this backend, field naming is mostly <strong>camelCase</strong> on AI routes.
             </p>
-            <p>
-              Note: API key management UI is present in app, but backend route auth currently validates JWT access tokens.
-            </p>
+            <p>Gemini key endpoints are under <code className="bg-gray-100 px-1">/v1/users/me/ai-keys/gemini</code>.</p>
           </div>
         </article>
       </div>
