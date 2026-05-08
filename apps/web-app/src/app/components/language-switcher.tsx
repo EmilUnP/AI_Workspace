@@ -1,7 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { getClientLocale, setClientLocale, type AppLocale } from '@/lib/i18n'
 
 interface LanguageSwitcherProps {
@@ -11,10 +12,16 @@ interface LanguageSwitcherProps {
 export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
   const router = useRouter()
   const t = useTranslations('common')
-  const locale = getClientLocale()
+  const initialLocale = useLocale()
+  const [locale, setLocale] = useState<AppLocale>(initialLocale)
+
+  useEffect(() => {
+    setLocale(getClientLocale())
+  }, [])
 
   const handleSwitch = (nextLocale: AppLocale) => {
     if (nextLocale === locale) return
+    setLocale(nextLocale)
     setClientLocale(nextLocale)
     router.refresh()
   }
