@@ -14,9 +14,13 @@ async function errorHandlerPlugin(app: FastifyInstance) {
       return
     }
 
-    const statusError = error as { statusCode?: number; message?: string }
+    const statusError = error as { statusCode?: number; message?: string; code?: string; hint?: string }
     if (typeof statusError.statusCode === 'number') {
-      reply.code(statusError.statusCode).send({ error: statusError.message ?? 'Request failed' })
+      reply.code(statusError.statusCode).send({
+        error: statusError.message ?? 'Request failed',
+        code: statusError.code,
+        hint: statusError.hint
+      })
       return
     }
 

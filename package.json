@@ -9,6 +9,7 @@
     "apps/backend"
   ],
   "scripts": {
+    "dev:all": "run-all.bat",
     "dev:clean-backend": "npm run dev -w @eduator/clean-backend",
     "dev:clean": "npm run dev:clean-backend",
     "build": "npm run build:clean-backend",
