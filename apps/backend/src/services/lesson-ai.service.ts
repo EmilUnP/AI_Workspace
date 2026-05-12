@@ -1000,6 +1000,7 @@ export class LessonAiService {
   async generate(userId: string, input: unknown) {
     currentRagUserId = userId
     currentGeminiApiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const geminiApiKeyForRequest = currentGeminiApiKey
     const body = (input ?? {}) as {
       documentId?: string
       documentIds?: string[]
@@ -1116,7 +1117,7 @@ export class LessonAiService {
             generated.title,
             generated.content,
             body.language,
-            currentGeminiApiKey
+            geminiApiKeyForRequest
           )
           if (!tts.audioUrl) return
           await this.app.db.query(

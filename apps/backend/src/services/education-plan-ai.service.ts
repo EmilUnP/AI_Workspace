@@ -5,7 +5,8 @@ import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { FastifyInstance } from 'fastify'
 
 const planSchema = z.object({
-  documentId: z.uuid(),
+  documentId: z.string().uuid().optional(),
+  documentIds: z.array(z.string().uuid()).optional(),
   name: z.string().min(1),
   language: z.string().default('en'),
   periodMonths: z.number().int().min(1).max(24).default(3),
@@ -21,8 +22,14 @@ export class EducationPlanAiService {
 
   async generate(userId: string, input: unknown) {
     const data = planSchema.parse(input)
+    const allDocumentIds = Array.from(new Set([...(data.documentIds || []), ...(data.documentId ? [data.documentId] : [])]))
+    const primaryDocumentId = allDocumentIds[0]
+    if (!primaryDocumentId) {
+      throw new Error('At least one source document is required')
+    }
+
     const retrieved = await this.rag.retrieve(userId, {
-      documentId: data.documentId,
+      documentId: primaryDocumentId,
       query: `Create education plan named ${data.name}`,
       topK: 8
     })
@@ -40,7 +47,7 @@ Context:\n${retrieved.chunks.join('\n\n')}`
     const { rows } = await this.app.db.query<{ id: string }>(
       `INSERT INTO education_plans (user_id, name, period_months, sessions_per_week, hours_per_session, document_ids, content)
        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb) RETURNING id`,
-      [userId, data.name, data.periodMonths, data.sessionsPerWeek, data.hoursPerSession, JSON.stringify([data.documentId]), JSON.stringify(content)]
+      [userId, data.name, data.periodMonths, data.sessionsPerWeek, data.hoursPerSession, JSON.stringify(allDocumentIds), JSON.stringify(content)]
     )
 
     return { id: rows[0].id, content }

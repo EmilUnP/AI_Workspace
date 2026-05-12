@@ -206,18 +206,38 @@ const toRenderWeek = (value: unknown): RenderWeek => {
   const week = Number(row.week ?? row.week_number ?? row.weekIndex)
   const title = pickString(row, ['title', 'week_title', 'name'])
   const notes = pickString(row, ['notes', 'description', 'summary'])
+  const sessionsRaw = Array.isArray(row.sessions) ? row.sessions : []
   const topicsRaw = Array.isArray(row.topics)
     ? row.topics
     : Array.isArray(row.items)
       ? row.items
       : []
-  const topics = topicsRaw.map((item) => formatTopic(item)).filter(Boolean)
+  const sessionTopics = sessionsRaw
+    .map((session) => {
+      const sessionRow = asRecord(session)
+      if (!sessionRow) return ''
+      const sessionNumber = Number(sessionRow.session_number)
+      const topic = pickString(sessionRow, ['topic', 'title', 'name'])
+      const description = pickString(sessionRow, ['description', 'details', 'summary'])
+      const prefix = Number.isFinite(sessionNumber) && sessionNumber > 0 ? `${sessionNumber}. ` : ''
+      if (topic && description) return `${prefix}${topic}: ${description}`
+      return `${prefix}${topic || description}`
+    })
+    .filter(Boolean)
+  const topics = [...topicsRaw.map((item) => formatTopic(item)).filter(Boolean), ...sessionTopics]
   const objectivesRaw = Array.isArray(row.objectives)
     ? row.objectives
     : Array.isArray(row.learning_objectives)
       ? row.learning_objectives
       : []
-  const objectives = objectivesRaw.map((item) => asTrimmedString(item)).filter(Boolean)
+  const sessionObjectives = sessionsRaw
+    .flatMap((session) => {
+      const sessionRow = asRecord(session)
+      if (!sessionRow) return []
+      const values = Array.isArray(sessionRow.learning_objectives) ? sessionRow.learning_objectives : []
+      return values.map((item) => asTrimmedString(item)).filter(Boolean)
+    })
+  const objectives = [...objectivesRaw.map((item) => asTrimmedString(item)).filter(Boolean), ...sessionObjectives]
 
   return {
     week: Number.isFinite(week) ? week : 0,
