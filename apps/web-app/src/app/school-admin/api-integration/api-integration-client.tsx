@@ -7,7 +7,15 @@ import { ApiKeysSection } from './api-keys-section'
 import { ApiDocsContent } from './api-docs-content'
 import { UsageSection } from './usage-section'
 import { GeminiKeySection } from './gemini-key-section'
-import type { TeacherApiKeyRow } from '@eduator/db'
+
+export type TeacherApiKeyRow = {
+  id: string
+  name: string
+  key_prefix: string
+  is_active: boolean
+  created_at: string
+  last_used_at: string | null
+}
 
 export type UsageStats = {
   totalRequests: number

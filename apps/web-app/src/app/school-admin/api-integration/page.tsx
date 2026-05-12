@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/backend-auth'
 import { redirect } from 'next/navigation'
-import { teacherApiKeyRepository } from '@eduator/db'
 import { getTranslations } from 'next-intl/server'
 import { ApiIntegrationClient } from './api-integration-client'
 import { getApiUrl } from '../../../lib/portal-urls'
@@ -14,20 +13,49 @@ export default async function ApiIntegrationPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/auth/login')
   if (user.role !== 'operator' && user.role !== 'admin') redirect('/app')
-
-  const [keys, usageStats] = await Promise.all([
-    teacherApiKeyRepository.listByProfile(user.id),
-    teacherApiKeyRepository.getUsageStats(user.id),
-  ])
   const token = await getAccessToken()
+  let keys: Array<{
+    id: string
+    name: string
+    key_prefix: string
+    is_active: boolean
+    created_at: string
+    last_used_at: string | null
+  }> = []
+  let usageStats = {
+    totalRequests: 0,
+    successCount: 0,
+    errorCount: 0,
+    byKey: [] as Array<{ keyId: string; keyName: string; keyPrefix: string; total: number; success: number; error: number }>,
+    byEndpoint: [] as Array<{ method: string; endpoint: string; total: number; success: number; error: number }>,
+    recent: [] as Array<{ method: string; endpoint: string; status: string; statusCode: number | null; createdAt: string }>,
+  }
   let geminiKeyStatus = { hasKey: false, keyHint: null as string | null }
   if (token) {
-    const response = await fetch(`${API_BASE_V1}/users/me/ai-keys/gemini`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-    })
-    if (response.ok) {
-      const payload = (await response.json()) as { hasKey?: boolean; keyHint?: string | null }
+    const [keysResponse, usageResponse, geminiResponse] = await Promise.all([
+      fetch(`${API_BASE_V1}/users/me/api-keys`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }),
+      fetch(`${API_BASE_V1}/users/me/api-keys/usage`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }),
+      fetch(`${API_BASE_V1}/users/me/ai-keys/gemini`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }),
+    ])
+
+    if (keysResponse.ok) {
+      const payload = (await keysResponse.json()) as { items?: typeof keys }
+      keys = payload.items ?? []
+    }
+    if (usageResponse.ok) {
+      usageStats = (await usageResponse.json()) as typeof usageStats
+    }
+    if (geminiResponse.ok) {
+      const payload = (await geminiResponse.json()) as { hasKey?: boolean; keyHint?: string | null }
       geminiKeyStatus = { hasKey: Boolean(payload.hasKey), keyHint: payload.keyHint ?? null }
     }
   }

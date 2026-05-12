@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Key, Plus, Copy, Trash2, Check, AlertCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { createApiKey, revokeApiKey } from './actions'
-import type { TeacherApiKeyRow } from '@eduator/db'
+import { createApiKey, getApiKeys, revokeApiKey } from './actions'
+import type { TeacherApiKeyRow } from './api-integration-client'
 
 interface ApiKeysSectionProps {
   keys: TeacherApiKeyRow[]
@@ -16,9 +16,18 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [keys, setKeys] = useState<TeacherApiKeyRow[]>(initialKeys)
   const [newKeyResult, setNewKeyResult] = useState<{ key: string; name: string } | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [keyName, setKeyName] = useState('')
+
+  useEffect(() => {
+    void (async () => {
+      const result = await getApiKeys()
+      if (result.error) return
+      setKeys(result.items ?? [])
+    })()
+  }, [])
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,6 +42,8 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
       } else if (result.key && result.name) {
         setNewKeyResult({ key: result.key, name: result.name })
         setKeyName('')
+        const keysResult = await getApiKeys()
+        if (!keysResult.error) setKeys(keysResult.items ?? [])
         router.refresh()
       }
     })
@@ -50,7 +61,11 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
     startTransition(async () => {
       const result = await revokeApiKey(keyId)
       if (result.error) setError(result.error)
-      else router.refresh()
+      else {
+        const keysResult = await getApiKeys()
+        if (!keysResult.error) setKeys(keysResult.items ?? [])
+        router.refresh()
+      }
     })
   }
 
@@ -123,11 +138,11 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
 
       <div>
         <h3 className="text-sm font-medium text-gray-700 mb-2">{t('existingKeys')}</h3>
-        {initialKeys.length === 0 ? (
+        {keys.length === 0 ? (
           <p className="text-sm text-gray-500">{t('noKeysYet')}</p>
         ) : (
           <ul className="space-y-2">
-            {initialKeys.map((k) => (
+            {keys.map((k) => (
               <li
                 key={k.id}
                 className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"
