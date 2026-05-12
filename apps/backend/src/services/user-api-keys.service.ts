@@ -46,9 +46,8 @@ export class UserApiKeysService {
 
   async revoke(userId: string, keyId: string) {
     const result = await this.app.db.query(
-      `UPDATE user_api_keys
-       SET is_active = FALSE, updated_at = NOW()
-       WHERE id = $1 AND user_id = $2 AND is_active = TRUE`,
+      `DELETE FROM user_api_keys
+       WHERE id = $1 AND user_id = $2`,
       [keyId, userId]
     )
     return (result.rowCount ?? 0) > 0

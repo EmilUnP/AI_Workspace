@@ -2,7 +2,6 @@
 
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { revalidatePath } from 'next/cache'
-import { getApiUrl } from '@/lib/portal-urls'
 
 export type CreateKeyResult = { error?: string; key?: string; name?: string }
 export type RevokeResult = { error?: string }
@@ -20,7 +19,7 @@ export type ApiKeysResult = {
 export type GeminiKeyStatusResult = { error?: string; hasKey?: boolean; keyHint?: string | null }
 export type SaveGeminiKeyResult = { error?: string; hasKey?: boolean; keyHint?: string | null }
 
-const getBackendBase = () => getApiUrl()
+const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
 
 export async function createApiKey(_prev: unknown, formData: FormData): Promise<CreateKeyResult> {
   const name = (formData.get('name') as string)?.trim()
