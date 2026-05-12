@@ -43,3 +43,4 @@ coverage/
 .temp/
 tmp/
 deploy-debug-report-*.txt
+apps/backend/storage/

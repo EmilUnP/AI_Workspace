@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { AlertCircle, KeyRound, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { deleteGeminiKey, saveGeminiKey } from './actions'
+import { deleteGeminiKey, getGeminiKeyStatus, saveGeminiKey } from './actions'
 
 type GeminiKeySectionProps = {
   initialHasKey: boolean
@@ -18,6 +18,25 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+    setIsLoadingStatus(true)
+    void getGeminiKeyStatus()
+      .then((status) => {
+        if (!isMounted || status.error) return
+        setHasKey(Boolean(status.hasKey))
+        setKeyHint(status.keyHint ?? null)
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingStatus(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleSave = () => {
     setError(null)
@@ -95,32 +114,32 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
           <button
             type="button"
             onClick={handleSave}
-            disabled={isPending || apiKey.trim().length === 0}
+            disabled={isPending || isLoadingStatus || apiKey.trim().length === 0}
             className="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
           >
             {isPending ? t('saving') : hasKey ? t('updateKey') : t('saveKey')}
           </button>
-          {hasKey && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isPending}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              {t('deleteKey')}
-            </button>
-          )}
         </div>
       </div>
 
-      <div className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
         {hasKey ? (
           <span>
             {t('activeKeyEndingWith')} <span className="font-mono text-gray-800">{keyHint ?? '****'}</span>
           </span>
         ) : (
           <span>{t('noGeminiKeySaved')}</span>
+        )}
+        {hasKey && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isPending || isLoadingStatus}
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 sm:text-sm"
+          >
+            <Trash2 className="h-4 w-4" />
+            {t('deleteKey')}
+          </button>
         )}
       </div>
     </div>

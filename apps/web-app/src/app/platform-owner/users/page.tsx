@@ -96,7 +96,6 @@ export default async function UsersPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('usersTitle')}</h1>
-          <p className="mt-1 text-sm text-gray-500">{t('usersSubtitle', { count: stats.total })}</p>
         </div>
         {/* Quick Stats */}
         <div className="hidden items-center gap-6 lg:flex">
@@ -108,11 +107,6 @@ export default async function UsersPage({
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600">{stats.operators}</p>
             <p className="text-xs text-gray-500">{t('roleOperator')}</p>
-          </div>
-          <div className="h-8 w-px bg-gray-200" />
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-700">{stats.regular}</p>
-            <p className="text-xs text-gray-500">{t('usersTitle')}</p>
           </div>
         </div>
       </div>
