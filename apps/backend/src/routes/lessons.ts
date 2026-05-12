@@ -37,6 +37,8 @@ const toAbsoluteMediaUrl = (
   const raw = typeof value === 'string' ? value.trim() : ''
   if (!raw) return null
   if (/^https?:\/\//i.test(raw)) return raw
+  // Keep internal API media paths relative so web-app can rewrite them to its authenticated proxy route.
+  if (raw.startsWith('/v1/lessons/')) return raw
   if (!raw.startsWith('/')) return raw
   const host = String(request.headers.host || '').trim()
   if (!host) return raw
