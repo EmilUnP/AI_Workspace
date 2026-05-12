@@ -43,8 +43,8 @@ interface GeneratedImage {
 /**
  * Get API key from environment
  */
-function getApiKey(): string {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
+function getApiKey(apiKeyOverride?: string): string {
+  const apiKey = apiKeyOverride || process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
     throw new Error('Missing GOOGLE_GENERATIVE_AI_KEY or GOOGLE_GEMINI_API_KEY environment variable')
   }
@@ -54,9 +54,9 @@ function getApiKey(): string {
 /**
  * Detect the primary language of content
  */
-async function detectLanguage(content: string): Promise<string> {
+async function detectLanguage(content: string, apiKeyOverride?: string): Promise<string> {
   try {
-    const apiKey = getApiKey()
+    const apiKey = getApiKey(apiKeyOverride)
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: AI_MODELS.TEXT })
     
@@ -91,14 +91,15 @@ async function generateImagePrompts(
   topic: string,
   content: string,
   count: number = 3,
-  language?: string
+  language?: string,
+  apiKeyOverride?: string
 ): Promise<string[]> {
   try {
-    const apiKey = getApiKey()
+    const apiKey = getApiKey(apiKeyOverride)
     const client = new GoogleGenerativeAI(apiKey)
     
     // Detect language if not provided
-    const detectedLanguage = language || await detectLanguage(content)
+    const detectedLanguage = language || await detectLanguage(content, apiKeyOverride)
     
     // Create language instruction for image prompts
     const languageInstruction = detectedLanguage !== "English"
@@ -185,9 +186,9 @@ Generate ${count} highly detailed, specific prompts:`
 /**
  * Generate an image from a prompt using Gemini native image generation
  */
-async function generateImageFromPrompt(prompt: string, language?: string): Promise<GeneratedImage | null> {
+async function generateImageFromPrompt(prompt: string, language?: string, apiKeyOverride?: string): Promise<GeneratedImage | null> {
   try {
-    const apiKey = getApiKey()
+    const apiKey = getApiKey(apiKeyOverride)
     
     // Enhance prompt for image generation
     let enhancedPrompt = `Educational illustration: ${prompt}. High quality, professional educational diagram, clean design, clear labels.`
@@ -334,17 +335,18 @@ export async function generateLessonImagesWithUsage(
   content: string,
   count: number = 3,
   language?: string,
-  lessonId?: string
+  lessonId?: string,
+  apiKeyOverride?: string
 ): Promise<{
   images: LessonImage[]
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string }
 }> {
   try {
     // Detect language if not provided
-    const detectedLanguage = language || await detectLanguage(content)
+    const detectedLanguage = language || await detectLanguage(content, apiKeyOverride)
     
     // Generate detailed image prompts using Gemini
-    const prompts = await generateImagePrompts(topic, content, count, detectedLanguage)
+    const prompts = await generateImagePrompts(topic, content, count, detectedLanguage, apiKeyOverride)
 
     // Generate images for each prompt with retry logic
     const generateImageWithRetry = async (
@@ -353,7 +355,7 @@ export async function generateLessonImagesWithUsage(
       retries: number = 2
     ): Promise<{ image: LessonImage | null; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string } }> => {
       for (let attempt = 0; attempt <= retries; attempt++) {
-        const image = await generateImageFromPrompt(prompt, detectedLanguage)
+        const image = await generateImageFromPrompt(prompt, detectedLanguage, apiKeyOverride)
         if (image) {
           // Determine position based on index
           let position: "top" | "middle" | "bottom" = "middle"
@@ -399,7 +401,10 @@ export async function generateLessonImagesWithUsage(
     const maxAttempts = 2 // Try generating prompts twice if needed
     
     while (validImages.length < count && attempts < maxAttempts) {
-      const currentPrompts = attempts === 0 ? prompts : await generateImagePrompts(topic, content, count - validImages.length, detectedLanguage)
+      const currentPrompts =
+        attempts === 0
+          ? prompts
+          : await generateImagePrompts(topic, content, count - validImages.length, detectedLanguage, apiKeyOverride)
       
       const imagePromises = currentPrompts.map((prompt, idx) => 
         generateImageWithRetry(prompt, validImages.length + idx)
@@ -455,8 +460,6 @@ export { detectLanguage, generateImagePrompts }
  * Uses Gemini TTS for generating lesson audio narration
  */
 
-const GEMINI_API_KEY = process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
-
 /**
  * Generate TTS audio for a lesson
  * @param lessonId - The lesson ID (used for storage path)
@@ -469,9 +472,10 @@ export async function generateLessonAudio(
   lessonId: string,
   title: string,
   content: string,
-  language?: string
+  language?: string,
+  apiKeyOverride?: string
 ): Promise<string | null> {
-  const result = await generateLessonAudioWithUsage(lessonId, title, content, language)
+  const result = await generateLessonAudioWithUsage(lessonId, title, content, language, apiKeyOverride)
   return result.audioUrl
 }
 
@@ -479,12 +483,14 @@ export async function generateLessonAudioWithUsage(
   lessonId: string,
   title: string,
   content: string,
-  language?: string
+  language?: string,
+  apiKeyOverride?: string
 ): Promise<{
   audioUrl: string | null
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }
 }> {
-  if (!GEMINI_API_KEY) {
+  const apiKey = apiKeyOverride || process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
+  if (!apiKey) {
     console.warn("TTS: No API key configured, skipping audio generation")
     return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
   }
@@ -537,7 +543,7 @@ export async function generateLessonAudioWithUsage(
     for (const ttsModel of AI_MODELS.TTS_MODELS) {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${ttsModel}:generateContent?key=${GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${ttsModel}:generateContent?key=${apiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

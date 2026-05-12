@@ -962,7 +962,8 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
           lesson.content,
           3,
           normalizedLanguageCode,
-          effectiveLessonId
+          effectiveLessonId,
+          currentGeminiApiKey
         )
         lesson.images = imageResult.images
         usageTelemetry.image_prompt_tokens = imageResult.usage.prompt_tokens
@@ -1110,7 +1111,13 @@ export class LessonAiService {
     if (includeAudio) {
       void (async () => {
         try {
-          const tts = await generateLessonAudioWithUsage(lessonId, generated.title, generated.content, body.language)
+          const tts = await generateLessonAudioWithUsage(
+            lessonId,
+            generated.title,
+            generated.content,
+            body.language,
+            currentGeminiApiKey
+          )
           if (!tts.audioUrl) return
           await this.app.db.query(
             `UPDATE lessons
