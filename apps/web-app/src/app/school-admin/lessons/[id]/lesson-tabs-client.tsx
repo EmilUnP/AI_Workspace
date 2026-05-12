@@ -61,20 +61,10 @@ const DEFAULT_TABS_LABELS: LessonTabsLabels = {
 export function LessonTabsClient({ content, images, miniTest, examples, centerText, labels = {} }: LessonTabsClientProps) {
   const L = { ...DEFAULT_TABS_LABELS, ...labels }
   const [activeTab, setActiveTab] = useState<TabType>('content')
-  const [selectedOptions, setSelectedOptions] = useState<(number | null)[]>(() => miniTest.map(() => null))
-  const [checked, setChecked] = useState(false)
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
-    if (tab !== 'test') {
-      setChecked(false)
-      setSelectedOptions(miniTest.map(() => null))
-    }
   }
-
-  const totalCorrect = checked
-    ? miniTest.reduce((acc, q, idx) => acc + (selectedOptions[idx] === q.correct_answer ? 1 : 0), 0)
-    : 0
 
   return (
     <div className="overflow-visible rounded-2xl border border-gray-200 bg-white">
@@ -157,23 +147,7 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
             ) : (
               <>
                 <div className="mb-2 flex items-center justify-between text-xs text-gray-600 sm:text-sm">
-                  <p>{L.chooseBestAnswers} <span className="font-medium">{L.checkAnswers}</span>.</p>
-                  <div className="flex items-center gap-2">
-                    {checked && <span className="font-medium text-gray-800">{L.scoreLabel} {totalCorrect}/{miniTest.length}</span>}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!checked) setChecked(true)
-                        else {
-                          setChecked(false)
-                          setSelectedOptions(miniTest.map(() => null))
-                        }
-                      }}
-                      className="rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
-                    >
-                      {checked ? L.tryAgain : L.checkAnswers}
-                    </button>
-                  </div>
+                  <p>{L.chooseBestAnswers}.</p>
                 </div>
                 {miniTest.map((q, qi) => (
                   <div key={qi} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -182,40 +156,25 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
                     </div>
                     <div className="space-y-2 p-4">
                       {q.options.map((opt, oi) => {
-                        const isSelected = selectedOptions[qi] === oi
-                        const isCorrect = checked && oi === q.correct_answer
-                        const isWrongSelected = checked && isSelected && !isCorrect
+                        const isCorrect = oi === q.correct_answer
                         return (
-                          <button
+                          <div
                             key={oi}
-                            type="button"
-                            onClick={() => {
-                              if (checked) return
-                              setSelectedOptions((prev) => {
-                                const next = [...prev]
-                                next[qi] = oi
-                                return next
-                              })
-                            }}
                             className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left ${
                               isCorrect
                                 ? 'border-gray-300 bg-gray-200'
-                                : isWrongSelected
-                                  ? 'border-gray-300 bg-gray-200'
-                                  : isSelected
-                                    ? 'border-gray-300 bg-gray-100'
-                                    : 'border-transparent bg-gray-50'
+                                : 'border-transparent bg-gray-50'
                             }`}
                           >
                             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 bg-white text-xs font-medium text-gray-600">
                               {String.fromCharCode(65 + oi)}
                             </span>
                             <span className="text-sm text-gray-800">{opt}</span>
-                          </button>
+                          </div>
                         )
                       })}
                     </div>
-                    {checked && q.explanation && (
+                    {q.explanation && (
                       <div className="px-4 pb-4">
                         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800">{q.explanation}</div>
                       </div>
