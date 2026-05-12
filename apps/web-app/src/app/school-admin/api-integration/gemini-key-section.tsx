@@ -19,6 +19,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isLoadingStatus, setIsLoadingStatus] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -55,7 +56,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
   }
 
   const handleDelete = () => {
-    if (!confirm(t('deleteGeminiKeyConfirm'))) return
+    setShowDeleteConfirm(false)
     setError(null)
     setMessage(null)
     startTransition(async () => {
@@ -133,7 +134,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
         {hasKey && (
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={isPending || isLoadingStatus}
             className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 sm:text-sm"
           >
@@ -142,6 +143,43 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
           </button>
         )}
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black/60"
+            onClick={() => !isPending && setShowDeleteConfirm(false)}
+            aria-hidden
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-md rounded-2xl bg-white ring-1 ring-gray-200">
+              <div className="p-6 sm:p-8">
+                <h3 className="mb-2 text-center text-xl font-bold text-gray-900">{t('deleteKey')}</h3>
+                <p className="text-center text-sm text-gray-600">{t('deleteGeminiKeyConfirm')}</p>
+              </div>
+              <div className="flex gap-3 bg-gray-50 px-6 py-4 sm:px-8">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isPending}
+                  className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-70"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t('deleteKey')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

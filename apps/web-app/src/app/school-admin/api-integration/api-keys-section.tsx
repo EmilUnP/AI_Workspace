@@ -20,6 +20,7 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
   const [newKeyResult, setNewKeyResult] = useState<{ key: string; name: string } | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [keyName, setKeyName] = useState('')
+  const [keyToDelete, setKeyToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     void (async () => {
@@ -56,16 +57,21 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
   }
 
   const handleRevoke = (keyId: string) => {
-    if (!confirm(t('revokeApiKeyConfirm'))) return
+    setKeyToDelete(keyId)
+  }
+
+  const confirmRevoke = () => {
+    if (!keyToDelete) return
     setError(null)
     startTransition(async () => {
-      const result = await revokeApiKey(keyId)
+      const result = await revokeApiKey(keyToDelete)
       if (result.error) setError(result.error)
       else {
         const keysResult = await getApiKeys()
         if (!keysResult.error) setKeys(keysResult.items ?? [])
         router.refresh()
       }
+      setKeyToDelete(null)
     })
   }
 
@@ -169,6 +175,43 @@ export function ApiKeysSection({ keys: initialKeys }: ApiKeysSectionProps) {
           </ul>
         )}
       </div>
+
+      {keyToDelete && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black/60"
+            onClick={() => !isPending && setKeyToDelete(null)}
+            aria-hidden
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative w-full max-w-md rounded-2xl bg-white ring-1 ring-gray-200">
+              <div className="p-6 sm:p-8">
+                <h3 className="mb-2 text-center text-xl font-bold text-gray-900">{t('deleteKey')}</h3>
+                <p className="text-center text-sm text-gray-600">{t('revokeApiKeyConfirm')}</p>
+              </div>
+              <div className="flex gap-3 bg-gray-50 px-6 py-4 sm:px-8">
+                <button
+                  type="button"
+                  onClick={() => setKeyToDelete(null)}
+                  disabled={isPending}
+                  className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmRevoke}
+                  disabled={isPending}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-70"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t('deleteKey')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
