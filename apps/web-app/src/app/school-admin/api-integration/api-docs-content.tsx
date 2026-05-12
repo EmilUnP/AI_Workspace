@@ -64,7 +64,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">POST /documents</h4>
               <p className="text-sm text-gray-600 mb-2">
-                Create a document record. Required fields: <code className="bg-gray-100 px-1">title</code>,
+                {t('documentsPostDescription')} <code className="bg-gray-100 px-1">title</code>,
                 <code className="bg-gray-100 px-1">fileName</code>, <code className="bg-gray-100 px-1">fileType</code>, <code className="bg-gray-100 px-1">fileSize</code>.
               </p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
@@ -106,14 +106,14 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               {t('generateExam')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              Real route: <code className="bg-gray-100 px-1">POST /v1/ai/exams/generate</code>. You can provide
+              {t('realRouteLabel')} <code className="bg-gray-100 px-1">POST /v1/ai/exams/generate</code>. {t('examsGenerateRouteDescription')}
               <code className="bg-gray-100 px-1">documentId</code>, <code className="bg-gray-100 px-1">documentIds</code>,
               or <code className="bg-gray-100 px-1">documentText</code>.
             </p>
           </div>
           <div className="p-6 space-y-5">
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Main fields</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('mainFields')}</h4>
               <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
                 <li><code className="bg-gray-100 px-1">documentId</code>, <code className="bg-gray-100 px-1">documentIds</code>, or <code className="bg-gray-100 px-1">documentText</code></li>
                 <li><code className="bg-gray-100 px-1">title</code>, <code className="bg-gray-100 px-1">subject</code>, <code className="bg-gray-100 px-1">gradeLevel</code>, <code className="bg-gray-100 px-1">language</code></li>
@@ -122,7 +122,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Example</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('example')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${examsGenerateUrl} \\
   -H "Authorization: Bearer ACCESS_TOKEN" \\
@@ -153,13 +153,12 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               {t('generateLesson')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              Real route: <code className="bg-gray-100 px-1">POST /v1/ai/lessons/generate</code>. This endpoint supports rich generation:
-              multi-document context, custom objectives, grade targeting, image generation, and async audio (TTS).
+              {t('realRouteLabel')} <code className="bg-gray-100 px-1">POST /v1/ai/lessons/generate</code>. {t('lessonsGenerateRouteDescription')}
             </p>
           </div>
           <div className="p-6 space-y-5">
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Request fields</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('requestFields')}</h4>
               <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside mb-3">
                 <li><code className="bg-gray-100 px-1">topic</code> (required)</li>
                 <li><code className="bg-gray-100 px-1">documentId</code> (optional UUID) and/or <code className="bg-gray-100 px-1">documentIds</code> (optional UUID array)</li>
@@ -177,7 +176,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Example (full settings)</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('exampleFullSettings')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${lessonsGenerateUrl} \\
   -H "Authorization: Bearer ACCESS_TOKEN" \\
@@ -202,11 +201,11 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               </pre>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Generation response (important)</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('generationResponseImportant')}</h4>
               <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                <li>Returns <code className="bg-gray-100 px-1">lesson</code> with rich content: <code className="bg-gray-100 px-1">content</code>, <code className="bg-gray-100 px-1">learning_objectives</code>, <code className="bg-gray-100 px-1">mini_test</code>, <code className="bg-gray-100 px-1">examples</code>, <code className="bg-gray-100 px-1">images</code>, <code className="bg-gray-100 px-1">usage</code></li>
-                <li><code className="bg-gray-100 px-1">audio_url</code> is initially <code className="bg-gray-100 px-1">null</code> even when audio is requested, because TTS is async</li>
-                <li>Use <code className="bg-gray-100 px-1">GET /v1/lessons/:id</code> to fetch the saved lesson and check when audio becomes available</li>
+                <li>{t('generationResponseReturnsLesson')} <code className="bg-gray-100 px-1">lesson</code> {t('generationResponseWithRichContent')} <code className="bg-gray-100 px-1">content</code>, <code className="bg-gray-100 px-1">learning_objectives</code>, <code className="bg-gray-100 px-1">mini_test</code>, <code className="bg-gray-100 px-1">examples</code>, <code className="bg-gray-100 px-1">images</code>, <code className="bg-gray-100 px-1">usage</code></li>
+                <li><code className="bg-gray-100 px-1">audio_url</code> {t('audioUrlInitiallyNullTtsAsync')}</li>
+                <li>{t('useLessonGetForAudioAvailability')} <code className="bg-gray-100 px-1">GET /v1/lessons/:id</code> {t('checkWhenAudioAvailable')}</li>
               </ul>
             </div>
           </div>
@@ -224,37 +223,37 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               {t('lessonRetrieval')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              <strong>GET /v1/lessons</strong> gives list-level metadata. <strong>GET /v1/lessons/:id</strong> gives the full lesson including generated content, images, mini-test, and audio URL.
+              <strong>GET /v1/lessons</strong> {t('lessonsListMetadataDescription')} <strong>GET /v1/lessons/:id</strong> {t('lessonDetailFullPayloadDescription')}
             </p>
           </div>
           <div className="p-6 space-y-5">
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons — list with pagination</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons — {t('listWithPagination')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET "${apiBaseUrl}/lessons?page=1&perPage=20" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
               <p className="mt-2 text-sm text-gray-600">
-                Query params: <code className="bg-gray-100 px-1">page</code>, <code className="bg-gray-100 px-1">perPage</code>, <code className="bg-gray-100 px-1">search</code>.
-                Returns compact items for listing (id/title/language/objectivesCount/etc), not full lesson body.
+                {t('queryParamsLabel')} <code className="bg-gray-100 px-1">page</code>, <code className="bg-gray-100 px-1">perPage</code>, <code className="bg-gray-100 px-1">search</code>.
+                {t('compactItemsNotFullBody')}
               </p>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons/:id — full lesson payload</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons/:id — {t('fullLessonPayload')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET "${apiBaseUrl}/lessons/LESSON_UUID" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
               <ul className="mt-2 text-sm text-gray-600 space-y-1 list-disc list-inside">
-                <li>Includes full fields: <code className="bg-gray-100 px-1">content</code>, <code className="bg-gray-100 px-1">images</code>, <code className="bg-gray-100 px-1">mini_test</code>, <code className="bg-gray-100 px-1">learning_objectives</code>, <code className="bg-gray-100 px-1">metadata</code>, <code className="bg-gray-100 px-1">audio_url</code></li>
-                <li>When audio generation finishes, <code className="bg-gray-100 px-1">audio_url</code> is populated</li>
-                <li>If audio_url is relative (for local fallback), media can be fetched via <code className="bg-gray-100 px-1">GET /v1/lessons/:id/media/:file</code></li>
+                <li>{t('includesFullFields')} <code className="bg-gray-100 px-1">content</code>, <code className="bg-gray-100 px-1">images</code>, <code className="bg-gray-100 px-1">mini_test</code>, <code className="bg-gray-100 px-1">learning_objectives</code>, <code className="bg-gray-100 px-1">metadata</code>, <code className="bg-gray-100 px-1">audio_url</code></li>
+                <li>{t('audioUrlPopulatedWhenReady')} <code className="bg-gray-100 px-1">audio_url</code> {t('isPopulated')}</li>
+                <li>{t('audioUrlRelativeMediaFetchPrefix')} <code className="bg-gray-100 px-1">GET /v1/lessons/:id/media/:file</code></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Lesson media contract (images + audio)</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('lessonMediaContract')}</h4>
               <p className="text-sm text-gray-600 mb-2">
-                Third-party apps should render lesson media directly from the lesson payload. Treat <code className="bg-gray-100 px-1">audio_url</code> as async: poll lesson details until it becomes non-null.
+                {t('thirdPartyAppsMediaRender')} <code className="bg-gray-100 px-1">audio_url</code> {t('treatAudioUrlAsAsync')}
               </p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`{
@@ -285,12 +284,12 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h3 className="text-lg font-semibold text-gray-900">{t('educationPlans')}</h3>
             </div>
             <p className="mt-1 text-sm text-gray-600">
-              Real route: <code className="bg-gray-100 px-1">POST /v1/ai/education-plans/generate</code>.
+              {t('realRouteLabel')} <code className="bg-gray-100 px-1">POST /v1/ai/education-plans/generate</code>.
             </p>
           </div>
           <div className="p-6 space-y-4">
             <p className="text-sm text-gray-600">
-              Required: <code className="bg-gray-100 px-1">documentId</code>, <code className="bg-gray-100 px-1">name</code>. Optional:
+              {t('requiredLabel')} <code className="bg-gray-100 px-1">documentId</code>, <code className="bg-gray-100 px-1">name</code>. {t('optionalLabel')}
               <code className="bg-gray-100 px-1">language</code>, <code className="bg-gray-100 px-1">periodMonths</code>,
               <code className="bg-gray-100 px-1">sessionsPerWeek</code>, <code className="bg-gray-100 px-1">hoursPerSession</code>.
             </p>
@@ -320,9 +319,9 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               API docs UI: <code className="bg-gray-100 px-1">/v1/docs</code>
             </p>
             <p>
-              For this backend, field naming is mostly <strong>camelCase</strong> on AI routes.
+              {t('fieldNamingCamelCaseAiRoutesPrefix')} <strong>camelCase</strong> {t('fieldNamingCamelCaseAiRoutesSuffix')}
             </p>
-            <p>Gemini key endpoints are under <code className="bg-gray-100 px-1">/v1/users/me/ai-keys/gemini</code>.</p>
+            <p>{t('geminiKeyEndpointsUnder')} <code className="bg-gray-100 px-1">/v1/users/me/ai-keys/gemini</code>.</p>
           </div>
         </article>
       </div>
@@ -332,8 +331,8 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
         <div className="text-sm text-blue-900">
           <p className="font-medium">{t('authentication')}</p>
           <p className="mt-1 text-blue-800">
-            Send <code className="rounded bg-blue-100 px-1 font-mono">Authorization: Bearer ACCESS_TOKEN</code> on every protected route.
-            Access token comes from <code className="rounded bg-blue-100 px-1 font-mono">POST /v1/auth/login</code>.
+            {t('sendAuthorizationHeader')} <code className="rounded bg-blue-100 px-1 font-mono">Authorization: Bearer ACCESS_TOKEN</code> {t('onEveryProtectedRoute')}
+            {t('accessTokenComesFrom')} <code className="rounded bg-blue-100 px-1 font-mono">POST /v1/auth/login</code>.
           </p>
         </div>
       </div>
