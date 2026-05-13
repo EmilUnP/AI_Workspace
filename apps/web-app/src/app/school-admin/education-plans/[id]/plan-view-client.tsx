@@ -372,33 +372,21 @@ export function EducationPlanViewClient({ content, sessionsPerWeek, hoursPerSess
                             {t('sessionLabel', { number: session.number })} · {session.durationHours}{t('hours')}
                           </p>
                           {session.title ? <p className="mt-1 text-sm text-gray-700 line-clamp-2">{session.title}</p> : null}
+                          {session.description ? <p className="mt-1 text-xs text-gray-600 line-clamp-2">{session.description}</p> : null}
+                          {session.objectives.length > 0 ? (
+                            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-gray-600">
+                              {session.objectives.map((objective, objectiveIndex) => (
+                                <li key={`${week.week}-${session.number}-${objectiveIndex}`}>{objective}</li>
+                              ))}
+                            </ul>
+                          ) : null}
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {(week.topics.length > 0 || week.objectives.length > 0 || week.notes) && (
-                  <details className="mt-3 rounded-lg border border-gray-200 bg-white p-3">
-                    <summary className="cursor-pointer text-xs font-medium text-gray-600">{t('viewWeekDetails')}</summary>
-                    {week.topics.length > 0 && (
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
-                        {week.topics.map((topic, i) => (
-                          <li key={i}>{topic}</li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {week.objectives.length > 0 && (
-                      <p className="mt-3 text-sm text-gray-600">
-                        <span className="font-medium text-gray-700">{t('objectivesLabel')}:</span>{' '}
-                        {week.objectives.join('; ')}
-                      </p>
-                    )}
-
-                    {week.notes && <p className="mt-2 text-sm text-gray-500">{week.notes}</p>}
-                  </details>
-                )}
+                {week.notes ? <p className="mt-3 text-sm text-gray-500">{week.notes}</p> : null}
               </article>
             ))}
           </div>

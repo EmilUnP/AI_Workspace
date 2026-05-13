@@ -17,8 +17,6 @@ const planSchema = z.object({
 type NormalizedWeek = {
   week: number
   title: string
-  topics: string[]
-  objectives: string[]
   notes: string
   sessions: Array<{
     session_number: number
@@ -47,16 +45,20 @@ const buildSessions = (
 ) => {
   const safeSessionsPerWeek = Math.max(1, sessionsPerWeek)
   const sourceTopics = topics.length > 0 ? topics : ['']
-  const chunkSize = Math.max(1, Math.ceil(sourceTopics.length / safeSessionsPerWeek))
+  const slots: string[][] = Array.from({ length: safeSessionsPerWeek }, () => [])
+  sourceTopics.forEach((topic, index) => {
+    slots[index % safeSessionsPerWeek].push(topic)
+  })
   const objectiveChunkSize = Math.max(1, Math.ceil(Math.max(objectives.length, 1) / safeSessionsPerWeek))
 
-  return Array.from({ length: safeSessionsPerWeek }, (_, index) => {
-    const topicSlice = sourceTopics.slice(index * chunkSize, (index + 1) * chunkSize).filter(Boolean)
+  return slots.map((slot, index) => {
     const objectiveSlice = objectives.slice(index * objectiveChunkSize, (index + 1) * objectiveChunkSize)
+    const topicTitle = slot[0] || `Session ${index + 1}`
+    const description = slot.length > 1 ? slot.slice(1).join('; ') : ''
     return {
       session_number: index + 1,
-      topic: topicSlice[0] || `Session ${index + 1}`,
-      description: topicSlice.slice(1).join('; '),
+      topic: topicTitle,
+      description,
       learning_objectives: objectiveSlice,
       duration_hours: hoursPerSession,
     }
@@ -97,7 +99,7 @@ const normalizeWeek = (
     return toStringArray(s.learning_objectives)
   })
 
-  const mergedTopics = Array.from(new Set([...topics, ...sessionTopics]))
+  const mergedTopics = Array.from(new Set(topics.length > 0 ? topics : sessionTopics))
   const mergedObjectives = Array.from(new Set([...objectives, ...sessionObjectives]))
   if (!title && mergedTopics.length === 0 && mergedObjectives.length === 0 && !notes) return null
   const normalizedSessions = sessions
@@ -129,8 +131,6 @@ const normalizeWeek = (
   return {
     week,
     title,
-    topics: mergedTopics,
-    objectives: mergedObjectives,
     notes,
     sessions: sessionsOut,
   }
@@ -182,8 +182,6 @@ const normalizePlanContent = (
   return Array.from({ length: targetWeeks }, (_, index) => ({
     week: index + 1,
     title: `Week ${index + 1}`,
-    topics: [],
-    objectives: [],
     notes: '',
     sessions: buildSessions([], [], sessionsPerWeek, hoursPerSession),
   }))
@@ -226,9 +224,16 @@ Return ONLY JSON in this exact shape:
     {
       "week": 1,
       "title": "Week title",
-      "topics": ["topic 1", "topic 2"],
-      "objectives": ["objective 1", "objective 2"],
-      "notes": "optional note"
+      "notes": "optional note",
+      "sessions": [
+        {
+          "session_number": 1,
+          "topic": "Session topic",
+          "description": "Session details",
+          "learning_objectives": ["objective 1", "objective 2"],
+          "duration_hours": ${data.hoursPerSession}
+        }
+      ]
     }
   ]
 }
@@ -237,7 +242,8 @@ Rules:
 - Include exactly ${targetWeeks} week items.
 - week must start at 1 and increase sequentially.
 - Keep field names exactly as shown.
-- topics and objectives must always be arrays of strings.`,
+- Include exactly ${data.sessionsPerWeek} sessions in every week.
+- duration_hours in each session must be ${data.hoursPerSession}.`,
       'gemini-2.5-flash',
       { apiKey }
     )
