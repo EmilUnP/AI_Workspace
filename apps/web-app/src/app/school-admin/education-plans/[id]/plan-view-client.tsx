@@ -4,6 +4,16 @@ import { useTranslations } from 'next-intl'
 
 interface Props {
   content: unknown
+  sessionsPerWeek: number
+  hoursPerSession: number
+}
+
+type RenderSession = {
+  number: number
+  title: string
+  description: string
+  objectives: string[]
+  durationHours: number
 }
 
 type RenderWeek = {
@@ -12,6 +22,7 @@ type RenderWeek = {
   topics: string[]
   objectives: string[]
   notes: string
+  sessions: RenderSession[]
 }
 
 const chunkArray = <T,>(items: T[], size: number): T[][] => {
@@ -73,6 +84,7 @@ const parseWeeksFromFallbackText = (text: string): RenderWeek[] => {
         topics: [],
         objectives: [],
         notes: '',
+        sessions: [],
       }
     }
   }
@@ -120,6 +132,7 @@ const parseWeeksFromFallbackText = (text: string): RenderWeek[] => {
         topics: [],
         objectives: [],
         notes: '',
+        sessions: [],
       }
       pendingTitle = ''
       lastKey = null
@@ -163,6 +176,35 @@ const formatTopic = (value: unknown): string => {
   return title || description
 }
 
+const buildSessionsFromWeek = (
+  week: RenderWeek,
+  sessionsPerWeek: number,
+  hoursPerSession: number
+): RenderSession[] => {
+  const safeSessionsPerWeek = Math.max(1, sessionsPerWeek)
+  const sourceTopics = week.topics.length > 0 ? week.topics : [week.title || '']
+  const sourceObjectives = week.objectives
+  const chunkSize = Math.max(1, Math.ceil(sourceTopics.length / safeSessionsPerWeek))
+  const objectiveChunkSize = Math.max(1, Math.ceil(Math.max(sourceObjectives.length, 1) / safeSessionsPerWeek))
+
+  return Array.from({ length: safeSessionsPerWeek }, (_, index) => {
+    const topicSlice = sourceTopics.slice(index * chunkSize, (index + 1) * chunkSize).filter(Boolean)
+    const objectiveSlice = sourceObjectives.slice(
+      index * objectiveChunkSize,
+      (index + 1) * objectiveChunkSize
+    )
+    const title = topicSlice[0] || week.title || ''
+    const description = topicSlice.slice(1).join('; ')
+    return {
+      number: index + 1,
+      title,
+      description,
+      objectives: objectiveSlice,
+      durationHours: hoursPerSession,
+    }
+  })
+}
+
 const extractRawWeeks = (content: unknown): unknown[] => {
   if (Array.isArray(content)) return content
   const root = asRecord(content)
@@ -201,7 +243,7 @@ const extractRawWeeks = (content: unknown): unknown[] => {
   return []
 }
 
-const toRenderWeek = (value: unknown): RenderWeek => {
+const toRenderWeek = (value: unknown, hoursPerSession: number): RenderWeek => {
   const row = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>
   const week = Number(row.week ?? row.week_number ?? row.weekIndex)
   const title = pickString(row, ['title', 'week_title', 'name'])
@@ -238,6 +280,27 @@ const toRenderWeek = (value: unknown): RenderWeek => {
       return values.map((item) => asTrimmedString(item)).filter(Boolean)
     })
   const objectives = [...objectivesRaw.map((item) => asTrimmedString(item)).filter(Boolean), ...sessionObjectives]
+  const sessions: RenderSession[] = sessionsRaw
+    .map((session, index) => {
+      const sessionRow = asRecord(session)
+      if (!sessionRow) return null
+      const rawNumber = Number(sessionRow.session_number)
+      const topic = pickString(sessionRow, ['topic', 'title', 'name'])
+      const description = pickString(sessionRow, ['description', 'details', 'summary'])
+      const learningObjectives = Array.isArray(sessionRow.learning_objectives)
+        ? sessionRow.learning_objectives.map((item) => asTrimmedString(item)).filter(Boolean)
+        : []
+      const rawDurationHours = Number(sessionRow.duration_hours ?? sessionRow.durationHours)
+      if (!topic && !description && learningObjectives.length === 0) return null
+      return {
+        number: Number.isFinite(rawNumber) && rawNumber > 0 ? rawNumber : index + 1,
+        title: topic,
+        description,
+        objectives: learningObjectives,
+        durationHours: Number.isFinite(rawDurationHours) && rawDurationHours > 0 ? rawDurationHours : hoursPerSession,
+      }
+    })
+    .filter((session): session is RenderSession => Boolean(session))
 
   return {
     week: Number.isFinite(week) ? week : 0,
@@ -245,15 +308,16 @@ const toRenderWeek = (value: unknown): RenderWeek => {
     topics,
     objectives,
     notes,
+    sessions,
   }
 }
 
-export function EducationPlanViewClient({ content }: Props) {
+export function EducationPlanViewClient({ content, sessionsPerWeek, hoursPerSession }: Props) {
   const t = useTranslations('teacherEducationPlans')
   const rawWeeks = extractRawWeeks(content)
   const normalizedContent = rawWeeks
     .map((week, index) => {
-      const parsed = toRenderWeek(week)
+      const parsed = toRenderWeek(week, hoursPerSession)
       return { ...parsed, week: index + 1 }
     })
     .filter((week) => week.title || week.topics.length > 0 || week.objectives.length > 0 || week.notes)
@@ -262,7 +326,7 @@ export function EducationPlanViewClient({ content }: Props) {
     ? parseWeeksFromFallbackText(fallbackText)
     : []
   const renderWeeksBase = normalizedContent.length > 0 ? normalizedContent : fallbackWeeks
-  const renderWeeks =
+  const renderWeeksBaseProcessed =
     renderWeeksBase.length === 1 && renderWeeksBase[0].topics.length > 8
       ? chunkArray(renderWeeksBase[0].topics, 6).map((topicsChunk, index) => ({
           week: index + 1,
@@ -270,8 +334,19 @@ export function EducationPlanViewClient({ content }: Props) {
           topics: topicsChunk,
           objectives: index === 0 ? renderWeeksBase[0].objectives : [],
           notes: index === 0 ? renderWeeksBase[0].notes : '',
+          sessions: index === 0 ? renderWeeksBase[0].sessions : [],
         }))
       : renderWeeksBase
+  const renderWeeks = renderWeeksBaseProcessed.map((week) => ({
+    ...week,
+    sessions:
+      week.sessions.length > 0
+        ? week.sessions
+            .slice()
+            .sort((a, b) => a.number - b.number)
+            .map((session, index) => ({ ...session, number: index + 1 }))
+        : buildSessionsFromWeek(week, sessionsPerWeek, hoursPerSession),
+  }))
 
   return (
     <div className="space-y-4">
@@ -284,23 +359,45 @@ export function EducationPlanViewClient({ content }: Props) {
                   {t('weekNum', { week: week.week })}: {week.title || t('weekNum', { week: week.week })}
                 </h3>
 
-                {week.topics.length > 0 && (
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
-                    {week.topics.map((topic, i) => (
-                      <li key={i}>{topic}</li>
-                    ))}
-                  </ul>
+                {week.sessions.length > 0 && (
+                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">{t('weeklyDeliveryPlan')}</p>
+                      <p className="text-xs text-gray-600">{sessionsPerWeek} {t('timesPerWeek')} · {hoursPerSession}{t('hours')}</p>
+                    </div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {week.sessions.map((session) => (
+                        <div key={`${week.week}-${session.number}`} className="rounded-md border border-gray-200 bg-white p-2.5">
+                          <p className="text-xs font-semibold text-gray-800">
+                            {t('sessionLabel', { number: session.number })} · {session.durationHours}{t('hours')}
+                          </p>
+                          {session.title ? <p className="mt-1 text-sm text-gray-700 line-clamp-2">{session.title}</p> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
-                {week.objectives.length > 0 && (
-                  <p className="mt-3 text-sm text-gray-600">
-                    <span className="font-medium text-gray-700">{t('objectivesLabel')}:</span>{' '}
-                    {week.objectives.join('; ')}
-                  </p>
-                )}
+                {(week.topics.length > 0 || week.objectives.length > 0 || week.notes) && (
+                  <details className="mt-3 rounded-lg border border-gray-200 bg-white p-3">
+                    <summary className="cursor-pointer text-xs font-medium text-gray-600">{t('viewWeekDetails')}</summary>
+                    {week.topics.length > 0 && (
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+                        {week.topics.map((topic, i) => (
+                          <li key={i}>{topic}</li>
+                        ))}
+                      </ul>
+                    )}
 
-                {week.notes && (
-                  <p className="mt-2 text-sm text-gray-500">{week.notes}</p>
+                    {week.objectives.length > 0 && (
+                      <p className="mt-3 text-sm text-gray-600">
+                        <span className="font-medium text-gray-700">{t('objectivesLabel')}:</span>{' '}
+                        {week.objectives.join('; ')}
+                      </p>
+                    )}
+
+                    {week.notes && <p className="mt-2 text-sm text-gray-500">{week.notes}</p>}
+                  </details>
                 )}
               </article>
             ))}

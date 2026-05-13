@@ -96,6 +96,8 @@ export default async function TeacherEducationPlanDetailPage({
 
       <EducationPlanViewClient
         content={plan.content}
+        sessionsPerWeek={plan.sessions_per_week}
+        hoursPerSession={plan.hours_per_session}
       />
     </div>
   )

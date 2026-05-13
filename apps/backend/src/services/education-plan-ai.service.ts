@@ -20,6 +20,13 @@ type NormalizedWeek = {
   topics: string[]
   objectives: string[]
   notes: string
+  sessions: Array<{
+    session_number: number
+    topic: string
+    description: string
+    learning_objectives: string[]
+    duration_hours: number
+  }>
 }
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
@@ -32,7 +39,36 @@ const toStringArray = (value: unknown): string[] => {
   return value.map((item) => asString(item)).filter(Boolean)
 }
 
-const normalizeWeek = (value: unknown, fallbackWeek: number): NormalizedWeek | null => {
+const buildSessions = (
+  topics: string[],
+  objectives: string[],
+  sessionsPerWeek: number,
+  hoursPerSession: number
+) => {
+  const safeSessionsPerWeek = Math.max(1, sessionsPerWeek)
+  const sourceTopics = topics.length > 0 ? topics : ['']
+  const chunkSize = Math.max(1, Math.ceil(sourceTopics.length / safeSessionsPerWeek))
+  const objectiveChunkSize = Math.max(1, Math.ceil(Math.max(objectives.length, 1) / safeSessionsPerWeek))
+
+  return Array.from({ length: safeSessionsPerWeek }, (_, index) => {
+    const topicSlice = sourceTopics.slice(index * chunkSize, (index + 1) * chunkSize).filter(Boolean)
+    const objectiveSlice = objectives.slice(index * objectiveChunkSize, (index + 1) * objectiveChunkSize)
+    return {
+      session_number: index + 1,
+      topic: topicSlice[0] || `Session ${index + 1}`,
+      description: topicSlice.slice(1).join('; '),
+      learning_objectives: objectiveSlice,
+      duration_hours: hoursPerSession,
+    }
+  })
+}
+
+const normalizeWeek = (
+  value: unknown,
+  fallbackWeek: number,
+  sessionsPerWeek: number,
+  hoursPerSession: number
+): NormalizedWeek | null => {
   const row = asRecord(value)
   if (!row) return null
 
@@ -64,6 +100,31 @@ const normalizeWeek = (value: unknown, fallbackWeek: number): NormalizedWeek | n
   const mergedTopics = Array.from(new Set([...topics, ...sessionTopics]))
   const mergedObjectives = Array.from(new Set([...objectives, ...sessionObjectives]))
   if (!title && mergedTopics.length === 0 && mergedObjectives.length === 0 && !notes) return null
+  const normalizedSessions = sessions
+    .map((session, index) => {
+      const s = asRecord(session)
+      if (!s) return null
+      const rawNumber = Number(s.session_number ?? s.number)
+      const sessionNumber = Number.isFinite(rawNumber) && rawNumber > 0 ? rawNumber : index + 1
+      const topic = asString(s.topic ?? s.title ?? s.name) || `Session ${sessionNumber}`
+      const description = asString(s.description ?? s.details ?? s.summary)
+      const learningObjectives = toStringArray(s.learning_objectives ?? s.objectives)
+      const rawDuration = Number(s.duration_hours ?? s.durationHours ?? hoursPerSession)
+      const durationHours = Number.isFinite(rawDuration) && rawDuration > 0 ? rawDuration : hoursPerSession
+      return {
+        session_number: sessionNumber,
+        topic,
+        description,
+        learning_objectives: learningObjectives,
+        duration_hours: durationHours,
+      }
+    })
+    .filter((session): session is NonNullable<typeof session> => Boolean(session))
+    .sort((a, b) => a.session_number - b.session_number)
+  const sessionsOut =
+    normalizedSessions.length > 0
+      ? normalizedSessions.map((session, index) => ({ ...session, session_number: index + 1 }))
+      : buildSessions(mergedTopics, mergedObjectives, sessionsPerWeek, hoursPerSession)
 
   return {
     week,
@@ -71,6 +132,7 @@ const normalizeWeek = (value: unknown, fallbackWeek: number): NormalizedWeek | n
     topics: mergedTopics,
     objectives: mergedObjectives,
     notes,
+    sessions: sessionsOut,
   }
 }
 
@@ -101,10 +163,15 @@ const extractWeeks = (raw: unknown): unknown[] => {
   return []
 }
 
-const normalizePlanContent = (raw: unknown, targetWeeks: number): NormalizedWeek[] => {
+const normalizePlanContent = (
+  raw: unknown,
+  targetWeeks: number,
+  sessionsPerWeek: number,
+  hoursPerSession: number
+): NormalizedWeek[] => {
   const extractedWeeks = extractWeeks(raw)
   const normalized = extractedWeeks
-    .map((item, index) => normalizeWeek(item, index + 1))
+    .map((item, index) => normalizeWeek(item, index + 1, sessionsPerWeek, hoursPerSession))
     .filter((item): item is NormalizedWeek => Boolean(item))
     .sort((a, b) => a.week - b.week)
     .map((item, index) => ({ ...item, week: index + 1 }))
@@ -118,6 +185,7 @@ const normalizePlanContent = (raw: unknown, targetWeeks: number): NormalizedWeek
     topics: [],
     objectives: [],
     notes: '',
+    sessions: buildSessions([], [], sessionsPerWeek, hoursPerSession),
   }))
 }
 
@@ -173,7 +241,7 @@ Rules:
       'gemini-2.5-flash',
       { apiKey }
     )
-    const content = normalizePlanContent(rawContent, targetWeeks)
+    const content = normalizePlanContent(rawContent, targetWeeks, data.sessionsPerWeek, data.hoursPerSession)
 
     const { rows } = await this.app.db.query<{ id: string }>(
       `INSERT INTO education_plans (user_id, name, period_months, sessions_per_week, hours_per_session, document_ids, content)
