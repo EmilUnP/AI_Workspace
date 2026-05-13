@@ -254,7 +254,7 @@ export function EducationPlanViewClient({ content }: Props) {
   const normalizedContent = rawWeeks
     .map((week, index) => {
       const parsed = toRenderWeek(week)
-      return { ...parsed, week: parsed.week > 0 ? parsed.week : index + 1 }
+      return { ...parsed, week: index + 1 }
     })
     .filter((week) => week.title || week.topics.length > 0 || week.objectives.length > 0 || week.notes)
   const fallbackText = extractPlanText(content)
@@ -279,7 +279,7 @@ export function EducationPlanViewClient({ content }: Props) {
         {renderWeeks.length > 0 ? (
           <div className="space-y-3">
             {renderWeeks.map((week) => (
-              <article key={week.week} className="rounded-xl border border-gray-200 bg-white p-4">
+              <article key={`${week.week}-${week.title || 'week'}`} className="rounded-xl border border-gray-200 bg-white p-4">
                 <h3 className="text-sm font-semibold text-gray-900">
                   {t('weekNum', { week: week.week })}: {week.title || t('weekNum', { week: week.week })}
                 </h3>
