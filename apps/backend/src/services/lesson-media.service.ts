@@ -8,6 +8,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../config/env.js'
+import { buildImagePromptContentExcerpt } from './lesson-content-sanitize.js'
 
 const AI_MODELS = {
   TEXT: 'gemini-2.5-flash',
@@ -120,12 +121,14 @@ ALL text, labels, annotations, and written content in the generated images MUST 
       },
     })
 
+    const contentForPrompt = buildImagePromptContentExcerpt(content, 3600)
+
     const prompt = `You are creating detailed prompts for AI image generation to illustrate an educational lesson.
 
 LESSON TOPIC: "${topic}"
 
-LESSON CONTENT:
-${content.substring(0, 2000)}
+LESSON CONTENT (excerpt; figure sections may be appended so prompts align with headings like "Şəkil 1" / "Figure 1"):
+${contentForPrompt}
 
 ${languageInstruction}
 
@@ -135,7 +138,8 @@ TASK: Generate ${count} detailed, specific prompts for AI image generation. Each
 3. Include educational context (e.g., "educational diagram", "scientific illustration")
 4. Be 15-30 words long for best results
 5. Focus on the SPECIFIC concepts taught in this lesson
-${detectedLanguage !== "English" ? `6. CRITICAL: Specify that ALL text, labels, and annotations in the image MUST be in ${detectedLanguage} language` : ""}
+6. ORDER: If the content uses numbered figures (e.g. "### Şəkil 1", "### Figure 1"), prompt 1 MUST match the first figure's theme, prompt 2 the second, and so on (then remaining prompts for other key visuals). Do not invent unrelated scenes when a figure title already defines the subject.
+${detectedLanguage !== "English" ? `7. CRITICAL: Specify that ALL text, labels, and annotations in the image MUST be in ${detectedLanguage} language` : ""}
 
 EXAMPLES OF GOOD PROMPTS:
 - "Educational diagram showing the water cycle with labeled stages: evaporation, condensation, precipitation, and collection"

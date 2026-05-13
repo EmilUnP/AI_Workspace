@@ -7,6 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { randomUUID } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { sanitizeBrokenMarkdownTableLines } from './lesson-content-sanitize.js'
 import { generateLessonImagesWithUsage, type LessonImage } from './lesson-media.service.js'
 import { DocumentRagService } from './document-rag.service.js'
 import { generateLessonAudioWithUsage } from './lesson-media.service.js'
@@ -91,6 +92,9 @@ const miniTestItemSchema = z.object({
   correct_answer: z.number().int().min(0).max(3),
   explanation: z.string().min(2),
 })
+
+/** Always persist exactly this many mini-test questions (independent of content length). */
+const MINI_TEST_TARGET = 5
 
 export interface GenerateLessonParams {
   documentId?: string | null
@@ -223,7 +227,7 @@ function getGeminiModelWithSystemInstruction(systemInstruction: string, modelNam
  */
 function normalizeLessonContent(content: string): string {
   if (!content || typeof content !== 'string') return content
-  let out = content.trim()
+  let out = sanitizeBrokenMarkdownTableLines(content.trim())
 
   // Strip disclaimer / meta-commentary paragraphs (common when topic and document mismatch)
   const disclaimerPatterns = [
@@ -490,6 +494,18 @@ function isMiniTestLowQuality(items: GeneratedLesson['mini_test'], fallbackQuest
   return false
 }
 
+function dedupeMiniTest(items: GeneratedLesson['mini_test']): GeneratedLesson['mini_test'] {
+  const seen = new Set<string>()
+  const out: GeneratedLesson['mini_test'] = []
+  for (const item of items) {
+    const key = String(item.question || '').trim().toLowerCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(item)
+  }
+  return out
+}
+
 async function regenerateMiniTestFromContent(
   topic: string,
   lessonContent: string,
@@ -501,7 +517,7 @@ async function regenerateMiniTestFromContent(
 All output must be in ${targetLanguage}. Questions must be grounded in the provided lesson content.`
   )
 
-  const prompt = `Create ${count} high-quality multiple-choice questions for this lesson.
+  const prompt = `Create exactly ${count} high-quality multiple-choice questions for this lesson.
 Rules:
 - Output ONLY valid JSON.
 - Language: ${targetLanguage}.
@@ -509,6 +525,7 @@ Rules:
 - Provide exactly 4 plausible options.
 - Exactly one correct answer per question.
 - explanations must be concise and content-grounded.
+- The mini_test array MUST contain exactly ${count} items (no fewer, no more).
 
 Return JSON with exact shape:
 {
@@ -733,10 +750,10 @@ Never add disclaimers or meta-commentary in the lesson content. Output only the 
 
   const lengthInstruction =
     contentLength === 'short'
-      ? ' Keep the lesson concise: about 1–2 pages of content (~300–700 words). Use 2–4 main sections and 3 mini test questions.'
+      ? ` Keep the lesson concise: about 1–2 pages of content (~300–700 words). Use 2–4 main sections and exactly ${MINI_TEST_TARGET} mini test questions (multiple choice).`
       : contentLength === 'full'
-        ? ' Create a maximum-length lesson: roughly 6–8 pages (~1,800–2,800 words). Use 8–12 sections and at least 6–8 mini test questions. Prioritize depth and coverage over brevity.'
-        : ' Aim for 3–4 pages (~900–1,400 words). Use 5–7 sections and at least 5 mini test questions.'
+        ? ` Create a maximum-length lesson: roughly 6–8 pages (~1,800–2,800 words). Use 8–12 sections and exactly ${MINI_TEST_TARGET} mini test questions (multiple choice). Prioritize depth and coverage over brevity.`
+        : ` Aim for 3–4 pages (~900–1,400 words). Use 5–7 sections and exactly ${MINI_TEST_TARGET} mini test questions (multiple choice).`
 
   const tablesRule = includeTables
     ? '  - For comparisons or structured data (e.g. definitions, properties, before/after), use markdown tables: one header row with | Column A | Column B |, then a separator row | --- | --- |, then data rows. Tables render clearly in the lesson and in the AI tutor chat.'
@@ -748,6 +765,10 @@ Never add disclaimers or meta-commentary in the lesson content. Output only the 
 
   const chartsRule = includeCharts
     ? '\n- Where helpful, include chart-like data: use markdown tables for trends or comparisons, or a short description of what a chart would show (e.g. "A bar chart of X would show...").'
+    : ''
+
+  const imagesVisualRule = includeImages
+    ? '\n- This lesson will receive separate AI-generated images in the app. Do NOT replace figures with enormous markdown tables or rows made of very long runs of dashes and pipes. For each visual, use a short heading like "### Şəkil 1: …" / "### Figure 1: …" (match the lesson language) followed by a compact bullet list — not a wide table. If you use a markdown table, keep it small: at most ~6 columns, short cell text, and separator rows must look exactly like | --- | --- | (same pipe count as the header) — never stretch a cell with hundreds of dashes.'
     : ''
 
   const rawGradeLevel = typeof gradeLevel === 'string' ? gradeLevel.trim() : ''
@@ -775,16 +796,17 @@ FORMATTING RULES (universal style – must follow):
   - Use **text** for bold (never ***text:** or similar). Use *text* for italic.
   - Use simple bullet lists with * or - at the start of each line. Do not duplicate the same bullet as a sub-bullet; keep a single-level list unless you have real sub-items.
   - Use numbered lists (1. 2. 3.) for steps or ordered points.
-${tablesRule}${figuresRule}${chartsRule}
+${tablesRule}${figuresRule}${chartsRule}${imagesVisualRule}
 - The "content" field must look like a clean, professional lesson suitable for in-app display: clear headings, short paragraphs, well-structured lists${includeTables ? ', and tables when they aid understanding' : ''}.
 
 The lesson should be well-structured, educational, and include:
 1. A clear title
 2. ${objectives ? 'The learning objectives provided above (3-5 items)' : '3-5 specific learning objectives (what students will learn)'}
 3. Main content explaining the topic in detail (using the markdown rules above)
-4. A mini test with 5 questions (multiple choice; 3 questions for short length)
+4. A mini test with exactly ${MINI_TEST_TARGET} questions (multiple choice)
 
 Return ONLY a valid JSON object with this exact structure. You MUST include all fields; learning_objectives is REQUIRED and must be a non-empty array of 3-5 strings. Output "title" and "learning_objectives" first (before "content") so they are never omitted.
+The mini_test array MUST contain exactly ${MINI_TEST_TARGET} question objects.
 CRITICAL for valid JSON: In the "content" field use \\n for line breaks (do not use literal newlines inside the string). Escape any double-quote inside content as \\".
 {
   "title": "Lesson title here",
@@ -862,50 +884,91 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
     // Normalize content to universal style (strip disclaimers, fix markdown) for consistent display in app and API
     lesson.content = normalizeLessonContent(lesson.content)
 
-    // Calculate estimated duration based on content length (avg 200 words per minute reading)
+    // Estimated reading time from content length (avg 200 words per minute); mini-test time added after mini_test is finalized
     const wordCount = lesson.content.split(/\s+/).length
     const readingMinutes = Math.ceil(wordCount / 200)
-    // Add time for mini test solving (~0.5 min per question)
-    const testTime = Math.ceil((lesson.mini_test?.length || 0) * 0.5)
-    lesson.duration_minutes = Math.max(5, readingMinutes + testTime)
 
     if (!lesson.mini_test || lesson.mini_test.length === 0) {
-      lesson.mini_test = [
-        {
-          question: fallback.question,
-          options: ['Option A', 'Option B', 'Option C', 'Option D'],
-          correct_answer: 0,
-          explanation: fallback.explanation,
-        },
-      ]
+      lesson.mini_test = []
     }
 
-    const expectedMiniTestCount = contentLength === 'short' ? 3 : 5
-    if (isMiniTestLowQuality(lesson.mini_test, fallback.question)) {
+    if (isMiniTestLowQuality(lesson.mini_test, fallback.question) || lesson.mini_test.length < MINI_TEST_TARGET) {
       try {
         const regenerated = await regenerateMiniTestFromContent(
           topicString,
           lesson.content,
           targetLanguage,
-          expectedMiniTestCount
+          MINI_TEST_TARGET
         )
         if (regenerated.length > 0) {
-          lesson.mini_test = regenerated
+          lesson.mini_test = dedupeMiniTest(regenerated)
         }
       } catch (error) {
         console.warn('Mini-test regeneration failed, using current mini-test:', error)
       }
     }
 
-    // Ensure we have 5 mini test questions (use target-language fallback, not topicString)
-    while (lesson.mini_test.length < 5) {
-      lesson.mini_test.push({
-        question: fallback.question,
-        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-        correct_answer: 0,
-        explanation: fallback.explanation,
-      })
+    // If still short, request only the missing amount and merge (no placeholder questions).
+    if (lesson.mini_test.length < MINI_TEST_TARGET) {
+      try {
+        const missing = MINI_TEST_TARGET - lesson.mini_test.length
+        const topUp = await regenerateMiniTestFromContent(
+          topicString,
+          lesson.content,
+          targetLanguage,
+          missing
+        )
+        if (topUp.length > 0) {
+          lesson.mini_test = dedupeMiniTest([...lesson.mini_test, ...topUp]).slice(0, MINI_TEST_TARGET)
+        }
+      } catch (error) {
+        console.warn('Mini-test top-up failed, keeping available questions:', error)
+      }
     }
+
+    // Never return generic placeholder entries.
+    lesson.mini_test = lesson.mini_test.filter((q) => {
+      const question = String(q.question || '').trim().toLowerCase()
+      const options = Array.isArray(q.options) ? q.options.map((opt) => String(opt).trim().toLowerCase()) : []
+      const genericOptions = options.length === 4 && options.every((opt, i) => opt === `option ${String.fromCharCode(97 + i)}` || opt === `${String.fromCharCode(65 + i)} variantı`.toLowerCase())
+      return question !== fallback.question.trim().toLowerCase() && !genericOptions
+    })
+
+    // Filtering can drop count; top up again (max a few attempts) toward MINI_TEST_TARGET.
+    let topUpAttempts = 0
+    while (lesson.mini_test.length < MINI_TEST_TARGET && topUpAttempts < 3) {
+      topUpAttempts += 1
+      try {
+        const missing = MINI_TEST_TARGET - lesson.mini_test.length
+        const topUp = await regenerateMiniTestFromContent(
+          topicString,
+          lesson.content,
+          targetLanguage,
+          missing
+        )
+        if (topUp.length > 0) {
+          lesson.mini_test = dedupeMiniTest([...lesson.mini_test, ...topUp]).slice(0, MINI_TEST_TARGET)
+        } else {
+          break
+        }
+        lesson.mini_test = lesson.mini_test.filter((q) => {
+          const question = String(q.question || '').trim().toLowerCase()
+          const options = Array.isArray(q.options) ? q.options.map((opt) => String(opt).trim().toLowerCase()) : []
+          const genericOptions =
+            options.length === 4 &&
+            options.every(
+              (opt, i) =>
+                opt === `option ${String.fromCharCode(97 + i)}` || opt === `${String.fromCharCode(65 + i)} variantı`.toLowerCase()
+            )
+          return question !== fallback.question.trim().toLowerCase() && !genericOptions
+        })
+      } catch (error) {
+        console.warn('Mini-test post-filter top-up failed:', error)
+        break
+      }
+    }
+
+    lesson.mini_test = lesson.mini_test.slice(0, MINI_TEST_TARGET)
 
     // Post-process mini-test explanations to remove low-value source-referencing intros.
     lesson.mini_test = lesson.mini_test.map((item) => ({
@@ -923,6 +986,12 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
     } catch (error) {
       console.warn('Lesson language lock failed, keeping original output:', error)
     }
+
+    if (lesson.mini_test.length > MINI_TEST_TARGET) {
+      lesson.mini_test = lesson.mini_test.slice(0, MINI_TEST_TARGET)
+    }
+    const testTimeFinal = Math.ceil((lesson.mini_test?.length || 0) * 0.5)
+    lesson.duration_minutes = Math.max(5, readingMinutes + testTimeFinal)
 
     // Generate images for the lesson (2-3 images) with language context
     // If lessonId is provided, images will be saved to Supabase Storage
