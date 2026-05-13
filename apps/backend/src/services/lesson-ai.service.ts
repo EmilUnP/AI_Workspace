@@ -64,11 +64,6 @@ export interface GeneratedLesson {
   content: string  // Markdown formatted content
   learning_objectives: string[]  // 3-5 learning objectives
   duration_minutes: number  // Estimated reading time
-  examples: Array<{
-    title: string
-    description: string
-    code?: string
-  }>
   mini_test: Array<{
     question: string
     options: string[]
@@ -106,7 +101,7 @@ export interface GenerateLessonParams {
   includeImages?: boolean
   /** Teacher-provided learning objectives (free-text); when set, the AI uses these instead of generating its own. */
   objectives?: string
-  /** Target grade level (e.g. 'grade_9', 'undergraduate'). The AI tailors complexity, vocabulary, and examples. */
+  /** Target grade level (e.g. 'grade_9', 'undergraduate'). The AI tailors complexity and vocabulary. */
   gradeLevel?: string
   /** Optional free-text core prompt that defines lesson focus, constraints, or style. */
   corePrompt?: string
@@ -562,7 +557,6 @@ Return ONLY valid JSON.`
     content: lesson.content,
     learning_objectives: lesson.learning_objectives,
     duration_minutes: lesson.duration_minutes,
-    examples: lesson.examples,
     mini_test: lesson.mini_test,
     images: lesson.images,
   }
@@ -570,7 +564,7 @@ Return ONLY valid JSON.`
   const response = await model.generateContent(
     `Translate this lesson JSON to ${targetLanguage}.
 Rules:
-- Translate title, content, objectives, examples, and mini_test fields.
+- Translate title, content, objectives, and mini_test fields.
 - Preserve markdown structure in content.
 - Keep images URLs unchanged; translate only alt/description if present.
 - Return ONLY valid JSON.
@@ -587,7 +581,6 @@ ${JSON.stringify(source)}`
 const LESSON_SYSTEM_INSTRUCTION = `You are an expert educational content creator. Your lessons should be:
 - Clear and easy to understand
 - Well-organized with proper sections
-- Include practical examples
 - Include a mini test to reinforce learning
 - Professional and educational in tone
 - Based on the provided PDF content
@@ -729,7 +722,7 @@ Never add disclaimers or meta-commentary in the lesson content. Output only the 
 
   const languageInstruction =
     targetLanguage !== 'English'
-      ? `\n\n⚠️ CRITICAL LANGUAGE REQUIREMENT ⚠️\nYou MUST generate ALL content EXCLUSIVELY in ${targetLanguage} language:\n- Title must be in ${targetLanguage}\n- All content must be in ${targetLanguage}\n- All examples must be in ${targetLanguage}\n- All questions, options, and explanations must be in ${targetLanguage}\n- Use proper ${targetLanguage} grammar and spelling\n- The topic or title below may be in a DIFFERENT language (e.g. user input). You MUST translate or rephrase it into ${targetLanguage} for the lesson title and all outputs. Do NOT copy the topic string literally if it is not in ${targetLanguage}.\n\n`
+      ? `\n\n⚠️ CRITICAL LANGUAGE REQUIREMENT ⚠️\nYou MUST generate ALL content EXCLUSIVELY in ${targetLanguage} language:\n- Title must be in ${targetLanguage}\n- All content must be in ${targetLanguage}\n- All questions, options, and explanations must be in ${targetLanguage}\n- Use proper ${targetLanguage} grammar and spelling\n- The topic or title below may be in a DIFFERENT language (e.g. user input). You MUST translate or rephrase it into ${targetLanguage} for the lesson title and all outputs. Do NOT copy the topic string literally if it is not in ${targetLanguage}.\n\n`
       : ''
 
   const opts = contentOptions ?? {}
@@ -740,10 +733,10 @@ Never add disclaimers or meta-commentary in the lesson content. Output only the 
 
   const lengthInstruction =
     contentLength === 'short'
-      ? ' Keep the lesson concise: about 1–2 pages of content (~300–700 words). Use 2–4 main sections, 1–2 examples, and 3 mini test questions.'
+      ? ' Keep the lesson concise: about 1–2 pages of content (~300–700 words). Use 2–4 main sections and 3 mini test questions.'
       : contentLength === 'full'
-        ? ' Create a maximum-length lesson: roughly 6–8 pages (~1,800–2,800 words). Use 8–12 sections, 4+ worked examples, and at least 6–8 mini test questions. Prioritize depth and coverage over brevity.'
-        : ' Aim for 3–4 pages (~900–1,400 words). Use 5–7 sections, 2–3 examples, and at least 5 mini test questions.'
+        ? ' Create a maximum-length lesson: roughly 6–8 pages (~1,800–2,800 words). Use 8–12 sections and at least 6–8 mini test questions. Prioritize depth and coverage over brevity.'
+        : ' Aim for 3–4 pages (~900–1,400 words). Use 5–7 sections and at least 5 mini test questions.'
 
   const tablesRule = includeTables
     ? '  - For comparisons or structured data (e.g. definitions, properties, before/after), use markdown tables: one header row with | Column A | Column B |, then a separator row | --- | --- |, then data rows. Tables render clearly in the lesson and in the AI tutor chat.'
@@ -761,11 +754,11 @@ Never add disclaimers or meta-commentary in the lesson content. Output only the 
   const gradeLevelLabel = gradeValueToLabel(rawGradeLevel)
   const targetGradeLevel = gradeLevelLabel ?? rawGradeLevel
   const gradeInstruction = targetGradeLevel
-    ? `\n\n🎓 TARGET GRADE LEVEL: ${targetGradeLevel}\nYou MUST tailor the lesson for this grade level:\n- Use vocabulary, sentence complexity, and examples appropriate for ${targetGradeLevel} students\n- Adjust the depth of explanation: simpler for lower grades, more analytical for higher levels\n- Choose relatable examples and analogies suitable for this age group\n- The mini test difficulty must match this grade level\n`
+    ? `\n\n🎓 TARGET GRADE LEVEL: ${targetGradeLevel}\nYou MUST tailor the lesson for this grade level:\n- Use vocabulary and sentence complexity appropriate for ${targetGradeLevel} students\n- Adjust the depth of explanation: simpler for lower grades, more analytical for higher levels\n- The mini test difficulty must match this grade level\n`
     : ''
 
   const objectivesInstruction = objectives
-    ? `\n\n🎯 TEACHER-PROVIDED LEARNING OBJECTIVES (use these exactly):\n${objectives}\nYou MUST structure the lesson content to cover ALL of the above objectives. Use them as the "learning_objectives" array in your response (you may rephrase slightly for clarity but preserve the intent). The lesson content, examples, and mini test questions should directly support these objectives.\n`
+    ? `\n\n🎯 TEACHER-PROVIDED LEARNING OBJECTIVES (use these exactly):\n${objectives}\nYou MUST structure the lesson content to cover ALL of the above objectives. Use them as the "learning_objectives" array in your response (you may rephrase slightly for clarity but preserve the intent). The lesson content and mini test questions should directly support these objectives.\n`
     : ''
   const corePromptInstruction = corePrompt?.trim()
     ? `\n\n🧭 CORE TEACHER PROMPT (high priority):\n${corePrompt.trim()}\nUse this as a strict guidance layer for scope, tone, depth, style, and constraints.`
@@ -789,8 +782,7 @@ The lesson should be well-structured, educational, and include:
 1. A clear title
 2. ${objectives ? 'The learning objectives provided above (3-5 items)' : '3-5 specific learning objectives (what students will learn)'}
 3. Main content explaining the topic in detail (using the markdown rules above)
-4. Practical examples (at least 2-3 examples, or 1-2 for short length)
-5. A mini test with 5 questions (multiple choice; 3 questions for short length)
+4. A mini test with 5 questions (multiple choice; 3 questions for short length)
 
 Return ONLY a valid JSON object with this exact structure. You MUST include all fields; learning_objectives is REQUIRED and must be a non-empty array of 3-5 strings. Output "title" and "learning_objectives" first (before "content") so they are never omitted.
 CRITICAL for valid JSON: In the "content" field use \\n for line breaks (do not use literal newlines inside the string). Escape any double-quote inside content as \\".
@@ -802,13 +794,6 @@ CRITICAL for valid JSON: In the "content" field use \\n for line breaks (do not 
     "Students will learn..."
   ],
   "content": "Main lesson content in markdown. Use ## and ### for headings, **bold** for emphasis, simple * bullets or 1. 2. numbered lists, and markdown tables (| col | col |, then | --- | --- |, then rows) for comparisons. No disclaimers or meta-commentary.",
-  "examples": [
-    {
-      "title": "Example 1 title",
-      "description": "Explanation of the example",
-      "code": "Code example if applicable (optional field)"
-    }
-  ],
   "mini_test": [
     {
       "question": "Question text",
@@ -853,7 +838,6 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
       content: `# ${fallback.title}\n\nContent is being prepared.`,
       learning_objectives: [],
       duration_minutes: 5,
-      examples: [],
       mini_test: [],
       images: [],
     })
@@ -881,20 +865,9 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
     // Calculate estimated duration based on content length (avg 200 words per minute reading)
     const wordCount = lesson.content.split(/\s+/).length
     const readingMinutes = Math.ceil(wordCount / 200)
-    // Add time for examples and mini test (1 min per example, 0.5 min per question)
-    const examplesTime = (lesson.examples?.length || 0) * 1
+    // Add time for mini test solving (~0.5 min per question)
     const testTime = Math.ceil((lesson.mini_test?.length || 0) * 0.5)
-    lesson.duration_minutes = Math.max(5, readingMinutes + examplesTime + testTime)
-
-    // Validate and ensure minimum requirements
-    if (!lesson.examples || lesson.examples.length === 0) {
-      lesson.examples = [
-        {
-          title: targetLanguage === 'English' ? 'Example' : fallback.title,
-          description: targetLanguage === 'English' ? 'Example related to the topic' : fallback.question,
-        },
-      ]
-    }
+    lesson.duration_minutes = Math.max(5, readingMinutes + testTime)
 
     if (!lesson.mini_test || lesson.mini_test.length === 0) {
       lesson.mini_test = [
@@ -946,7 +919,6 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
       lesson.title = locked.title
       lesson.content = locked.content
       lesson.learning_objectives = locked.learning_objectives
-      lesson.examples = locked.examples
       lesson.mini_test = locked.mini_test
     } catch (error) {
       console.warn('Lesson language lock failed, keeping original output:', error)
@@ -1085,7 +1057,6 @@ export class LessonAiService {
           JSON.stringify(generated.mini_test || []),
           JSON.stringify(generated.images || []),
           JSON.stringify({
-            examples: generated.examples || [],
             generation_options: {
               includeImages,
               includeAudio,

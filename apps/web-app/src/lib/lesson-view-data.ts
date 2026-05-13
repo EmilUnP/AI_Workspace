@@ -2,7 +2,6 @@ export interface LessonViewData {
   contentText: string
   images: { url: string; alt: string; description: string; position?: 'top' | 'middle' | 'bottom' }[]
   miniTest: { question: string; options: string[]; correct_answer: number; explanation: string }[]
-  examples: { title: string; description: string; code?: string }[]
   objectives: string[]
   centerText: boolean
 }
@@ -70,13 +69,8 @@ export function mapLessonToViewData(lesson: LessonLike): LessonViewData {
     : []
 
   const metadata = (lesson.metadata ?? null) as {
-    examples?: unknown
     generation_options?: { centerText?: boolean }
   } | null
-
-  const examples = Array.isArray(metadata?.examples)
-    ? (metadata.examples as LessonViewData['examples'])
-    : []
 
   const objectives = Array.isArray(lesson.learning_objectives)
     ? lesson.learning_objectives.map((o) => String(o))
@@ -88,7 +82,6 @@ export function mapLessonToViewData(lesson: LessonLike): LessonViewData {
     contentText,
     images,
     miniTest,
-    examples,
     objectives,
     centerText,
   }

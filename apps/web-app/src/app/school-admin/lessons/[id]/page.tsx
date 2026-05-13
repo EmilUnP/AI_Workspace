@@ -35,7 +35,7 @@ type LessonRecord = {
   content?: unknown
   images?: unknown
   mini_test?: unknown
-  metadata?: { examples?: unknown; generation_options?: { centerText?: boolean } } | null
+  metadata?: { generation_options?: { centerText?: boolean } } | null
   learning_objectives?: unknown
   documents?: { title?: string } | Array<{ title?: string }> | null
 }
@@ -105,7 +105,7 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
     notFound()
   }
   
-  const { contentText, images, miniTest, examples, objectives, centerText } = mapLessonToViewData(lesson)
+  const { contentText, images, miniTest, objectives, centerText } = mapLessonToViewData(lesson)
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -271,17 +271,14 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
           content={contentText} 
           images={images} 
           miniTest={miniTest} 
-          examples={examples}
           centerText={centerText}
           labels={{
             tabContent: tl('tabContent', 'Content'),
-            tabExamples: tl('tabExamples', 'Examples'),
             tabMiniTest: tl('tabMiniTest', 'Mini test'),
             chooseBestAnswers: tl('chooseBestAnswers', 'Choose the best answers'),
             checkAnswers: tl('checkAnswers', 'Check answers'),
             tryAgain: tl('tryAgain', 'Try again'),
             scoreLabel: tl('scoreLabel', 'Score'),
-            noExamples: tl('noExamples', 'No examples'),
             noTestQuestions: tl('noTestQuestions', 'No test questions'),
           }}
         />

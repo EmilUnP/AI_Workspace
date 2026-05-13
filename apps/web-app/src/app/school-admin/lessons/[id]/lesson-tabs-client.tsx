@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, FileQuestion, Lightbulb } from 'lucide-react'
+import { BookOpen, FileQuestion } from 'lucide-react'
 
 export interface LessonImage {
   url: string
@@ -17,21 +17,13 @@ export interface MiniTestQuestion {
   explanation: string
 }
 
-export interface Example {
-  title: string
-  description: string
-  code?: string
-}
-
 export interface LessonTabsLabels {
   tabContent?: string
-  tabExamples?: string
   tabMiniTest?: string
   chooseBestAnswers?: string
   checkAnswers?: string
   tryAgain?: string
   scoreLabel?: string
-  noExamples?: string
   noTestQuestions?: string
 }
 
@@ -39,26 +31,23 @@ interface LessonTabsClientProps {
   content: string
   images: LessonImage[]
   miniTest: MiniTestQuestion[]
-  examples: Example[]
   centerText?: boolean
   labels?: LessonTabsLabels
 }
 
-type TabType = 'content' | 'examples' | 'test'
+type TabType = 'content' | 'test'
 
 const DEFAULT_TABS_LABELS: LessonTabsLabels = {
   tabContent: 'Content',
-  tabExamples: 'Examples',
   tabMiniTest: 'Mini Test',
   chooseBestAnswers: 'Choose the best answers, then click',
   checkAnswers: 'Check answers',
   tryAgain: 'Try again',
   scoreLabel: 'Score:',
-  noExamples: 'No examples available for this lesson',
   noTestQuestions: 'No test questions available for this lesson',
 }
 
-export function LessonTabsClient({ content, images, miniTest, examples, centerText, labels = {} }: LessonTabsClientProps) {
+export function LessonTabsClient({ content, images, miniTest, centerText, labels = {} }: LessonTabsClientProps) {
   const L = { ...DEFAULT_TABS_LABELS, ...labels }
   const [activeTab, setActiveTab] = useState<TabType>('content')
 
@@ -74,13 +63,6 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
             <BookOpen className="h-4 w-4" /> {L.tabContent}
             {activeTab === 'content' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />}
           </button>
-          {examples.length > 0 && (
-            <button onClick={() => handleTabChange('examples')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'examples' ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
-              <Lightbulb className="h-4 w-4" /> {L.tabExamples}
-              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">{examples.length}</span>
-              {activeTab === 'examples' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />}
-            </button>
-          )}
           {miniTest.length > 0 && (
             <button onClick={() => handleTabChange('test')} className={`relative flex items-center gap-2 px-6 py-4 text-sm font-medium ${activeTab === 'test' ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
               <FileQuestion className="h-4 w-4" /> {L.tabMiniTest}
@@ -120,22 +102,6 @@ export function LessonTabsClient({ content, images, miniTest, examples, centerTe
                   </a>
                 ))}
               </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'examples' && (
-          <div className="space-y-3">
-            {examples.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-500">{L.noExamples}</p>
-            ) : (
-              examples.map((ex, i) => (
-                <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <p className="font-semibold text-gray-900">{ex.title}</p>
-                  <p className="mt-1 text-sm text-gray-700">{ex.description}</p>
-                  {ex.code && <pre className="mt-3 overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100">{ex.code}</pre>}
-                </div>
-              ))
             )}
           </div>
         )}
