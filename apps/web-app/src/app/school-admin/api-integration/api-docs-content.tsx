@@ -66,7 +66,10 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">
                 {t('documentsPostDescription')} <code className="bg-gray-100 px-1">title</code>,
                 <code className="bg-gray-100 px-1">fileName</code>, <code className="bg-gray-100 px-1">fileType</code>, <code className="bg-gray-100 px-1">fileSize</code>.
+                {' '}
+                {t('documentsPostOptionalFields')}
               </p>
+              <p className="text-sm text-gray-600 mb-2">{t('documentsPostUploadDetail')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${documentsUrl} \\
   -H "Authorization: Bearer ACCESS_TOKEN" \\
@@ -76,7 +79,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
     "fileName": "chapter-1.pdf",
     "fileType": "application/pdf",
     "fileSize": 245760,
-    "localPath": "storage/docs/chapter-1.pdf"
+    "contentBase64": "<BASE64_OF_FILE_BYTES>"
   }'`}
               </pre>
             </div>

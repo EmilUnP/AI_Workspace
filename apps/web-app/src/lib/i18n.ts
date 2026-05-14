@@ -355,6 +355,10 @@ const translations: I18nTable = {
       interactiveBackendDocs: 'Interactive backend docs',
       documents: 'Documents',
       documentsPostDescription: 'Create a document record. Required fields:',
+      documentsPostOptionalFields:
+        'Optional: contentBase64 (standard for uploads from your app) or localPath (only if the file already exists on the backend).',
+      documentsPostUploadDetail:
+        'Replace the placeholder with your file encoded as base64 (same approach as the web app). The server stores the file under its storage directory, then runs extraction and RAG processing.',
       listDocumentsForUser: 'List documents for the authenticated user.',
       getDocumentById: 'Get one document by ID.',
       streamOriginalDocumentFile: 'Stream the original document file if available.',
@@ -949,6 +953,10 @@ const translations: I18nTable = {
       interactiveBackendDocs: 'İnteraktiv backend sənədləri',
       documents: 'Sənədlər',
       documentsPostDescription: 'Sənəd qeydi yaradın. Mütləq sahələr:',
+      documentsPostOptionalFields:
+        'Opsional: contentBase64 (tətbiqinizdən yükləmə üçün standart) və ya localPath (yalnız fayl artıq backenddə varsa).',
+      documentsPostUploadDetail:
+        'Placeholder-i öz faylınızın base64 kodlaması ilə əvəz edin (veb tətbiqdəki kimi). Server faylı saxlama qovluğuna yazır, sonra çıxarış və RAG emalını işə salır.',
       listDocumentsForUser: 'Autentifikasiya olunmuş istifadəçi üçün sənədləri siyahıla.',
       getDocumentById: 'ID ilə bir sənəd al.',
       streamOriginalDocumentFile: 'Mümkündürsə, orijinal sənəd faylını stream et.',

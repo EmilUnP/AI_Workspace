@@ -213,9 +213,23 @@ Returns aggregate and recent HTTP usage used by the school-admin **Usage** tab:
 ## 3) Documents
 
 ### POST `/v1/documents` (Protected)
-Create document metadata record (owner-scoped).
+Create document metadata record (owner-scoped), persist the file when `contentBase64` or `localPath` is provided, then run the same post-upload processing (extraction / RAG) as the first-party app.
 
-Request:
+**Remote clients and integrations** should send file bytes as **`contentBase64`** (JSON). **`localPath`** is only useful when the file already exists on a path the **backend process** can read (same host or mounted storage).
+
+Request (upload from client — same shape the web app uses):
+```json
+{
+  "title": "Biology Notes",
+  "fileName": "biology.pdf",
+  "fileType": "application/pdf",
+  "fileSize": 234567,
+  "contentBase64": "<base64 of file bytes>",
+  "metadata": { "source": "third-party-app" }
+}
+```
+
+Request (metadata + path on backend filesystem only):
 ```json
 {
   "title": "Biology Notes",
@@ -230,9 +244,10 @@ Request:
 Rules:
 - `title`: 1..200
 - `fileName`: required
-- `fileType`: required (for RAG extraction use `pdf | docx | doc | txt`)
-- `fileSize`: integer >= 0
-- `localPath`: optional; needed for automatic extraction if `extracted_text` empty
+- `fileType`: required (MIME or short type; for RAG extraction prefer `pdf | docx | doc | txt` and related MIME strings)
+- `fileSize`: integer >= 0 (should match actual decoded size when using `contentBase64`)
+- `contentBase64`: optional; when present (and `localPath` not used), the API writes the file under `AI_STORAGE_DIR` and processes it
+- `localPath`: optional; path on the backend machine (or under storage root); use when the file is not sent in the body
 
 Response `201`:
 ```json

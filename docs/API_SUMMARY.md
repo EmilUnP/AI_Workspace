@@ -33,7 +33,7 @@ Authentication: `Authorization: Bearer <accessToken>` required for protected rou
 
 ## Documents
 
-- `POST /documents` - create document + trigger processing queue
+- `POST /documents` - create document + trigger processing queue. **Body:** `title`, `fileName`, `fileType`, `fileSize`, optional `metadata`, and either **`contentBase64`** (standard for third-party uploads) or **`localPath`** (file already on backend disk / mount).
 - `GET /documents` - list own documents
 - `GET /documents/:id` - get single document
 - `GET /documents/:id/file` - stream document file

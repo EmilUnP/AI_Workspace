@@ -935,7 +935,16 @@ components:
         fileName: { type: string }
         fileType: { type: string }
         fileSize: { type: integer, minimum: 0 }
-        localPath: { type: string }
+        localPath:
+          type: string
+          description: >
+            Optional. Path readable by the backend process (same machine or mount).
+            Use either this or contentBase64 for a file the API should persist and process.
+        contentBase64:
+          type: string
+          description: >
+            Optional. Base64-encoded file bytes (typical for remote clients and the web app).
+            When set without localPath, the server writes the file under AI_STORAGE_DIR and runs RAG processing.
         metadata:
           type: object
           additionalProperties: true
