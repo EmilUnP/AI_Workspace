@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
 
     const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
     const response = await fetch(`${backendBase}/v1/documents`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',
     })
 

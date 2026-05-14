@@ -1,3 +1,5 @@
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
+
 export const TEACHER_EXAMS_PER_PAGE = 10
 
 export type TeacherExamRow = {
@@ -40,7 +42,7 @@ export async function getTeacherExams(
   if (params?.search?.trim()) searchParams.set('search', params.search.trim())
 
   const response = await fetch(`${backendBase}/v1/exams?${searchParams.toString()}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
 
@@ -67,7 +69,7 @@ export async function getTeacherExamStats(_supabase: unknown, _teacherId: string
   }
 
   const response = await fetch(`${backendBase}/v1/exams/stats`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) {

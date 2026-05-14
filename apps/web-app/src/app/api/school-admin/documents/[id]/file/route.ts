@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 export async function GET(
   request: NextRequest,
@@ -15,7 +16,7 @@ export async function GET(
   const backendUrl = `${backendBase}/v1/documents/${id}/file`
 
   const upstream = await fetch(backendUrl, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
 

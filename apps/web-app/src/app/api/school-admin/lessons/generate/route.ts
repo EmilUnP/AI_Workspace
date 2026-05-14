@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
 
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        ...webAppBackendAuthHeaders(accessToken),
       },
       body: JSON.stringify(payload),
       cache: 'no-store',

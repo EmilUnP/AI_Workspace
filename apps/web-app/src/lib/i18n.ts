@@ -323,14 +323,14 @@ const translations: I18nTable = {
       noGeminiKeySaved: 'No key saved yet. Add your key to use AI features.',
       usageAnalytics: 'Usage analytics',
       usageAnalyticsDescription:
-        'Shows authenticated HTTP calls to `/v1` with your Bearer access token (after login). Filter and sort by endpoint.',
+        'Shows `/v1` calls made **outside** this web app (Postman, scripts, other systems). The browser app sends an internal header so routine UI traffic is not logged here.',
       totalRequests: 'Total requests',
       successful: 'Successful',
       failed: 'Failed',
       successRate: 'Success rate',
       noUsageYet: 'No usage yet',
       usageWillAppear:
-        'Call any `/v1` endpoint with `Authorization: Bearer <access_token>` from login; each response is logged and listed here.',
+        'Call `/v1` with your access token from a tool or integration **without** sending `X-Eduator-Client: web-app` (only the official app uses that). Each response is then logged below.',
       key: 'Key',
       allKeys: 'All keys',
       statusRecent: 'Status (recent)',
@@ -936,14 +936,14 @@ const translations: I18nTable = {
       noGeminiKeySaved: 'Hələ açar saxlanmayıb. AI funksiyalarından istifadə üçün açar əlavə edin.',
       usageAnalytics: 'İstifadə analitikası',
       usageAnalyticsDescription:
-        'Girişdən sonra Bearer access token ilə `/v1` üzrə autentifikasiya olunmuş HTTP sorğularını göstərir. Endpoint üzrə filtrləyin və sıralayın.',
+        'Bu veb tətbiqdən **kənar** edilən `/v1` sorğularını göstərir (Postman, skript, digər sistemlər). Brauzer tətbiqi daxili başlıq göndərdiyi üçün adi UI trafiki burada qeydə alınmır.',
       totalRequests: 'Ümumi sorğu',
       successful: 'Uğurlu',
       failed: 'Uğursuz',
       successRate: 'Uğur faizi',
       noUsageYet: 'Hələ istifadə yoxdur',
       usageWillAppear:
-        'Girişdən sonra `Authorization: Bearer <access_token>` ilə istənilən `/v1` endpointinə sorğu göndərin; hər cavab burada qeydə alınır.',
+        'Alət və ya inteqrasiyadan `X-Eduator-Client: web-app` başlığını **göndərmədən** (yalnız rəsmi tətbiq ondan istifadə edir) access token ilə `/v1` çağırın; hər cavab aşağıda qeydə alınır.',
       key: 'Açar',
       allKeys: 'Bütün açarlar',
       statusRecent: 'Status (son)',

@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
 
@@ -44,7 +45,7 @@ export async function getConversations() {
   }
 
   const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) {
@@ -60,7 +61,7 @@ export async function getConversation(conversationId: string) {
     return { error: 'Not authenticated' }
   }
   const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) {
@@ -78,7 +79,7 @@ export async function createConversation(input: CreateConversationInput) {
   const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...webAppBackendAuthHeaders(token),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ title: input.title, documentIds: input.document_ids || [] }),
@@ -99,7 +100,7 @@ export async function sendMessage(input: SendMessageInput) {
   const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${input.conversation_id}/messages`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...webAppBackendAuthHeaders(token),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -140,7 +141,7 @@ export async function updateConversation(
   const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...webAppBackendAuthHeaders(token),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -164,7 +165,7 @@ export async function deleteConversation(conversationId: string) {
   }
   const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) {
@@ -178,7 +179,7 @@ export async function getDocuments() {
   if (!token) return { error: 'Not authenticated' }
 
   const response = await fetch(`${getBackendBase()}/v1/documents`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) return { error: 'Failed to load documents' }

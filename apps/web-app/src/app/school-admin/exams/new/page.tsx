@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { createExam, updateExam } from './actions'
 import { generateExamFromDocuments, translateExam } from './ai-actions'
 import { ExamCreatorWithIntl } from '../exam-creator-with-intl'
@@ -22,7 +23,7 @@ async function getTeacherDocuments(teacherId: string, workspaceId: string) {
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
   try {
     const response = await fetch(`${backendBase}/v1/documents`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: webAppBackendAuthHeaders(accessToken),
       cache: 'no-store',
     })
     if (!response.ok) return []

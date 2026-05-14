@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { getCurrentUser } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { mapLessonToViewData } from '@/lib/lesson-view-data'
 import { LessonTabsClient } from './lesson-tabs-client'
 import Link from 'next/link'
@@ -55,7 +56,7 @@ async function getLesson(lessonId: string): Promise<LessonRecord | null> {
 
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
   const response = await fetch(`${backendBase}/v1/lessons/${lessonId}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
 

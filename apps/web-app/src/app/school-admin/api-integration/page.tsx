@@ -1,8 +1,8 @@
-import { getCurrentUser } from '@/lib/backend-auth'
+import { getCurrentUser, getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { ApiIntegrationClient } from './api-integration-client'
-import { getAccessToken } from '@/lib/backend-auth'
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
 const API_BASE_V1 = `${API_BASE}/v1`
@@ -33,15 +33,15 @@ export default async function ApiIntegrationPage() {
   if (token) {
     const [keysResponse, usageResponse, geminiResponse] = await Promise.all([
       fetch(`${API_BASE_V1}/users/me/api-keys`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: webAppBackendAuthHeaders(token),
         cache: 'no-store',
       }),
       fetch(`${API_BASE_V1}/users/me/api-keys/usage`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: webAppBackendAuthHeaders(token),
         cache: 'no-store',
       }),
       fetch(`${API_BASE_V1}/users/me/ai-keys/gemini`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: webAppBackendAuthHeaders(token),
         cache: 'no-store',
       }),
     ])

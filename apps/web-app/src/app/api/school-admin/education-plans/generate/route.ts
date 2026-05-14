@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...webAppBackendAuthHeaders(token),
       },
       body: JSON.stringify(body),
       cache: 'no-store',

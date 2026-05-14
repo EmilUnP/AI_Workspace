@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 export default async function DeleteLessonPage({
   params,
@@ -15,7 +16,7 @@ export default async function DeleteLessonPage({
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
   await fetch(`${backendBase}/v1/lessons/${id}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
 

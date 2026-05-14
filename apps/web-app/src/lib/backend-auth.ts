@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 export type BackendUser = {
   id: string
@@ -22,7 +23,7 @@ export const getCurrentUser = async (): Promise<BackendUser | null> => {
   if (!token) return null
 
   const response = await fetch(`${getBackendBase()}/v1/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
 
@@ -39,7 +40,7 @@ export const listUsers = async (params?: { limit?: number; offset?: number }): P
   const offset = Math.max(params?.offset ?? 0, 0)
   const query = new URLSearchParams({ limit: String(limit), offset: String(offset) }).toString()
   const response = await fetch(`${getBackendBase()}/v1/users?${query}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
 

@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { revalidatePath } from 'next/cache'
 
 export type CreateKeyResult = { error?: string; key?: string; name?: string }
@@ -35,7 +36,7 @@ export async function createApiKey(_prev: unknown, formData: FormData): Promise<
   const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...webAppBackendAuthHeaders(token),
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ name }),
@@ -60,7 +61,7 @@ export async function revokeApiKey(keyId: string): Promise<RevokeResult> {
   if (!token) return { error: 'Not authenticated' }
   const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys/${keyId}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'
   })
   if (!response.ok) {
@@ -76,7 +77,7 @@ export async function getApiKeys(): Promise<ApiKeysResult> {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
   const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'
   })
   if (!response.ok) {
@@ -92,7 +93,7 @@ export async function getGeminiKeyStatus(): Promise<GeminiKeyStatusResult> {
   if (!token) return { error: 'Not authenticated' }
 
   const response = await fetch(`${getBackendBase()}/v1/users/me/ai-keys/gemini`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'
   })
   if (!response.ok) return { error: 'Failed to load Gemini key status' }
@@ -106,7 +107,7 @@ export async function saveGeminiKey(apiKey: string): Promise<SaveGeminiKeyResult
   const response = await fetch(`${getBackendBase()}/v1/users/me/ai-keys/gemini`, {
     method: 'PUT',
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...webAppBackendAuthHeaders(token),
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ apiKey }),
@@ -126,7 +127,7 @@ export async function deleteGeminiKey(): Promise<SaveGeminiKeyResult> {
   if (!token) return { error: 'Not authenticated' }
   const response = await fetch(`${getBackendBase()}/v1/users/me/ai-keys/gemini`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'
   })
   if (!response.ok) return { error: 'Failed to delete Gemini key' }

@@ -1,5 +1,6 @@
 import 'server-only'
 import { cookies } from 'next/headers'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 export const TEACHER_LESSONS_PER_PAGE = 10
 
@@ -21,7 +22,7 @@ export async function getTeacherLessons(
   if (params?.search?.trim()) searchParams.set('search', params.search.trim())
 
   const response = await fetch(`${backendBase}/v1/lessons?${searchParams.toString()}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) return { data: [], count: 0, page }

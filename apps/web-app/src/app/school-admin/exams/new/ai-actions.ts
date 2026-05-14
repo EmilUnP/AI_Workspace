@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 interface Question {
   id: string
@@ -55,7 +56,7 @@ export async function generateExamFromDocuments(input: GenerateInput) {
     const response = await fetch(`${backendBase}/v1/ai/exams/generate`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...webAppBackendAuthHeaders(token),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -96,7 +97,7 @@ export async function translateExam(input: TranslateInput) {
     const response = await fetch(`${backendBase}/v1/ai/exams/translate`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...webAppBackendAuthHeaders(token),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

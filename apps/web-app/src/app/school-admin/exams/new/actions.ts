@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 interface Question {
   id: string
@@ -62,7 +63,7 @@ export async function createExam(input: CreateExamInput) {
     const response = await fetch(`${backendBase}/v1/exams`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...webAppBackendAuthHeaders(token),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(examData),
@@ -126,7 +127,7 @@ export async function updateExam(examId: string, input: Partial<CreateExamInput>
     const response = await fetch(`${backendBase}/v1/exams/${examId}`, {
       method: 'PATCH',
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...webAppBackendAuthHeaders(token),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(updateData),
@@ -154,7 +155,7 @@ export async function deleteExam(examId: string) {
     const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
     const response = await fetch(`${backendBase}/v1/exams/${examId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',
     })
     if (!response.ok) {

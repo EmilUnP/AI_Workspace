@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 const getAccessTokenFromRequest = (request: Request): string | null => {
   const cookieHeader = request.headers.get('cookie') || ''
@@ -43,7 +44,7 @@ export async function GET(
 
   // Validate ownership/access first.
   const lessonAccessResponse = await fetch(`${backendBase}/v1/lessons/${encodeURIComponent(id)}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!lessonAccessResponse.ok) {
@@ -70,7 +71,7 @@ export async function GET(
   const backendUrl = `${backendBase}/v1/lessons/${encodeURIComponent(id)}/media/${encodeURIComponent(file)}`
 
   const upstream = await fetch(backendUrl, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
 

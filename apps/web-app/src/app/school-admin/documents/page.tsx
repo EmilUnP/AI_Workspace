@@ -1,4 +1,5 @@
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { redirect } from 'next/navigation'
 import { DocumentsClient } from './documents-client'
 import { getTranslations } from 'next-intl/server'
@@ -29,7 +30,7 @@ async function getDocuments() {
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
   try {
     const response = await fetch(`${backendBase}/v1/documents`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: webAppBackendAuthHeaders(accessToken),
       cache: 'no-store',
     })
     if (!response.ok) return []

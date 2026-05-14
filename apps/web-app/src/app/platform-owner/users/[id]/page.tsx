@@ -1,5 +1,6 @@
 import { getUserById } from '@/lib/backend-auth'
 import { getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -79,7 +80,7 @@ export default async function UserDetailPage({
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          ...webAppBackendAuthHeaders(accessToken),
         },
         body: JSON.stringify({ password }),
         cache: 'no-store',

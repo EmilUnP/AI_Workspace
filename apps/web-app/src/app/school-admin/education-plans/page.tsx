@@ -1,4 +1,5 @@
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -41,7 +42,7 @@ async function getPlanStats(adminId: string, workspaceId: string) {
     if (!token) return { total: 0, shared: 0 }
     const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
     const response = await fetch(`${backendBase}/v1/education-plans/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',
     })
     if (!response.ok) return { total: 0, shared: 0 }
@@ -67,7 +68,7 @@ async function getPlans(
     if (params.search) qs.set('search', params.search)
     if (params.shared) qs.set('shared', params.shared)
     const response = await fetch(`${backendBase}/v1/education-plans?${qs.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',
     })
     if (!response.ok) return []

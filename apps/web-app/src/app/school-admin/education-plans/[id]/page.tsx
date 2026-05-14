@@ -1,4 +1,5 @@
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
@@ -34,7 +35,7 @@ async function getPlan(planId: string, teacherId: string, workspaceId: string): 
   if (!token) return null
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
   const response = await fetch(`${backendBase}/v1/education-plans/${planId}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) return null

@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { revalidatePath } from 'next/cache'
 import type { EducationPlanWeek } from '@eduator/core/types/education-plan'
 
@@ -24,7 +25,7 @@ export async function createEducationPlan(params: {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      ...webAppBackendAuthHeaders(token),
     },
     body: JSON.stringify({
       class_id: params.class_id,
@@ -72,7 +73,7 @@ export async function updateEducationPlan(
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      ...webAppBackendAuthHeaders(token),
     },
     body: JSON.stringify(params),
     cache: 'no-store',
@@ -94,7 +95,7 @@ export async function deleteEducationPlan(planId: string) {
 
   const response = await fetch(`${backendBase}/v1/education-plans/${planId}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) {

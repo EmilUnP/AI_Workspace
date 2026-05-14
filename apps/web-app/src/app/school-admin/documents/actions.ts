@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 type QuickUploadInput = {
   organizationId?: string
@@ -71,7 +72,7 @@ export async function quickUploadDocument(input: QuickUploadInput) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...webAppBackendAuthHeaders(token),
       },
       body: JSON.stringify({
         title,
@@ -139,7 +140,7 @@ export async function updateDocument(_input: UpdateDocumentInput) {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...webAppBackendAuthHeaders(token),
       },
       body: (() => {
         // If tags are not provided, omit them from the payload so the backend keeps existing tags.
@@ -168,7 +169,7 @@ export async function deleteDocument(documentId: string) {
   try {
     const response = await fetch(`${getBackendBase()}/v1/documents/${documentId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',
     })
     if (!response.ok) {
