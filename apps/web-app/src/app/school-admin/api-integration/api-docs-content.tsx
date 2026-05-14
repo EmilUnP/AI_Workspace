@@ -114,6 +114,14 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   --output downloaded.pdf`}
               </pre>
             </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">DELETE /documents/:id</h4>
+              <p className="text-sm text-gray-600 mb-2">{t('documentsDeleteIntro')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X DELETE ${documentsUrl}/DOCUMENT_UUID \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+            </div>
           </div>
         </article>
 

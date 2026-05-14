@@ -370,6 +370,8 @@ const translations: I18nTable = {
         'Returns { "document": { ... } } for one document you own. Use the document id from GET /documents or from the POST /documents response.',
       documentsGetFileIntro:
         'Returns the raw file bytes (PDF, Word, etc.) with Content-Type and Content-Disposition. Use GET, not POST. For large files, prefer streaming clients; the response is not JSON.',
+      documentsDeleteIntro:
+        'Deletes the document row and removes the stored file from disk when successful. Response: { "success": true } or 404 if not found / not owned.',
       plansGenerateLanguageNote:
         'Set language (or outputLanguage) to a short code such as az or en. The backend maps it to a clear label for the model and requires all week titles, session text, and objectives in that language.',
       plansGenerateResponseNote:
@@ -988,6 +990,8 @@ const translations: I18nTable = {
         'Sizə məxsus bir sənəd üçün { "document": { ... } } qaytarır. id-ni GET /documents və ya POST /documents cavabından götürün.',
       documentsGetFileIntro:
         'Xam fayl baytlarını (PDF, Word və s.) Content-Type və Content-Disposition ilə qaytarır. GET istifadə edin. Böyük fayllar üçün axın dəstəkləyən klient üstünlüklüdür; cavab JSON deyil.',
+      documentsDeleteIntro:
+        'Sənəd qeydini silir və uğurlu olduqda faylı diskdən silir. Cavab: { "success": true } və ya tapılmadı/məxsus deyilsə 404.',
       plansGenerateLanguageNote:
         'language (və ya outputLanguage) az, en kimi qısa kod təyin edin. Backend model üçün aydın etiketə çevirir və bütün həftə başlıqları, sessiya mətni və məqsədləri həmin dildə tələb edir.',
       plansGenerateResponseNote:

@@ -278,6 +278,45 @@ Response:
 
 ---
 
+### GET `/v1/documents/:id/file` (Protected)
+
+Streams the original uploaded file (binary). Sets `Content-Type` and `Content-Disposition` appropriately.
+
+---
+
+### PATCH `/v1/documents/:id` (Protected)
+
+Update owner-scoped metadata (at minimum `title`; optional `description`, `tags`).
+
+Request:
+```json
+{
+  "title": "Updated title",
+  "description": "Optional description",
+  "tags": ["math", "chapter-1"]
+}
+```
+
+Response `200`:
+```json
+{ "document": { "id": "uuid", "...": "..." } }
+```
+
+---
+
+### DELETE `/v1/documents/:id` (Protected)
+
+Deletes the database row and removes the file from storage when present.
+
+Response `200`:
+```json
+{ "success": true }
+```
+
+`404` when not found or not owned.
+
+---
+
 ## 4) AI Request Tracking (Generic)
 
 ### POST `/v1/ai/requests` (Protected)
