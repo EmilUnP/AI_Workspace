@@ -511,9 +511,9 @@ Response:
 
 ### REST: `GET` / `POST` / `PATCH` / `DELETE` `/v1/education-plans` (Protected)
 
-Saved plan rows (including those created by AI generate) are listed and managed here. Request/response bodies for **POST** and **PATCH** use **snake_case** field names as stored in the database (e.g. `period_months`, `sessions_per_week`, `hours_per_session`, `document_ids`, `content`, `is_shared_with_students`).
+Saved plan rows (including those created by AI generate) are listed and managed here. Request/response bodies for **POST** and **PATCH** use **snake_case** field names as stored in the database (e.g. `period_months`, `sessions_per_week`, `hours_per_session`, `document_ids`, `content`).
 
-- **`GET /v1/education-plans`** — `{ "items": [ ... ] }` with **full plan rows** (including `content`). Query: optional `search`, `shared` (`shared` \| `not_shared`). There is **no** separate `GET .../stats` or `GET .../:id`; use the list payload for counts or to find a plan by `id`.
+- **`GET /v1/education-plans`** — `{ "items": [ ... ] }` with **full plan rows** (including `content`). Query: optional `search`. There is **no** separate `GET .../stats` or `GET .../:id`; use the list payload for counts or to find a plan by `id`.
 - **`POST /v1/education-plans`** — create metadata row; response `201` `{ "plan": { "id" } }`.
 - **`PATCH /v1/education-plans/:id`** — partial update; `{ "plan": { "id" } }`.
 - **`DELETE /v1/education-plans/:id`** — `{ "ok": true }` or `404`.

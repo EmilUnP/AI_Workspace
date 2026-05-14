@@ -447,11 +447,6 @@ paths:
           name: search
           schema:
             type: string
-        - in: query
-          name: shared
-          schema:
-            type: string
-            enum: [shared, not_shared]
       responses:
         '200':
           description: Education plan list

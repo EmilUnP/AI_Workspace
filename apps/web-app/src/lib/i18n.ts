@@ -192,7 +192,6 @@ const translations: I18nTable = {
       title: 'Education Plans',
       searchPlaceholder: 'Search plans...',
       total: 'Total',
-      shared: 'Shared',
       createPlan: 'Create plan',
       create: 'Create',
       noPlansFound: 'No plans found',
@@ -376,7 +375,7 @@ const translations: I18nTable = {
       educationPlansRestHeading: 'REST — list, read, write',
       educationPlansAiHeading: 'AI — generate from document',
       plansRestGetList:
-        'GET /education-plans returns { "items": [ ... ] } with full rows (including content). Optional query: search, shared (shared | not_shared). Use the list to count plans or find an entry by id — there is no GET /education-plans/stats or GET /education-plans/:id.',
+        'GET /education-plans returns { "items": [ ... ] } with full rows (including content). Optional query: search. Use the list to count plans or find an entry by id — there is no GET /education-plans/stats or GET /education-plans/:id.',
       plansRestWriteNote:
         'POST /education-plans and PATCH /education-plans/:id use snake_case fields (period_months, sessions_per_week, hours_per_session, document_ids, content, …) as the backend expects. DELETE /education-plans/:id removes the plan.',
       includesFullFields: 'Includes full fields:',
@@ -457,7 +456,7 @@ const translations: I18nTable = {
       topicPlaceholder: 'Enter a lesson topic',
       learningObjectives: 'Learning objectives',
       optional: '(optional)',
-      objectivesPlaceholder: 'Describe what students should learn',
+      objectivesPlaceholder: 'Describe the intended learning outcomes',
       gradeLevel: 'Grade level',
       gradeLevelPlaceholder: 'e.g. Grade 9, Undergraduate, PhD',
       language: 'Language',
@@ -807,7 +806,6 @@ const translations: I18nTable = {
       title: 'Tədris planları',
       searchPlaceholder: 'Plan axtar...',
       total: 'Ümumi',
-      shared: 'Paylaşılan',
       createPlan: 'Plan yarat',
       create: 'Yarat',
       noPlansFound: 'Plan tapılmadı',
@@ -991,7 +989,7 @@ const translations: I18nTable = {
       educationPlansRestHeading: 'REST — siyahı, oxuma, yazma',
       educationPlansAiHeading: 'AI — sənəddən generasiya',
       plansRestGetList:
-        'GET /education-plans { "items": [ ... ] } tam sətirlərlə (content daxil) qaytarır. Opsional sorğu: search, shared (shared | not_shared). Saylar və ya id ilə axtarış üçün siyahıdan istifadə edin — GET /education-plans/stats və GET /education-plans/:id yoxdur.',
+        'GET /education-plans { "items": [ ... ] } tam sətirlərlə (content daxil) qaytarır. Opsional sorğu: search. Saylar və ya id ilə axtarış üçün siyahıdan istifadə edin — GET /education-plans/stats və GET /education-plans/:id yoxdur.',
       plansRestWriteNote:
         'POST /education-plans və PATCH /education-plans/:id backend-in gözlədiyi snake_case sahələri qəbul edir (period_months, sessions_per_week, hours_per_session, document_ids, content, …). DELETE /education-plans/:id planı silir.',
       includesFullFields: 'Tam sahələri ehtiva edir:',
@@ -1072,7 +1070,7 @@ const translations: I18nTable = {
       topicPlaceholder: 'Dərs mövzusunu daxil edin',
       learningObjectives: 'Öyrənmə məqsədləri',
       optional: '(opsional)',
-      objectivesPlaceholder: 'Şagirdlərin nə öyrənəcəyini yazın',
+      objectivesPlaceholder: 'Gözlənilən öyrənmə nəticələrini təsvir edin',
       gradeLevel: 'Sinif səviyyəsi',
       gradeLevelPlaceholder: 'məs: 9-cu sinif, bakalavr, PhD',
       language: 'Dil',

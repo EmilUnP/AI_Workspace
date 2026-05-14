@@ -9,7 +9,6 @@ type InsertArgs = {
   audience: string | null
   document_ids: string[]
   content: unknown
-  is_shared_with_students: boolean
 }
 
 export async function insertEducationPlan(_supabase: unknown, payload: InsertArgs) {

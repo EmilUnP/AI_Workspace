@@ -14,7 +14,6 @@ export async function createEducationPlan(params: {
   audience?: string | null
   document_ids: string[]
   content: EducationPlanWeek[]
-  is_shared_with_students?: boolean
 }) {
   const token = await getAccessToken()
   if (!token) return { error: 'Unauthorized', planId: null }
@@ -35,7 +34,6 @@ export async function createEducationPlan(params: {
       audience: params.audience ?? null,
       document_ids: params.document_ids || [],
       content: params.content,
-      is_shared_with_students: params.is_shared_with_students ?? false,
     }),
     cache: 'no-store',
   })

@@ -16,7 +16,6 @@ type EducationPlan = {
   sessions_per_week: number
   hours_per_session: number
   audience: string | null
-  is_shared_with_students: boolean
   content: unknown
 }
 

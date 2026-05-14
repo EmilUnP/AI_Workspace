@@ -22,14 +22,11 @@ type PlanRow = {
   period_months: number
   sessions_per_week: number
   hours_per_session: number
-  is_shared_with_students: boolean
   created_at: string
 }
 
-function computePlanStats(plans: PlanRow[]): { total: number; shared: number } {
-  const total = plans.length
-  const shared = plans.filter((p) => p.is_shared_with_students).length
-  return { total, shared }
+function computePlanStats(plans: PlanRow[]): { total: number } {
+  return { total: plans.length }
 }
 
 async function getAdminData() {
@@ -42,7 +39,7 @@ async function getAdminData() {
 async function getPlans(
   adminId: string,
   workspaceId: string,
-  params: { search?: string; shared?: string }
+  params: { search?: string }
 ): Promise<PlanRow[]> {
   void adminId
   void workspaceId
@@ -52,7 +49,6 @@ async function getPlans(
     const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
     const qs = new URLSearchParams()
     if (params.search) qs.set('search', params.search)
-    if (params.shared) qs.set('shared', params.shared)
     const response = await fetch(`${backendBase}/v1/education-plans?${qs.toString()}`, {
       headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',
@@ -68,7 +64,7 @@ async function getPlans(
 export default async function SchoolAdminEducationPlansPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; shared?: string }>
+  searchParams: Promise<{ search?: string }>
 }) {
   const adminData = await getAdminData()
   if (!adminData) redirect('/auth/login')
@@ -77,11 +73,11 @@ export default async function SchoolAdminEducationPlansPage({
 
   const [plansFiltered, plansAll, t, locale] = await Promise.all([
     getPlans(adminId, workspaceId, params),
-    params.search || params.shared ? getPlans(adminId, workspaceId, {}) : Promise.resolve([] as PlanRow[]),
+    params.search ? getPlans(adminId, workspaceId, {}) : Promise.resolve([] as PlanRow[]),
     getTranslations('teacherEducationPlans'),
     getLocale(),
   ])
-  const hasFilters = !!(params.search || params.shared)
+  const hasFilters = !!params.search
   const statsSource = hasFilters && plansAll.length > 0 ? plansAll : plansFiltered
   const stats = computePlanStats(statsSource)
   const plans = plansFiltered
@@ -94,7 +90,6 @@ export default async function SchoolAdminEducationPlansPage({
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{t('title')}</h1>
         </div>
         <form className="relative flex-1 sm:max-w-md" method="get" action="/school-admin/education-plans">
-          <input type="hidden" name="shared" value={params.shared ?? ''} />
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -109,10 +104,6 @@ export default async function SchoolAdminEducationPlansPage({
             <div className="text-center">
               <p className="text-lg font-bold text-gray-900">{stats.total}</p>
               <p className="text-xs text-gray-500">{t('total')}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-gray-900">{stats.shared}</p>
-              <p className="text-xs text-gray-500">{t('shared')}</p>
             </div>
           </div>
           <Link

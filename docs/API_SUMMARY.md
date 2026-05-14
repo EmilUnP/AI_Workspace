@@ -60,7 +60,7 @@ Authentication: `Authorization: Bearer <accessToken>` required for protected rou
 - `POST /ai/exams/generate`
 - `POST /ai/exams/translate`
 - `POST /ai/education-plans/generate` — `documentId`, `name`, optional `language` or `outputLanguage` (e.g. `az`); backend instructs the model to write all plan strings in that language
-- `GET /education-plans` — list saved plans (`items` include full `content`; query `search`, `shared`). No separate `GET .../stats` or `GET .../:id`.
+- `GET /education-plans` — list saved plans (`items` include full `content`; optional query `search`). No separate `GET .../stats` or `GET .../:id`.
 - `POST /education-plans` — create row (snake_case body, e.g. `period_months`, `document_ids`, `content`)
 - `PATCH /education-plans/:id` — partial update (snake_case)
 - `DELETE /education-plans/:id` — delete plan

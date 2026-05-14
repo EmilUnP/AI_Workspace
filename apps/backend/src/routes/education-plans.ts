@@ -8,7 +8,6 @@ type PlanRow = {
   sessions_per_week: number
   hours_per_session: number
   audience: string | null
-  is_shared_with_students: boolean
   document_ids: unknown
   content: unknown
   created_at: string
@@ -35,9 +34,8 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
 
-    const query = request.query as { search?: string; shared?: string }
+    const query = request.query as { search?: string }
     const search = String(query.search || '').trim()
-    const shared = String(query.shared || '').trim()
 
     const clauses = ['user_id = $1']
     const values: unknown[] = [userId]
@@ -46,13 +44,11 @@ export async function educationPlansRoutes(app: FastifyInstance) {
       values.push(search)
       clauses.push(`(name ILIKE '%' || $${values.length} || '%' OR COALESCE(description, '') ILIKE '%' || $${values.length} || '%')`)
     }
-    if (shared === 'shared') clauses.push('is_shared_with_students = true')
-    if (shared === 'not_shared') clauses.push('is_shared_with_students = false')
 
     const sql = `
       SELECT
         id, name, description, period_months, sessions_per_week,
-        hours_per_session, audience, is_shared_with_students, document_ids,
+        hours_per_session, audience, document_ids,
         content, created_at
       FROM education_plans
       WHERE ${clauses.join(' AND ')}
@@ -82,7 +78,6 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     const sessionsPerWeek = Number(body.sessions_per_week || 3)
     const hoursPerSession = Number(body.hours_per_session || 1)
     const audience = body.audience == null ? null : String(body.audience)
-    const isShared = Boolean(body.is_shared_with_students)
     const documentIds = parseArray<string>(body.document_ids)
     const content = parseJsonContent(body.content)
 
@@ -101,7 +96,7 @@ export async function educationPlansRoutes(app: FastifyInstance) {
         Number.isFinite(sessionsPerWeek) ? sessionsPerWeek : 3,
         Number.isFinite(hoursPerSession) ? hoursPerSession : 1,
         audience,
-        isShared,
+        false,
         JSON.stringify(documentIds),
         JSON.stringify(content),
       ]
@@ -130,7 +125,6 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     if (body.sessions_per_week !== undefined) add('sessions_per_week', Number(body.sessions_per_week || 3))
     if (body.hours_per_session !== undefined) add('hours_per_session', Number(body.hours_per_session || 1))
     if (body.audience !== undefined) add('audience', body.audience == null ? null : String(body.audience))
-    if (body.is_shared_with_students !== undefined) add('is_shared_with_students', Boolean(body.is_shared_with_students))
     if (body.document_ids !== undefined) add('document_ids', JSON.stringify(parseArray<string>(body.document_ids)))
     if (body.content !== undefined) add('content', JSON.stringify(parseJsonContent(body.content)))
     add('updated_at', new Date().toISOString())

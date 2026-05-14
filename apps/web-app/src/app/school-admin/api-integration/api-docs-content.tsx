@@ -326,7 +326,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
-{`curl -X GET "${plansRestUrl}?search=math&shared=shared" \\
+{`curl -X GET "${plansRestUrl}?search=math" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
               <p className="text-sm text-gray-600 mb-2">{t('plansRestWriteNote')}</p>
