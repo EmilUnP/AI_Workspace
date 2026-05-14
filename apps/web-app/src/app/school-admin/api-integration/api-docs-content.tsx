@@ -10,11 +10,13 @@ interface ApiDocsContentProps {
 
 export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   const t = useTranslations('teacherApiIntegration')
+  const openApiDocsUrl = `${apiBaseUrl.replace(/\/$/, '')}/docs`
   const loginUrl = `${apiBaseUrl}/auth/login`
   const documentsUrl = `${apiBaseUrl}/documents`
   const examsGenerateUrl = `${apiBaseUrl}/ai/exams/generate`
   const lessonsGenerateUrl = `${apiBaseUrl}/ai/lessons/generate`
   const plansGenerateUrl = `${apiBaseUrl}/ai/education-plans/generate`
+  const plansRestUrl = `${apiBaseUrl}/education-plans`
   const languagesList = SUPPORTED_LANGUAGES.map((l) => `"${l.code}"`).join(', ')
   const questionTypesList = Object.values(QUESTION_TYPES).map((q) => `"${q}"`).join(', ')
 
@@ -49,8 +51,8 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             </pre>
             <p>
               {t('interactiveBackendDocs')}:{' '}
-              <a className="underline text-gray-800 hover:text-black" href="http://127.0.0.1:4000/v1/docs" target="_blank" rel="noreferrer">
-                http://127.0.0.1:4000/v1/docs
+              <a className="underline text-gray-800 hover:text-black" href={openApiDocsUrl} target="_blank" rel="noreferrer">
+                {openApiDocsUrl}
               </a>
             </p>
           </div>
@@ -85,15 +87,32 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /documents</h4>
-              <p className="text-sm text-gray-600">{t('listDocumentsForUser')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('listDocumentsForUser')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('documentsGetListIntro')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('documentsGetListReturns')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X GET ${documentsUrl} \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /documents/:id</h4>
-              <p className="text-sm text-gray-600">{t('getDocumentById')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('getDocumentById')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('documentsGetByIdIntro')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X GET ${documentsUrl}/DOCUMENT_UUID \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /documents/:id/file</h4>
-              <p className="text-sm text-gray-600">{t('streamOriginalDocumentFile')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('streamOriginalDocumentFile')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('documentsGetFileIntro')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X GET ${documentsUrl}/DOCUMENT_UUID/file \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  --output downloaded.pdf`}
+              </pre>
             </div>
           </div>
         </article>
@@ -286,29 +305,66 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <BookOpen className="h-5 w-5 text-indigo-600" />
               <h3 className="text-lg font-semibold text-gray-900">{t('educationPlans')}</h3>
             </div>
-            <p className="mt-1 text-sm text-gray-600">
-              {t('realRouteLabel')} <code className="bg-gray-100 px-1">POST /v1/ai/education-plans/generate</code>.
-            </p>
+            <p className="mt-1 text-sm text-gray-600">{t('educationPlansDocIntro')}</p>
           </div>
-          <div className="p-6 space-y-4">
-            <p className="text-sm text-gray-600">
-              {t('requiredLabel')} <code className="bg-gray-100 px-1">documentId</code>, <code className="bg-gray-100 px-1">name</code>. {t('optionalLabel')}
-              <code className="bg-gray-100 px-1">language</code>, <code className="bg-gray-100 px-1">periodMonths</code>,
-              <code className="bg-gray-100 px-1">sessionsPerWeek</code>, <code className="bg-gray-100 px-1">hoursPerSession</code>.
-            </p>
-            <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+          <div className="p-6 space-y-6">
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                {t('educationPlansRestHeading')}
+              </h4>
+              <p className="text-sm text-gray-600 mb-2">{t('plansRestGetList')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-3">
+{`curl -X GET "${plansRestUrl}" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X GET "${plansRestUrl}?search=math&shared=shared" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+              <p className="text-sm text-gray-600 mb-2">{t('plansRestGetStats')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-3">
+{`curl -X GET "${plansRestUrl}/stats" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+              <p className="text-sm text-gray-600 mb-2">{t('plansRestGetById')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-3">
+{`curl -X GET "${plansRestUrl}/PLAN_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+              <p className="text-sm text-gray-600 mb-2">{t('plansRestWriteNote')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X DELETE "${plansRestUrl}/PLAN_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                {t('educationPlansAiHeading')}
+              </h4>
+              <p className="text-sm text-gray-600 mb-1">
+                {t('realRouteLabel')} <code className="bg-gray-100 px-1">POST /v1/ai/education-plans/generate</code>
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                {t('requiredLabel')} <code className="bg-gray-100 px-1">documentId</code>, <code className="bg-gray-100 px-1">name</code>. {t('optionalLabel')}
+                <code className="bg-gray-100 px-1">language</code> (same as <code className="bg-gray-100 px-1">outputLanguage</code>), <code className="bg-gray-100 px-1">periodMonths</code>,
+                <code className="bg-gray-100 px-1">sessionsPerWeek</code>, <code className="bg-gray-100 px-1">hoursPerSession</code>.
+              </p>
+              <p className="text-sm text-gray-600 mb-2">{t('plansGenerateLanguageNote')}</p>
+              <p className="text-sm text-gray-600 mb-2">{t('plansGenerateResponseNote')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${plansGenerateUrl} \\
   -H "Authorization: Bearer ACCESS_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
     "documentId": "uuid-from-documents",
     "name": "Grade 10 Math Plan",
-    "language": "en",
+    "language": "az",
     "periodMonths": 3,
     "sessionsPerWeek": 3,
     "hoursPerSession": 1
   }'`}
-            </pre>
+              </pre>
+            </div>
           </div>
         </article>
 
@@ -319,7 +375,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
           <div className="p-6 text-sm text-gray-600 space-y-2">
             <p>{t('supportedLanguageCodes')}: {languagesList}</p>
             <p>
-              API docs UI: <code className="bg-gray-100 px-1">/v1/docs</code>
+              API docs UI: <a className="underline text-gray-800 hover:text-black" href={openApiDocsUrl} target="_blank" rel="noreferrer"><code className="bg-gray-100 px-1">/v1/docs</code></a> ({openApiDocsUrl})
             </p>
             <p>
               {t('fieldNamingCamelCaseAiRoutesPrefix')} <strong>camelCase</strong> {t('fieldNamingCamelCaseAiRoutesSuffix')}

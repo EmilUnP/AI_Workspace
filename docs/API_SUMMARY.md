@@ -34,9 +34,9 @@ Authentication: `Authorization: Bearer <accessToken>` required for protected rou
 ## Documents
 
 - `POST /documents` - create document + trigger processing queue. **Body:** `title`, `fileName`, `fileType`, `fileSize`, optional `metadata`, and either **`contentBase64`** (standard for third-party uploads) or **`localPath`** (file already on backend disk / mount).
-- `GET /documents` - list own documents
-- `GET /documents/:id` - get single document
-- `GET /documents/:id/file` - stream document file
+- `GET /documents` - list own documents (`{ "items": [...] }`; includes `status`, `content_language`, quality fields)
+- `GET /documents/:id` - get single document JSON
+- `GET /documents/:id/file` - stream original file bytes (PDF/Word/etc.; not JSON)
 - `PATCH /documents/:id` - update title/metadata
 - `DELETE /documents/:id` - delete DB record + physical file
 
@@ -59,7 +59,13 @@ Authentication: `Authorization: Bearer <accessToken>` required for protected rou
 - `POST /ai/lessons/generate`
 - `POST /ai/exams/generate`
 - `POST /ai/exams/translate`
-- `POST /ai/education-plans/generate`
+- `POST /ai/education-plans/generate` — `documentId`, `name`, optional `language` or `outputLanguage` (e.g. `az`); backend instructs the model to write all plan strings in that language
+- `GET /education-plans` — list saved plans (`items`; query `search`, `shared`, `classId`)
+- `GET /education-plans/stats` — `{ total, shared }`
+- `GET /education-plans/:id` — one plan `{ plan: { ... } }`
+- `POST /education-plans` — create row (snake_case body, e.g. `period_months`, `document_ids`, `content`)
+- `PATCH /education-plans/:id` — partial update (snake_case)
+- `DELETE /education-plans/:id` — delete plan
 - `POST /ai/translate`
 - `POST /ai/tts`
 - `POST /ai/stt`

@@ -805,7 +805,12 @@ paths:
               properties:
                 documentId: { type: string, format: uuid }
                 name: { type: string }
-                language: { type: string, default: en }
+                language:
+                  type: string
+                  description: Output language code (e.g. en, az). Same effect as outputLanguage.
+                outputLanguage:
+                  type: string
+                  description: Alias of language for clients that use this field from the web UI.
                 periodMonths: { type: integer, minimum: 1, maximum: 24 }
                 sessionsPerWeek: { type: integer, minimum: 1, maximum: 14 }
                 hoursPerSession: { type: integer, minimum: 1, maximum: 8 }

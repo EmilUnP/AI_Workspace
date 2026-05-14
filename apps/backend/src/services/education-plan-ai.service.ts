@@ -4,11 +4,32 @@ import { DocumentRagService } from './document-rag.service.js'
 import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { FastifyInstance } from 'fastify'
 
+/** Human-readable labels so the model follows output language (ISO codes alone are often ignored). */
+const PLAN_OUTPUT_LANGUAGE_LABELS: Record<string, string> = {
+  en: 'English',
+  az: 'Azerbaijani',
+  tr: 'Turkish',
+  ru: 'Russian',
+  de: 'German',
+  fr: 'French',
+  es: 'Spanish',
+  uk: 'Ukrainian',
+}
+
+function resolvePlanOutputLanguage(languageCode: string, fallbackCode: string): { code: string; label: string } {
+  const code = (languageCode.trim().toLowerCase() || fallbackCode).slice(0, 16)
+  const label = PLAN_OUTPUT_LANGUAGE_LABELS[code] || languageCode.trim() || PLAN_OUTPUT_LANGUAGE_LABELS[fallbackCode] || 'English'
+  return { code: code || fallbackCode, label }
+}
+
 const planSchema = z.object({
   documentId: z.string().uuid().optional(),
   documentIds: z.array(z.string().uuid()).optional(),
   name: z.string().min(1),
-  language: z.string().default('en'),
+  /** Output language (ISO-style code, e.g. en, az). */
+  language: z.string().optional(),
+  /** Same as language; accepted for clients that use this name from the web UI. */
+  outputLanguage: z.string().optional(),
   periodMonths: z.number().int().min(1).max(24).default(3),
   sessionsPerWeek: z.number().int().min(1).max(14).default(3),
   hoursPerSession: z.number().int().min(1).max(8).default(1)
@@ -195,6 +216,10 @@ export class EducationPlanAiService {
 
   async generate(userId: string, input: unknown) {
     const data = planSchema.parse(input)
+    const { code: languageCode, label: languageLabel } = resolvePlanOutputLanguage(
+      (data.language ?? data.outputLanguage ?? 'en').trim(),
+      'en'
+    )
     const targetWeeks = data.periodMonths * 4
     const allDocumentIds = Array.from(new Set([...(data.documentIds || []), ...(data.documentId ? [data.documentId] : [])]))
     const primaryDocumentId = allDocumentIds[0]
@@ -210,7 +235,11 @@ export class EducationPlanAiService {
 
     const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const rawContent = await generateJson<unknown>(
-      `Generate a weekly education plan in ${data.language}.
+      `You are an expert curriculum designer.
+
+CRITICAL OUTPUT LANGUAGE: Every human-readable string in the JSON (week titles, notes, session topics, session descriptions, and every item in learning_objectives) MUST be written in ${languageLabel} (language code: ${languageCode}).
+If the source context below is in a different language, translate or rewrite all pedagogical content into ${languageLabel}. Do not leave titles or objectives in English unless ${languageCode} is "en".
+
 Plan name: ${data.name}
 Period months: ${data.periodMonths}
 Sessions/week: ${data.sessionsPerWeek}

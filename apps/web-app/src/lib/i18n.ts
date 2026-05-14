@@ -362,6 +362,29 @@ const translations: I18nTable = {
       listDocumentsForUser: 'List documents for the authenticated user.',
       getDocumentById: 'Get one document by ID.',
       streamOriginalDocumentFile: 'Stream the original document file if available.',
+      documentsGetListIntro:
+        'Returns JSON { "items": [ ... ] }. Each item includes id, title, file metadata, processing status, and fields your UI may use for quality badges.',
+      documentsGetListReturns:
+        'Typical fields on each item: id, title, file_name, file_type, status (e.g. pending, processing, ready, failed), content_language, chunk_count, quality_status.',
+      documentsGetByIdIntro:
+        'Returns { "document": { ... } } for one document you own. Use the document id from GET /documents or from the POST /documents response.',
+      documentsGetFileIntro:
+        'Returns the raw file bytes (PDF, Word, etc.) with Content-Type and Content-Disposition. Use GET, not POST. For large files, prefer streaming clients; the response is not JSON.',
+      plansGenerateLanguageNote:
+        'Set language (or outputLanguage) to a short code such as az or en. The backend maps it to a clear label for the model and requires all week titles, session text, and objectives in that language.',
+      plansGenerateResponseNote:
+        'Success response is HTTP 201 with JSON body { "plan": { "id": "uuid", "content": [ /* weekly plan */ ] } }. Persisted plan rows are also created server-side.',
+      educationPlansDocIntro:
+        'REST CRUD is under /v1/education-plans (list, stats, one plan, create, update, delete). AI generation from a document is separate: POST /v1/ai/education-plans/generate (camelCase JSON).',
+      educationPlansRestHeading: 'REST — list, stats, read, write',
+      educationPlansAiHeading: 'AI — generate from document',
+      plansRestGetList:
+        'GET /education-plans returns { "items": [ ... ] }. Optional query: search (matches name/description), shared (shared | not_shared), classId (UUID).',
+      plansRestGetStats: 'GET /education-plans/stats returns { "total", "shared" } counts for your plans.',
+      plansRestGetById:
+        'GET /education-plans/:id returns { "plan": { id, name, description, period_months, sessions_per_week, hours_per_session, document_ids, content, ... } }.',
+      plansRestWriteNote:
+        'POST /education-plans and PATCH /education-plans/:id use snake_case fields (period_months, sessions_per_week, hours_per_session, document_ids, content, …) as the backend expects. DELETE /education-plans/:id removes the plan.',
       includesFullFields: 'Includes full fields:',
       audioUrlPopulatedWhenReady: 'When audio generation finishes,',
       isPopulated: 'is populated',
@@ -960,6 +983,29 @@ const translations: I18nTable = {
       listDocumentsForUser: 'Autentifikasiya olunmuş istifadəçi üçün sənədləri siyahıla.',
       getDocumentById: 'ID ilə bir sənəd al.',
       streamOriginalDocumentFile: 'Mümkündürsə, orijinal sənəd faylını stream et.',
+      documentsGetListIntro:
+        'JSON { "items": [ ... ] } qaytarır. Hər elementdə id, başlıq, fayl metaverilənləri, emal statusu və keyfiyyət nişanları üçün sahələr ola bilər.',
+      documentsGetListReturns:
+        'Elementdə tipik sahələr: id, title, file_name, file_type, status (məs. pending, processing, ready, failed), content_language, chunk_count, quality_status.',
+      documentsGetByIdIntro:
+        'Sizə məxsus bir sənəd üçün { "document": { ... } } qaytarır. id-ni GET /documents və ya POST /documents cavabından götürün.',
+      documentsGetFileIntro:
+        'Xam fayl baytlarını (PDF, Word və s.) Content-Type və Content-Disposition ilə qaytarır. GET istifadə edin. Böyük fayllar üçün axın dəstəkləyən klient üstünlüklüdür; cavab JSON deyil.',
+      plansGenerateLanguageNote:
+        'language (və ya outputLanguage) az, en kimi qısa kod təyin edin. Backend model üçün aydın etiketə çevirir və bütün həftə başlıqları, sessiya mətni və məqsədləri həmin dildə tələb edir.',
+      plansGenerateResponseNote:
+        'Uğur: HTTP 201 və { "plan": { "id": "uuid", "content": [ /* həftəlik plan */ ] } }. Plan sətirləri serverdə də yaradılır.',
+      educationPlansDocIntro:
+        'REST CRUD /v1/education-plans altındadır (siyahı, statistika, tək plan, yaratma, yeniləmə, silmə). Sənəddən AI generasiyası ayrıca: POST /v1/ai/education-plans/generate (camelCase JSON).',
+      educationPlansRestHeading: 'REST — siyahı, statistika, oxuma, yazma',
+      educationPlansAiHeading: 'AI — sənəddən generasiya',
+      plansRestGetList:
+        'GET /education-plans { "items": [ ... ] } qaytarır. Opsional sorğu: search (ad/təsvir üzrə), shared (shared | not_shared), classId (UUID).',
+      plansRestGetStats: 'GET /education-plans/stats planlarınız üçün { "total", "shared" } saylarını qaytarır.',
+      plansRestGetById:
+        'GET /education-plans/:id { "plan": { id, name, description, period_months, sessions_per_week, hours_per_session, document_ids, content, ... } } qaytarır.',
+      plansRestWriteNote:
+        'POST /education-plans və PATCH /education-plans/:id backend-in gözlədiyi snake_case sahələri qəbul edir (period_months, sessions_per_week, hours_per_session, document_ids, content, …). DELETE /education-plans/:id planı silir.',
       includesFullFields: 'Tam sahələri ehtiva edir:',
       audioUrlPopulatedWhenReady: 'Audio yaradılması bitəndə,',
       isPopulated: 'doldurulur',
