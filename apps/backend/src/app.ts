@@ -8,6 +8,7 @@ import path from 'node:path'
 import dbPlugin from './plugins/db.js'
 import authPlugin from './plugins/auth.js'
 import errorHandlerPlugin from './plugins/error-handler.js'
+import apiAccessLogPlugin from './plugins/api-access-log.js'
 import { authRoutes } from './routes/auth.js'
 import { usersRoutes } from './routes/users.js'
 import { documentsRoutes } from './routes/documents.js'
@@ -46,6 +47,7 @@ export async function buildApp() {
   await app.register(dbPlugin)
   await app.register(authPlugin)
   await app.register(errorHandlerPlugin)
+  await app.register(apiAccessLogPlugin)
 
   app.get('/health', async () => ({ ok: true }))
 
