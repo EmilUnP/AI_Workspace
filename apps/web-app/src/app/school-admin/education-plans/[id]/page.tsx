@@ -34,13 +34,14 @@ async function getPlan(planId: string, teacherId: string, workspaceId: string): 
   const token = await getAccessToken()
   if (!token) return null
   const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
-  const response = await fetch(`${backendBase}/v1/education-plans/${planId}`, {
+  const response = await fetch(`${backendBase}/v1/education-plans`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
   if (!response.ok) return null
-  const payload = (await response.json()) as { plan?: EducationPlan }
-  return payload.plan ?? null
+  const payload = (await response.json()) as { items?: EducationPlan[] }
+  const items = payload.items || []
+  return items.find((p) => p.id === planId) ?? null
 }
 
 export default async function TeacherEducationPlanDetailPage({

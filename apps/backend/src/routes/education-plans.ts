@@ -75,53 +75,6 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     })
   })
 
-  app.get('/education-plans/stats', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-
-    const { rows } = await app.db.query<{ total: number; shared: number }>(
-      `SELECT
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE is_shared_with_students = true)::int AS shared
-      FROM education_plans
-      WHERE user_id = $1`,
-      [userId]
-    )
-
-    return reply.send({
-      total: Number(rows[0]?.total || 0),
-      shared: Number(rows[0]?.shared || 0),
-    })
-  })
-
-  app.get('/education-plans/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const id = String((request.params as { id?: string }).id || '')
-    if (!id) return reply.code(400).send({ error: 'Plan id is required' })
-
-    const { rows } = await app.db.query<PlanRow>(
-      `SELECT
-        id, name, description, class_id, period_months, sessions_per_week,
-        hours_per_session, audience, is_shared_with_students, document_ids,
-        content, created_at
-      FROM education_plans
-      WHERE id = $1 AND user_id = $2
-      LIMIT 1`,
-      [id, userId]
-    )
-
-    const row = rows[0]
-    if (!row) return reply.code(404).send({ error: 'Education plan not found' })
-    return reply.send({
-      plan: {
-        ...row,
-        document_ids: parseArray<string>(row.document_ids),
-        content: parseJsonContent(row.content),
-      },
-    })
-  })
-
   app.post('/education-plans', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })

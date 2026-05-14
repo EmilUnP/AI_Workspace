@@ -375,14 +375,11 @@ const translations: I18nTable = {
       plansGenerateResponseNote:
         'Success response is HTTP 201 with JSON body { "plan": { "id": "uuid", "content": [ /* weekly plan */ ] } }. Persisted plan rows are also created server-side.',
       educationPlansDocIntro:
-        'REST CRUD is under /v1/education-plans (list, stats, one plan, create, update, delete). AI generation from a document is separate: POST /v1/ai/education-plans/generate (camelCase JSON).',
-      educationPlansRestHeading: 'REST — list, stats, read, write',
+        'REST CRUD is under /v1/education-plans (list includes full plan content; create, update, delete). There are no separate list stats or GET-by-id APIs. AI generation from a document: POST /v1/ai/education-plans/generate (camelCase JSON).',
+      educationPlansRestHeading: 'REST — list, read, write',
       educationPlansAiHeading: 'AI — generate from document',
       plansRestGetList:
-        'GET /education-plans returns { "items": [ ... ] }. Optional query: search (matches name/description), shared (shared | not_shared), classId (UUID).',
-      plansRestGetStats: 'GET /education-plans/stats returns { "total", "shared" } counts for your plans.',
-      plansRestGetById:
-        'GET /education-plans/:id returns { "plan": { id, name, description, period_months, sessions_per_week, hours_per_session, document_ids, content, ... } }.',
+        'GET /education-plans returns { "items": [ ... ] } with full rows (including content). Optional query: search, shared (shared | not_shared), classId. Use the list to count plans or find an entry by id — there is no GET /education-plans/stats or GET /education-plans/:id.',
       plansRestWriteNote:
         'POST /education-plans and PATCH /education-plans/:id use snake_case fields (period_months, sessions_per_week, hours_per_session, document_ids, content, …) as the backend expects. DELETE /education-plans/:id removes the plan.',
       includesFullFields: 'Includes full fields:',
@@ -996,14 +993,11 @@ const translations: I18nTable = {
       plansGenerateResponseNote:
         'Uğur: HTTP 201 və { "plan": { "id": "uuid", "content": [ /* həftəlik plan */ ] } }. Plan sətirləri serverdə də yaradılır.',
       educationPlansDocIntro:
-        'REST CRUD /v1/education-plans altındadır (siyahı, statistika, tək plan, yaratma, yeniləmə, silmə). Sənəddən AI generasiyası ayrıca: POST /v1/ai/education-plans/generate (camelCase JSON).',
-      educationPlansRestHeading: 'REST — siyahı, statistika, oxuma, yazma',
+        'REST CRUD /v1/education-plans altındadır (siyahıda tam plan məzmunu; yaratma, yeniləmə, silmə). Ayrıca statistika və ya GET-by-id API yoxdur. Sənəddən AI: POST /v1/ai/education-plans/generate (camelCase JSON).',
+      educationPlansRestHeading: 'REST — siyahı, oxuma, yazma',
       educationPlansAiHeading: 'AI — sənəddən generasiya',
       plansRestGetList:
-        'GET /education-plans { "items": [ ... ] } qaytarır. Opsional sorğu: search (ad/təsvir üzrə), shared (shared | not_shared), classId (UUID).',
-      plansRestGetStats: 'GET /education-plans/stats planlarınız üçün { "total", "shared" } saylarını qaytarır.',
-      plansRestGetById:
-        'GET /education-plans/:id { "plan": { id, name, description, period_months, sessions_per_week, hours_per_session, document_ids, content, ... } } qaytarır.',
+        'GET /education-plans { "items": [ ... ] } tam sətirlərlə (content daxil) qaytarır. Opsional sorğu: search, shared (shared | not_shared), classId. Saylar və ya id ilə axtarış üçün siyahıdan istifadə edin — GET /education-plans/stats və GET /education-plans/:id yoxdur.',
       plansRestWriteNote:
         'POST /education-plans və PATCH /education-plans/:id backend-in gözlədiyi snake_case sahələri qəbul edir (period_months, sessions_per_week, hours_per_session, document_ids, content, …). DELETE /education-plans/:id planı silir.',
       includesFullFields: 'Tam sahələri ehtiva edir:',

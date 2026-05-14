@@ -321,16 +321,6 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
 {`curl -X GET "${plansRestUrl}?search=math&shared=shared" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
-              <p className="text-sm text-gray-600 mb-2">{t('plansRestGetStats')}</p>
-              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-3">
-{`curl -X GET "${plansRestUrl}/stats" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
-              </pre>
-              <p className="text-sm text-gray-600 mb-2">{t('plansRestGetById')}</p>
-              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-3">
-{`curl -X GET "${plansRestUrl}/PLAN_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
-              </pre>
               <p className="text-sm text-gray-600 mb-2">{t('plansRestWriteNote')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X DELETE "${plansRestUrl}/PLAN_UUID" \\

@@ -27,30 +27,17 @@ type PlanRow = {
   created_at: string
 }
 
+function computePlanStats(plans: PlanRow[]): { total: number; shared: number } {
+  const total = plans.length
+  const shared = plans.filter((p) => p.is_shared_with_students).length
+  return { total, shared }
+}
+
 async function getAdminData() {
   const user = await getCurrentUser()
   if (!user) return null
   if (user.role !== 'operator' && user.role !== 'admin') return null
   return { adminId: user.id, workspaceId: 'global' }
-}
-
-async function getPlanStats(adminId: string, workspaceId: string) {
-  void adminId
-  void workspaceId
-  try {
-    const token = await getAccessToken()
-    if (!token) return { total: 0, shared: 0 }
-    const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
-    const response = await fetch(`${backendBase}/v1/education-plans/stats`, {
-      headers: webAppBackendAuthHeaders(token),
-      cache: 'no-store',
-    })
-    if (!response.ok) return { total: 0, shared: 0 }
-    const payload = (await response.json()) as { total?: number; shared?: number }
-    return { total: Number(payload.total || 0), shared: Number(payload.shared || 0) }
-  } catch {
-    return { total: 0, shared: 0 }
-  }
 }
 
 async function getPlans(
@@ -89,13 +76,16 @@ export default async function SchoolAdminEducationPlansPage({
   const { adminId, workspaceId } = adminData
   const params = await searchParams
 
-  const [plans, stats, t, locale] = await Promise.all([
+  const [plansFiltered, plansAll, t, locale] = await Promise.all([
     getPlans(adminId, workspaceId, params),
-    getPlanStats(adminId, workspaceId),
+    params.search || params.shared ? getPlans(adminId, workspaceId, {}) : Promise.resolve([] as PlanRow[]),
     getTranslations('teacherEducationPlans'),
     getLocale(),
   ])
   const hasFilters = !!(params.search || params.shared)
+  const statsSource = hasFilters && plansAll.length > 0 ? plansAll : plansFiltered
+  const stats = computePlanStats(statsSource)
+  const plans = plansFiltered
 
   return (
     <div className="space-y-6 sm:space-y-8">
