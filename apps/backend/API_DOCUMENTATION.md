@@ -138,6 +138,17 @@ Response:
 }
 ```
 
+### PATCH `/v1/users/:id/password` (Protected, **admin only**)
+
+Request:
+```json
+{
+  "password": "NewStrongPassword123"
+}
+```
+
+Updates the target user's password. Non-admin callers receive `403`.
+
 ---
 
 ## 2.1) User AI Key Management
@@ -384,37 +395,167 @@ Missing Gemini key example:
 
 ---
 
-## 6) AI Chat (Teacher Assistant)
+## 6) AI Chat (assistant)
+
+Conversations are **owner-scoped** (JWT `sub`). JSON bodies use **camelCase** (`documentIds`, `shortAnswer`).
 
 ### GET `/v1/ai/chat/conversations` (Protected)
-List conversations for user.
+
+Response `200`:
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "title": "Untitled",
+      "document_ids": [],
+      "created_at": "...",
+      "updated_at": "..."
+    }
+  ]
+}
+```
 
 ### POST `/v1/ai/chat/conversations` (Protected)
-Create conversation.
 
-Request:
+Create a conversation. Optional body:
+
 ```json
-{ "title": "Grade 9 Biology Help" }
+{
+  "title": "Biology Q&A",
+  "documentIds": ["uuid-doc-1", "uuid-doc-2"]
+}
+```
+
+- When `documentIds` is provided (non-empty), the server persists them on the new conversation before responding.
+
+Response `201`:
+```json
+{ "conversation": { "id": "uuid", "title": "...", "document_ids": [] } }
+```
+
+### GET `/v1/ai/chat/conversations/:id` (Protected)
+
+Returns the conversation **with recent messages** embedded (shape from `TeacherChatbotService.getConversation`).
+
+### PATCH `/v1/ai/chat/conversations/:id` (Protected)
+
+Partial update (validated). Allowed fields:
+
+```json
+{
+  "title": "Renamed thread",
+  "documentIds": ["uuid-doc-1"]
+}
+```
+
+Both fields are optional; send only what changes.
+
+### DELETE `/v1/ai/chat/conversations/:id` (Protected)
+
+Response `200`:
+```json
+{ "success": true }
 ```
 
 ### POST `/v1/ai/chat/conversations/:id/messages` (Protected)
-Send message and receive assistant response.
+
+Send a user message; response includes the assistant reply and suggested follow-ups.
 
 Request:
 ```json
 {
-  "message": "Give me 3 classroom activities about cell division",
-  "documentIds": ["uuid"],
+  "message": "Summarize the key ideas from my selected documents.",
+  "documentIds": ["uuid-doc-1"],
   "shortAnswer": false
 }
 ```
 
-Response:
+- `message` (string, required)
+- `documentIds` (UUID array, optional; up to **3** document IDs are used for RAG context)
+- `shortAnswer` (boolean, default `true`) — when `true`, the assistant uses a concise style
+
+Response `200`:
 ```json
 {
-  "message": { "id": "uuid", "content": "..." },
-  "followups": ["...", "...", "..."]
+  "message": { "id": "uuid", "role": "assistant", "content": "..." },
+  "followups": ["...", "..."]
 }
+```
+
+---
+
+## 6.1) Lessons (saved content) — REST
+
+These routes expose **persisted** lessons (including rows created by `POST /v1/ai/lessons/generate`). All routes are **owner-scoped**.
+
+### GET `/v1/lessons` (Protected)
+
+Paginated list. Query:
+
+- `page` (default `1`)
+- `perPage` (default `10`, max `50`)
+- `search` (optional; matches `title` and `topic`)
+
+Response `200`:
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "title": "Fractions",
+      "duration_minutes": 45,
+      "is_published": false,
+      "languages": ["en"],
+      "objectivesCount": 4,
+      "created_at": "..."
+    }
+  ],
+  "total": 123,
+  "page": 1,
+  "perPage": 10
+}
+```
+
+### GET `/v1/lessons/:id` (Protected)
+
+Full lesson payload for viewing/editing clients.
+
+Response `200` (abridged):
+```json
+{
+  "lesson": {
+    "id": "uuid",
+    "title": "...",
+    "topic": "...",
+    "description": "...",
+    "created_at": "...",
+    "duration_minutes": 45,
+    "is_published": false,
+    "audio_url": "/v1/lessons/uuid/media/audio.wav",
+    "content": {},
+    "images": [],
+    "mini_test": {},
+    "metadata": {},
+    "learning_objectives": [],
+    "documents": { "title": "Source document title" }
+  }
+}
+```
+
+- `audio_url` may be `null` until async TTS completes; the API may also expose a file-backed URL under `/v1/lessons/:id/media/...` when a wave file exists on disk.
+
+### GET `/v1/lessons/:id/media/:file` (Protected)
+
+Streams generated lesson media (e.g. `audio.wav`, `image_0.png`) after verifying lesson ownership. `:file` must be a basename (path traversal is rejected).
+
+### DELETE `/v1/lessons/:id` (Protected)
+
+Deletes the lesson row and **best-effort** removes `AI_STORAGE_DIR/lessons/:id/` (images/audio).
+
+Response `200`:
+```json
+{ "ok": true }
 ```
 
 ---
@@ -507,16 +648,167 @@ Response:
 
 ---
 
+### Exams (saved rows) — REST
+
+These routes manage **persisted** exams (including rows created by `POST /v1/ai/exams/generate` or `POST /v1/exams`). JSON bodies for write routes use **camelCase** to match the web app (`durationMinutes`, `isPublished`, …).
+
+#### GET `/v1/exams` (Protected)
+
+Query:
+
+- `page` (default `1`)
+- `perPage` (default `10`, max `50`)
+- `search` (optional; matches `title` and `subject`)
+
+Response `200`:
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "title": "Quiz 1",
+      "description": null,
+      "topics": ["algebra"],
+      "languages": ["en"],
+      "questionCount": 10,
+      "duration_minutes": 60,
+      "is_published": false,
+      "created_at": "..."
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "perPage": 10
+}
+```
+
+#### GET `/v1/exams/stats` (Protected)
+
+Aggregate counts for the authenticated user.
+
+Response `200`:
+```json
+{
+  "total": 10,
+  "published": 4,
+  "draft": 6,
+  "totalQuestions": 120
+}
+```
+
+#### GET `/v1/exams/:id` (Protected)
+
+Response `200` (abridged):
+```json
+{
+  "exam": {
+    "id": "uuid",
+    "title": "...",
+    "description": null,
+    "subject": "Math",
+    "grade_level": "10",
+    "duration_minutes": 60,
+    "language": "en",
+    "is_published": false,
+    "questions": [],
+    "translations": {},
+    "settings": {},
+    "topics": [],
+    "created_at": "..."
+  }
+}
+```
+
+#### POST `/v1/exams` (Protected)
+
+Creates an exam row from a full question payload (same path the web app uses when saving a manually built exam).
+
+Request (typical):
+```json
+{
+  "title": "Midterm",
+  "description": null,
+  "subject": "Math",
+  "gradeLevel": "10",
+  "durationMinutes": 60,
+  "language": "en",
+  "isPublished": false,
+  "questions": [],
+  "topics": [],
+  "translations": {},
+  "settings": {}
+}
+```
+
+Response `201`:
+```json
+{ "exam": { "id": "uuid" } }
+```
+
+#### PATCH `/v1/exams/:id` (Protected)
+
+Partial update. Supported fields include: `title`, `description`, `subject`, `gradeLevel`, `durationMinutes`, `language`, `isPublished`, `questions`, `metadata`.
+
+Response `200`:
+```json
+{ "exam": { "id": "uuid" } }
+```
+
+#### DELETE `/v1/exams/:id` (Protected)
+
+Response `200`:
+```json
+{ "ok": true }
+```
+
+---
+
 ## 9) Education plans
 
 ### REST: `GET` / `POST` / `PATCH` / `DELETE` `/v1/education-plans` (Protected)
 
-Saved plan rows (including those created by AI generate) are listed and managed here. Request/response bodies for **POST** and **PATCH** use **snake_case** field names as stored in the database (e.g. `period_months`, `sessions_per_week`, `hours_per_session`, `document_ids`, `content`).
+Saved plan rows (including those created by `POST /v1/ai/education-plans/generate`) are listed and managed here. **GET** returns **full** rows (including `content`). **POST** / **PATCH** use **snake_case** fields as stored in the database.
 
-- **`GET /v1/education-plans`** — `{ "items": [ ... ] }` with **full plan rows** (including `content`). Query: optional `search`. There is **no** separate `GET .../stats` or `GET .../:id`; use the list payload for counts or to find a plan by `id`.
-- **`POST /v1/education-plans`** — create metadata row; response `201` `{ "plan": { "id" } }`.
-- **`PATCH /v1/education-plans/:id`** — partial update; `{ "plan": { "id" } }`.
-- **`DELETE /v1/education-plans/:id`** — `{ "ok": true }` or `404`.
+- **`GET /v1/education-plans`** — `{ "items": [ ... ] }`. Query: optional `search` (matches `name` / `description`). There is **no** separate `GET .../stats` or `GET .../:id`; use the list to locate a plan by `id`.
+- **`POST /v1/education-plans`** — `201` `{ "plan": { "id" } }`.
+- **`PATCH /v1/education-plans/:id`** — partial update; `200` `{ "plan": { "id" } }`.
+- **`DELETE /v1/education-plans/:id`** — `200` `{ "ok": true }` or `404`.
+
+#### GET list — response item shape (abridged)
+
+```json
+{
+  "id": "uuid",
+  "name": "Semester plan",
+  "description": null,
+  "period_months": 3,
+  "sessions_per_week": 3,
+  "hours_per_session": 1,
+  "audience": "Grade 10",
+  "document_ids": ["uuid-doc"],
+  "content": [],
+  "created_at": "..."
+}
+```
+
+#### POST — request body
+
+```json
+{
+  "name": "Semester plan",
+  "description": null,
+  "period_months": 3,
+  "sessions_per_week": 3,
+  "hours_per_session": 1,
+  "audience": "Grade 10",
+  "document_ids": ["uuid-doc"],
+  "content": []
+}
+```
+
+#### PATCH — supported fields
+
+Any subset of: `name`, `description`, `period_months`, `sessions_per_week`, `hours_per_session`, `audience`, `document_ids`, `content`.
 
 ### AI: `POST` `/v1/ai/education-plans/generate` (Protected)
 

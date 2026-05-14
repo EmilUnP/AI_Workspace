@@ -12,6 +12,8 @@ Authentication: `Authorization: Bearer <accessToken>` required for protected rou
 - **Users**: list + password update
 - **User HTTP API keys**: list/create/revoke + **usage** analytics (`/users/me/api-keys`, `/users/me/api-keys/usage`)
 - **Documents**: upload/list/detail/file/update/delete
+- **Lessons (REST)**: list/detail/media stream/delete saved lessons
+- **Exams (REST)**: list/stats/detail/create/update/delete saved exams (camelCase on writes)
 - **AI**:
   - RAG retrieval
   - chat conversations/messages
@@ -39,6 +41,22 @@ Authentication: `Authorization: Bearer <accessToken>` required for protected rou
 - `GET /documents/:id/file` - stream original file bytes (PDF/Word/etc.; not JSON)
 - `PATCH /documents/:id` - update title/metadata
 - `DELETE /documents/:id` - delete DB record + physical file
+
+## Lessons (REST)
+
+- `GET /lessons` — paginated list (`page`, `perPage`, `search`)
+- `GET /lessons/:id` — full lesson JSON (content, images, mini_test, etc.)
+- `GET /lessons/:id/media/:file` — stream generated image/audio bytes
+- `DELETE /lessons/:id` — delete saved lesson and related media when possible
+
+## Exams (saved rows, REST)
+
+- `GET /exams` — list (`page`, `perPage`, `search`)
+- `GET /exams/stats` — aggregate counts
+- `GET /exams/:id` — full exam JSON
+- `POST /exams` — create (camelCase body, e.g. `durationMinutes`, `isPublished`, `questions`)
+- `PATCH /exams/:id` — partial update (camelCase)
+- `DELETE /exams/:id` — delete
 
 ## AI / RAG
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOpen, Sparkles } from 'lucide-react'
+import { BookOpen, MessageSquare, Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { QUESTION_TYPES, SUPPORTED_LANGUAGES } from '@eduator/config'
 
@@ -17,6 +17,9 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   const lessonsGenerateUrl = `${apiBaseUrl}/ai/lessons/generate`
   const plansGenerateUrl = `${apiBaseUrl}/ai/education-plans/generate`
   const plansRestUrl = `${apiBaseUrl}/education-plans`
+  const chatConversationsUrl = `${apiBaseUrl}/ai/chat/conversations`
+  const examsRestUrl = `${apiBaseUrl}/exams`
+  const lessonsRestUrl = `${apiBaseUrl}/lessons`
   const languagesList = SUPPORTED_LANGUAGES.map((l) => `"${l.code}"`).join(', ')
   const questionTypesList = Object.values(QUESTION_TYPES).map((q) => `"${q}"`).join(', ')
 
@@ -173,6 +176,56 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
         </article>
 
         <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white px-6 py-4">
+            <h3 className="text-lg font-semibold text-gray-900">{t('apiDocsExamsRestTitle')}</h3>
+            <p className="mt-1 text-sm text-gray-600">{t('apiDocsExamsRestIntro')}</p>
+          </div>
+          <div className="p-6 space-y-5 text-sm text-gray-600">
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /exams · GET /exams/stats</h4>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X GET "${examsRestUrl}?page=1&perPage=10&search=biology" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X GET "${examsRestUrl}/stats" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /exams/:id · POST /exams · PATCH /exams/:id · DELETE /exams/:id</h4>
+              <p className="mb-2">GET returns full <code className="bg-gray-100 px-1">exam</code> JSON. POST/PATCH use camelCase (e.g. <code className="bg-gray-100 px-1">durationMinutes</code>, <code className="bg-gray-100 px-1">isPublished</code>, <code className="bg-gray-100 px-1">questions</code>).</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X GET "${examsRestUrl}/EXAM_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X POST ${examsRestUrl} \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "Saved quiz",
+    "language": "en",
+    "durationMinutes": 45,
+    "isPublished": false,
+    "questions": []
+  }'`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X PATCH "${examsRestUrl}/EXAM_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "isPublished": true }'`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X DELETE "${examsRestUrl}/EXAM_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+            </div>
+          </div>
+        </article>
+
+        <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white px-6 py-4">
             <div className="flex items-center gap-2">
               <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">POST</span>
@@ -304,6 +357,14 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
 }`}
               </pre>
             </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">DELETE /lessons/:id</h4>
+              <p className="text-sm text-gray-600 mb-2">{t('apiDocsLessonDeleteIntro')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X DELETE "${lessonsRestUrl}/LESSON_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+            </div>
           </div>
         </article>
 
@@ -330,6 +391,27 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   -H "Authorization: Bearer ACCESS_TOKEN"`}
               </pre>
               <p className="text-sm text-gray-600 mb-2">{t('plansRestWriteNote')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X POST ${plansRestUrl} \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Semester plan",
+    "description": null,
+    "period_months": 3,
+    "sessions_per_week": 3,
+    "hours_per_session": 1,
+    "audience": "Grade 10",
+    "document_ids": ["DOCUMENT_UUID"],
+    "content": []
+  }'`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X PATCH "${plansRestUrl}/PLAN_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "name": "Renamed plan", "audience": "Grade 11" }'`}
+              </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X DELETE "${plansRestUrl}/PLAN_UUID" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
@@ -360,6 +442,71 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
     "periodMonths": 3,
     "sessionsPerWeek": 3,
     "hoursPerSession": 1
+  }'`}
+              </pre>
+            </div>
+          </div>
+        </article>
+
+        <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white px-6 py-4">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-violet-600" aria-hidden />
+              <h3 className="text-lg font-semibold text-gray-900">{t('apiDocsAiChatTitle')}</h3>
+            </div>
+            <p className="mt-1 text-sm text-gray-600">{t('apiDocsAiChatIntro')}</p>
+          </div>
+          <div className="p-6 space-y-5 text-sm text-gray-600">
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/conversations</h4>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X GET ${chatConversationsUrl} \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">POST /ai/chat/conversations</h4>
+              <p className="mb-2">Optional JSON: <code className="bg-gray-100 px-1">title</code>, <code className="bg-gray-100 px-1">documentIds</code> (array of UUIDs).</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X POST ${chatConversationsUrl} \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "Lesson prep",
+    "documentIds": ["DOCUMENT_UUID"]
+  }'`}
+              </pre>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/conversations/:id · PATCH · DELETE</h4>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X GET "${chatConversationsUrl}/CONVERSATION_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
+{`curl -X PATCH "${chatConversationsUrl}/CONVERSATION_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "title": "Renamed thread", "documentIds": ["DOCUMENT_UUID"] }'`}
+              </pre>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X DELETE "${chatConversationsUrl}/CONVERSATION_UUID" \\
+  -H "Authorization: Bearer ACCESS_TOKEN"`}
+              </pre>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">POST /ai/chat/conversations/:id/messages</h4>
+              <p className="mb-2">
+                Required: <code className="bg-gray-100 px-1">message</code>. Optional: <code className="bg-gray-100 px-1">documentIds</code> (up to 3 for RAG), <code className="bg-gray-100 px-1">shortAnswer</code> (boolean; brief vs detailed assistant style).
+              </p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
+  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "message": "Summarize the key ideas for my next class.",
+    "documentIds": ["DOCUMENT_UUID"],
+    "shortAnswer": false
   }'`}
               </pre>
             </div>
