@@ -193,8 +193,8 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               </pre>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /exams/:id · POST /exams · PATCH /exams/:id · DELETE /exams/:id</h4>
-              <p className="mb-2">GET returns full <code className="bg-gray-100 px-1">exam</code> JSON. POST/PATCH use camelCase (e.g. <code className="bg-gray-100 px-1">durationMinutes</code>, <code className="bg-gray-100 px-1">isPublished</code>, <code className="bg-gray-100 px-1">questions</code>).</p>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /exams/:id · POST /exams · DELETE /exams/:id</h4>
+              <p className="mb-2">GET returns full <code className="bg-gray-100 px-1">exam</code> JSON. POST uses camelCase (e.g. <code className="bg-gray-100 px-1">durationMinutes</code>, <code className="bg-gray-100 px-1">isPublished</code>, <code className="bg-gray-100 px-1">questions</code>).</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X GET "${examsRestUrl}/EXAM_UUID" \\
   -H "Authorization: Bearer ACCESS_TOKEN"`}
@@ -210,12 +210,6 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
     "isPublished": false,
     "questions": []
   }'`}
-              </pre>
-              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
-{`curl -X PATCH "${examsRestUrl}/EXAM_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "isPublished": true }'`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X DELETE "${examsRestUrl}/EXAM_UUID" \\
@@ -405,12 +399,6 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
     "document_ids": ["DOCUMENT_UUID"],
     "content": []
   }'`}
-              </pre>
-              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
-{`curl -X PATCH "${plansRestUrl}/PLAN_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "name": "Renamed plan", "audience": "Grade 11" }'`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X DELETE "${plansRestUrl}/PLAN_UUID" \\

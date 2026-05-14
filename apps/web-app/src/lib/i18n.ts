@@ -373,19 +373,19 @@ const translations: I18nTable = {
         'Deletes the saved lesson and removes generated media on disk when possible. Response: { "ok": true }.',
       apiDocsExamsRestTitle: 'Exams (saved)',
       apiDocsExamsRestIntro:
-        'List, read, create, update, and delete persisted exams (camelCase JSON on writes, matching the web app). Use GET /exams/stats for aggregate counts.',
+        'List, read, create, and delete persisted exams (camelCase JSON on POST, matching the web app). Use GET /exams/stats for aggregate counts.',
       plansGenerateLanguageNote:
         'Set language (or outputLanguage) to a short code such as az or en. The backend maps it to a clear label for the model and requires all week titles, session text, and objectives in that language.',
       plansGenerateResponseNote:
         'Success response is HTTP 201 with JSON body { "plan": { "id": "uuid", "content": [ /* weekly plan */ ] } }. Persisted plan rows are also created server-side.',
       educationPlansDocIntro:
-        'REST CRUD is under /v1/education-plans (list includes full plan content; create, update, delete). There are no separate list stats or GET-by-id APIs. AI generation from a document: POST /v1/ai/education-plans/generate (camelCase JSON).',
-      educationPlansRestHeading: 'REST — list, read, write',
+        'REST under /v1/education-plans: list includes full plan content; you can create and delete plans. There are no separate list stats or GET-by-id APIs. AI generation from a document: POST /v1/ai/education-plans/generate (camelCase JSON).',
+      educationPlansRestHeading: 'REST — list, create, delete',
       educationPlansAiHeading: 'AI — generate from document',
       plansRestGetList:
         'GET /education-plans returns { "items": [ ... ] } with full rows (including content). Optional query: search. Use the list to count plans or find an entry by id — there is no GET /education-plans/stats or GET /education-plans/:id.',
       plansRestWriteNote:
-        'POST /education-plans and PATCH /education-plans/:id use snake_case fields (period_months, sessions_per_week, hours_per_session, document_ids, content, …) as the backend expects. DELETE /education-plans/:id removes the plan.',
+        'POST /education-plans accepts snake_case fields (period_months, sessions_per_week, hours_per_session, document_ids, content, …) as the backend expects. DELETE /education-plans/:id removes the plan.',
       includesFullFields: 'Includes full fields:',
       audioUrlPopulatedWhenReady: 'When audio generation finishes,',
       isPopulated: 'is populated',
@@ -995,19 +995,19 @@ const translations: I18nTable = {
         'Saxlanılmış dərsi silir və mümkünsə yaradılmış media fayllarını diskdən təmizləyir. Cavab: { "ok": true }.',
       apiDocsExamsRestTitle: 'İmtahanlar (saxlanmış)',
       apiDocsExamsRestIntro:
-        'Saxlanmış imtahanları siyahıla, oxu, yarat, yenilə və sil (yazma əməliyyatlarında camelCase JSON, veb tətbiq ilə uyğun). Ümumi saylar üçün GET /exams/stats.',
+        'Saxlanmış imtahanları siyahıla, oxu, yarat və sil (POST-da camelCase JSON, veb tətbiq ilə uyğun). Ümumi saylar üçün GET /exams/stats.',
       plansGenerateLanguageNote:
         'language (və ya outputLanguage) az, en kimi qısa kod təyin edin. Backend model üçün aydın etiketə çevirir və bütün həftə başlıqları, sessiya mətni və məqsədləri həmin dildə tələb edir.',
       plansGenerateResponseNote:
         'Uğur: HTTP 201 və { "plan": { "id": "uuid", "content": [ /* həftəlik plan */ ] } }. Plan sətirləri serverdə də yaradılır.',
       educationPlansDocIntro:
-        'REST CRUD /v1/education-plans altındadır (siyahıda tam plan məzmunu; yaratma, yeniləmə, silmə). Ayrıca statistika və ya GET-by-id API yoxdur. Sənəddən AI: POST /v1/ai/education-plans/generate (camelCase JSON).',
-      educationPlansRestHeading: 'REST — siyahı, oxuma, yazma',
+        'REST /v1/education-plans altındadır: siyahıda tam plan məzmunu; plan yaradıb silə bilərsiniz. Ayrıca statistika və ya GET-by-id API yoxdur. Sənəddən AI: POST /v1/ai/education-plans/generate (camelCase JSON).',
+      educationPlansRestHeading: 'REST — siyahı, yaratma, silmə',
       educationPlansAiHeading: 'AI — sənəddən generasiya',
       plansRestGetList:
         'GET /education-plans { "items": [ ... ] } tam sətirlərlə (content daxil) qaytarır. Opsional sorğu: search. Saylar və ya id ilə axtarış üçün siyahıdan istifadə edin — GET /education-plans/stats və GET /education-plans/:id yoxdur.',
       plansRestWriteNote:
-        'POST /education-plans və PATCH /education-plans/:id backend-in gözlədiyi snake_case sahələri qəbul edir (period_months, sessions_per_week, hours_per_session, document_ids, content, …). DELETE /education-plans/:id planı silir.',
+        'POST /education-plans backend-in gözlədiyi snake_case sahələri qəbul edir (period_months, sessions_per_week, hours_per_session, document_ids, content, …). DELETE /education-plans/:id planı silir.',
       includesFullFields: 'Tam sahələri ehtiva edir:',
       audioUrlPopulatedWhenReady: 'Audio yaradılması bitəndə,',
       isPopulated: 'doldurulur',

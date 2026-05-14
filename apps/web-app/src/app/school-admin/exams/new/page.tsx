@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
-import { createExam, updateExam } from './actions'
+import { createExam } from './actions'
 import { generateExamFromDocuments, translateExam } from './ai-actions'
 import { ExamCreatorWithIntl } from '../exam-creator-with-intl'
 
@@ -65,7 +65,6 @@ export default async function NewExamPage() {
         organizationId={workspaceId}
         documents={documents}
         onCreateExam={createExam}
-        onUpdateExam={updateExam}
         onGenerateExam={generateExamFromDocuments}
         onTranslateExam={translateExam}
       />
