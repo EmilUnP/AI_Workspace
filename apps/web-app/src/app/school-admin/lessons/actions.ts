@@ -18,7 +18,6 @@ type LessonRow = {
   content?: unknown
   title?: string
   language?: string
-  class_id?: string | null
   start_time?: string | null
   end_time?: string | null
 }
@@ -262,7 +261,7 @@ export async function deleteLesson(lessonId: string) {
     // Verify ownership and check if in use
     const { data: existingLessonData } = await adminSupabase
       .from('lessons')
-      .select('id, created_by, class_id, start_time, end_time')
+      .select('id, created_by, start_time, end_time')
       .eq('id', lessonId)
       .single()
     const existingLesson = existingLessonData as LessonRow | null
@@ -271,9 +270,6 @@ export async function deleteLesson(lessonId: string) {
       return { error: 'Lesson not found or access denied' }
     }
 
-    if (existingLesson.class_id) {
-      return { error: 'This lesson is assigned to a class. Remove it from the class first (Classes → select the class → remove this lesson), then try again.' }
-    }
     if (existingLesson.start_time && existingLesson.end_time) {
       return { error: 'This lesson is scheduled on the calendar. Remove the schedule first, then try again.' }
     }

@@ -19,7 +19,6 @@ type PlanRow = {
   id: string
   name: string
   description: string | null
-  class_id: string
   period_months: number
   sessions_per_week: number
   hours_per_session: number

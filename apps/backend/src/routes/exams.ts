@@ -249,9 +249,6 @@ export async function examsRoutes(app: FastifyInstance) {
         questionCount: parseQuestions(row.questions).length,
         duration_minutes: row.duration_minutes ?? 60,
         is_published: Boolean(row.is_published),
-        usedInClass: false,
-        className: null as string | null,
-        usedInCalendar: false,
         created_at: row.created_at,
       }
     })

@@ -452,10 +452,6 @@ paths:
           schema:
             type: string
             enum: [shared, not_shared]
-        - in: query
-          name: classId
-          schema:
-            type: string
       responses:
         '200':
           description: Education plan list

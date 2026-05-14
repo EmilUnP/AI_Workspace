@@ -1,7 +1,6 @@
 type InsertArgs = {
   organization_id: string
   teacher_id: string
-  class_id: string | null
   name: string
   description: string | null
   period_months: number

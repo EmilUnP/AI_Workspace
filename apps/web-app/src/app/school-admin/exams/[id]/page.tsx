@@ -8,7 +8,6 @@ import {
   Clock, 
   FileText,
   Calendar,
-  BookOpen
 } from 'lucide-react'
 import { ExamActions } from './exam-actions'
 import { ExamLanguageSelector } from './exam-language-selector'
@@ -26,7 +25,6 @@ type ExamRow = {
   is_published?: boolean | null
   duration_minutes?: number | null
   created_at: string
-  classInfo?: { name?: string | null; class_code?: string | null } | null
 }
 
 type UiQuestion = {
@@ -146,15 +144,6 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
               </div>
               {exam.description && (
                 <p className="mt-2 max-w-2xl text-sm text-gray-600">{exam.description}</p>
-              )}
-              {exam.classInfo && (
-                <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-                  <BookOpen className="h-4 w-4 text-gray-400" />
-                  <span>{exam.classInfo.name}</span>
-                  {exam.classInfo.class_code && (
-                    <span className="text-gray-400">({exam.classInfo.class_code})</span>
-                  )}
-                </div>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">

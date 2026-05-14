@@ -6,7 +6,6 @@ import { revalidatePath } from 'next/cache'
 import type { EducationPlanWeek } from '@eduator/core/types/education-plan'
 
 export async function createEducationPlan(params: {
-  class_id: string | null
   name: string
   description?: string | null
   period_months: number
@@ -28,7 +27,6 @@ export async function createEducationPlan(params: {
       ...webAppBackendAuthHeaders(token),
     },
     body: JSON.stringify({
-      class_id: params.class_id,
       name: params.name,
       description: params.description ?? null,
       period_months: params.period_months,

@@ -46,7 +46,7 @@ async function getAdminInfo() {
 export default async function SchoolAdminExamsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; status?: string; page?: string; classId?: string }>
+  searchParams: Promise<{ search?: string; status?: string; page?: string }>
 }) {
   const adminData = await getAdminInfo()
   
@@ -324,10 +324,9 @@ export default async function SchoolAdminExamsPage({
             searchParams={{
               search: params.search,
               status: params.status,
-              classId: params.classId,
             }}
           />
-          {(params.search || params.status || params.classId) && (
+          {(params.search || params.status) && (
             <div className="text-center">
               <Link
                 href="/school-admin/exams"

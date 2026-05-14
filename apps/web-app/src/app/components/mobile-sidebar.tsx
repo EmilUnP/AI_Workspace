@@ -93,9 +93,9 @@ export function MobileSidebar({
     }
   }, [isOpen])
 
-  const getActiveClasses = (_color: string) => 'bg-gray-100 text-gray-900 border-gray-500'
+  const getActiveNavItemClasses = (_color: string) => 'bg-gray-100 text-gray-900 border-gray-500'
   
-  const activeClasses = getActiveClasses(accentColor || 'blue')
+  const activeNavItemClasses = getActiveNavItemClasses(accentColor || 'blue')
 
   const isActive = (href: string) => {
     // Parse href to separate path and query params
@@ -209,7 +209,7 @@ export function MobileSidebar({
                         isChild ? 'pl-8 pr-3 text-gray-600' : 'px-3'
                       } ${
                         active
-                          ? activeClasses + ' border-l-4'
+                          ? activeNavItemClasses + ' border-l-4'
                           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent'
                       }`}
                     >
@@ -245,9 +245,9 @@ export function DesktopNavigation({
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const getActiveClasses = (_color: string) => 'bg-gray-100 text-gray-900 border-l-4 border-gray-500'
+  const getActiveNavItemClasses = (_color: string) => 'bg-gray-100 text-gray-900 border-l-4 border-gray-500'
   
-  const activeClasses = getActiveClasses(accentColor || 'blue')
+  const activeNavItemClasses = getActiveNavItemClasses(accentColor || 'blue')
 
   const isActive = (href: string) => {
     // Parse href to separate path and query params
@@ -312,7 +312,7 @@ export function DesktopNavigation({
               href={item.href}
               title={item.name}
               className={`flex items-center justify-center rounded-lg p-2.5 transition-colors ${
-                active ? activeClasses : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                active ? activeNavItemClasses : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
               {Icon && <Icon className="h-5 w-5 flex-shrink-0" />}
@@ -337,7 +337,7 @@ export function DesktopNavigation({
               isChild ? 'pl-8 pr-3 text-gray-600' : 'px-3'
             } ${
               active
-                ? activeClasses
+                ? activeNavItemClasses
                 : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent'
             }`}
           >

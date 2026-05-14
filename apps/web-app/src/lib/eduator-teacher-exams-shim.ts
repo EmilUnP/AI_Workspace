@@ -11,9 +11,6 @@ export type TeacherExamRow = {
   questionCount: number
   duration_minutes: number | null
   is_published: boolean
-  usedInClass: boolean
-  className: string | null
-  usedInCalendar: boolean
   created_at: string
 }
 

@@ -59,7 +59,6 @@ async function getDocuments() {
         avg_chunk_size: Number(doc.avg_chunk_size || 0),
         content_language: String(doc.content_language || ''),
         created_at: String(doc.created_at || doc.createdAt || new Date().toISOString()),
-        classes: null,
       }
     })
   } catch {
@@ -96,13 +95,11 @@ export default async function SchoolAdminDocumentsPage() {
   }
   const explorerTranslations = {
     allDocuments: t('allDocuments'),
-    noClass: t('noClass'),
     noDocumentsYet: t('noDocumentsYet'),
     noDocumentsHint: t('noDocumentsHint'),
     groupBy: t('groupBy'),
     groupNone: t('groupNone'),
     groupDate: t('groupDate'),
-    groupClass: t('groupClass'),
     sortBy: t('sortBy'),
     sortName: t('sortName'),
     sortDate: t('sortDate'),

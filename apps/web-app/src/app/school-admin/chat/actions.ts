@@ -131,7 +131,6 @@ export async function updateConversation(
   updates: {
     title?: string
     document_ids?: string[]
-    class_id?: string | null // Optional: assign to a class for learner access
     context?: Record<string, unknown>
   }
 ) {

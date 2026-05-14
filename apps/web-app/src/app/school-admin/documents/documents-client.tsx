@@ -25,7 +25,6 @@ interface Document {
   avg_chunk_size?: number | null
   content_language?: string | null
   created_at: string
-  classes?: { id: string; name: string; class_code?: string | null } | null
 }
 
 interface DocumentsClientProps {

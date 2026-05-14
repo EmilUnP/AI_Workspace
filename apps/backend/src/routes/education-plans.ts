@@ -4,7 +4,6 @@ type PlanRow = {
   id: string
   name: string
   description: string | null
-  class_id: string | null
   period_months: number
   sessions_per_week: number
   hours_per_session: number
@@ -36,10 +35,9 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
 
-    const query = request.query as { search?: string; shared?: string; classId?: string }
+    const query = request.query as { search?: string; shared?: string }
     const search = String(query.search || '').trim()
     const shared = String(query.shared || '').trim()
-    const classId = String(query.classId || '').trim()
 
     const clauses = ['user_id = $1']
     const values: unknown[] = [userId]
@@ -50,14 +48,10 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     }
     if (shared === 'shared') clauses.push('is_shared_with_students = true')
     if (shared === 'not_shared') clauses.push('is_shared_with_students = false')
-    if (classId) {
-      values.push(classId)
-      clauses.push(`class_id = $${values.length}`)
-    }
 
     const sql = `
       SELECT
-        id, name, description, class_id, period_months, sessions_per_week,
+        id, name, description, period_months, sessions_per_week,
         hours_per_session, audience, is_shared_with_students, document_ids,
         content, created_at
       FROM education_plans
@@ -84,7 +78,6 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     if (!name) return reply.code(400).send({ error: 'Name is required' })
 
     const description = body.description == null ? null : String(body.description)
-    const classId = body.class_id == null ? null : String(body.class_id)
     const periodMonths = Number(body.period_months || 3)
     const sessionsPerWeek = Number(body.sessions_per_week || 3)
     const hoursPerSession = Number(body.hours_per_session || 1)
@@ -103,7 +96,7 @@ export async function educationPlansRoutes(app: FastifyInstance) {
         userId,
         name,
         description,
-        classId,
+        null,
         Number.isFinite(periodMonths) ? periodMonths : 3,
         Number.isFinite(sessionsPerWeek) ? sessionsPerWeek : 3,
         Number.isFinite(hoursPerSession) ? hoursPerSession : 1,
@@ -133,7 +126,6 @@ export async function educationPlansRoutes(app: FastifyInstance) {
 
     if (body.name !== undefined) add('name', String(body.name || '').trim())
     if (body.description !== undefined) add('description', body.description == null ? null : String(body.description))
-    if (body.class_id !== undefined) add('class_id', body.class_id == null ? null : String(body.class_id))
     if (body.period_months !== undefined) add('period_months', Number(body.period_months || 3))
     if (body.sessions_per_week !== undefined) add('sessions_per_week', Number(body.sessions_per_week || 3))
     if (body.hours_per_session !== undefined) add('hours_per_session', Number(body.hours_per_session || 1))

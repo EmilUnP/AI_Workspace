@@ -16,7 +16,6 @@ interface CreateExamInput {
   organizationId: string
   title: string
   description?: string | null
-  classId?: string | null
   subject?: string | null
   gradeLevel?: string | null
   durationMinutes: number

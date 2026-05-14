@@ -19,20 +19,18 @@ import { EditDocumentDialog } from './edit-document-dialog'
 import { DocumentQualityModal } from './document-quality-modal'
 import type { DocItem } from './documents-list-state'
 
-type GroupBy = 'none' | 'date' | 'class'
+type GroupBy = 'none' | 'date'
 type SortBy = 'name' | 'date' | 'type' | 'size'
 type SortDir = 'asc' | 'desc'
 type DocumentStatusLevel = 'ok' | 'issues' | 'critical'
-type ExplorerItem = DocItem & { classes?: { id: string; name: string; class_code?: string | null } | null }
+type ExplorerItem = DocItem
 interface ExplorerTranslations {
   allDocuments: string
-  noClass: string
   noDocumentsYet: string
   noDocumentsHint: string
   groupBy: string
   groupNone: string
   groupDate: string
-  groupClass: string
   sortBy: string
   sortName: string
   sortDate: string
@@ -76,13 +74,11 @@ interface ExplorerTranslations {
 
 const DEFAULT_EXPLORER_TRANSLATIONS: ExplorerTranslations = {
   allDocuments: 'All documents',
-  noClass: 'No class',
   noDocumentsYet: 'No documents yet',
   noDocumentsHint: 'Drag and drop a file above to upload your first document.',
   groupBy: 'Group by',
   groupNone: 'None',
   groupDate: 'Date',
-  groupClass: 'Class',
   sortBy: 'Sort by',
   sortName: 'Name',
   sortDate: 'Date',
@@ -209,17 +205,15 @@ export function DocumentsExplorer({
     for (const doc of sorted) {
       let key = '_'
       if (groupBy === 'date') key = getDateGroupKey(doc.created_at)
-      else if (groupBy === 'class') key = doc.classes?.id ?? '_none'
       if (!map.has(key)) map.set(key, [])
       map.get(key)?.push(doc)
     }
 
     return Array.from(map.entries()).map(([key, groupDocs]) => {
-      let label = key
-      if (groupBy === 'class') label = key === '_none' ? t.noClass : (groupDocs[0]?.classes?.name ?? key)
+      const label = key
       return { key, label, documents: groupDocs }
     })
-  }, [sorted, groupBy, t.allDocuments, t.noClass])
+  }, [sorted, groupBy, t.allDocuments])
 
   useEffect(() => {
     if (groupBy === 'none') setExpandedGroups(new Set())
@@ -246,7 +240,6 @@ export function DocumentsExplorer({
           <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
             <option value="none">{t.groupNone}</option>
             <option value="date">{t.groupDate}</option>
-            <option value="class">{t.groupClass}</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
