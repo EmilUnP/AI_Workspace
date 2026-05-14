@@ -31,7 +31,7 @@ export default function CreateEducationPlanPage() {
       documentsUrl="/api/school-admin/documents"
       createPlanAction={createEducationPlan}
       backHref="/school-admin/education-plans"
-      planDetailHref={(id) => `/school-admin/education-plans/${id}`}
+      planDetailHref={(id: string) => `/school-admin/education-plans/${id}`}
       audienceOptions={audienceOptions}
       labels={{
         backToPlans: t('backToPlans'),

@@ -1,4 +1,4 @@
-# Technical Summary (0.2.0)
+# Technical Summary (0.2.5)
 
 ## Architecture
 
@@ -12,7 +12,16 @@
 - **Database**: PostgreSQL for users, auth tokens, documents, chats, lessons, exams, education plans, and user AI keys.
 - **File storage**: backend local storage (`AI_STORAGE_DIR`) for uploaded docs and generated lesson media.
 - **Auth model**: backend-issued JWT access token + refresh token.
-- **Frontend-backend bridge**: Next.js server actions and API routes proxy to backend endpoints with JWT.
+- **Frontend-backend bridge**: Next.js server actions and API routes proxy to backend endpoints with JWT and **`X-Eduator-Client: web-app`** on first-party calls (`webAppBackendAuthHeaders` in `apps/web-app/src/lib/web-app-backend-headers.ts`).
+
+## API access logging (0.2.5+)
+
+- Table **`api_access_log`** stores `(user_id, method, path, status_code, created_at)` for authenticated responses used by **API Integration → Usage**.
+- The Fastify **`api-access-log`** plugin skips:
+  - unauthenticated requests (no `authUser`)
+  - **`GET /v1/users/me/api-keys/usage`** (avoids feedback loop)
+  - requests with header **`X-Eduator-Client: web-app`** (official app traffic)
+- Run **`npm run db:migrate`** in `apps/backend` so migration `006_api_access_log.sql` is applied.
 
 ## AI Key Resolution Model
 
@@ -30,7 +39,7 @@
 - Upload documents and monitor processing state.
 - Generate lessons/exams/education plans from documents.
 - Use AI Tutor conversations with optional document context.
-- Manage personal Gemini key in API Integration.
+- Manage personal Gemini key and **HTTP API keys** in API Integration; Usage reflects external-style `/v1` traffic (see Technical Summary — API access logging).
 
 ### Platform Owner
 

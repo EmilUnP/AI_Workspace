@@ -1,6 +1,6 @@
 # Eduator AI Platform — Overview & Delivery Report
 
-**Version:** 0.2.0  
+**Version:** 0.2.5  
 **Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, **where APIs live**, and **what shipped recently**.
 
 For deeper dives, use the linked docs at the end — this file is the map, not a duplicate of every endpoint.
@@ -37,7 +37,7 @@ flowchart LR
 |--------|----------------|
 | **web-app** (`apps/web-app`) | UI: auth, school-admin, platform-owner; proxies some file/API calls; locale + i18n. |
 | **backend** (`apps/backend`) | Auth, users, documents, RAG pipeline, AI generation (lessons/exams/plans), chat, encrypted Gemini keys. |
-| **PostgreSQL** | Users, sessions/tokens, documents metadata, chunks/embeddings refs, lessons, exams, plans, API usage, keys. |
+| **PostgreSQL** | Users, sessions/tokens, documents metadata, chunks/embeddings refs, lessons, exams, plans, **api access log** (`api_access_log`), user API keys, encrypted Gemini keys. |
 | **Local disk** | Uploaded documents and generated lesson media (see backend storage config). |
 
 Canonical technical detail: [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md).
@@ -89,7 +89,7 @@ Canonical technical detail: [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md).
 ### 5.1 Authentication
 
 1. User logs in via web-app; backend issues **access** + **refresh** tokens (JWT).
-2. Web-app attaches `Authorization: Bearer <accessToken>` when calling the backend (server-side or via secure patterns).
+2. Web-app attaches `Authorization: Bearer <accessToken>` when calling the backend from server code, plus **`X-Eduator-Client: web-app`** on first-party requests so **Usage** analytics stay focused on external integrations.
 3. Protected API routes reject missing/invalid tokens.
 
 ### 5.2 Documents and RAG
@@ -135,7 +135,7 @@ See [DECISIONS.md](./DECISIONS.md) for encryption and error-shape rationale.
 
 **Base URL (local):** `http://localhost:4000/v1` (adjust per environment).
 
-Groups at a glance: Auth, Users, Documents, AI (RAG, chat, lessons/exams/plans generate, media helpers), User AI keys (Gemini).
+Groups at a glance: Auth, Users, Documents, AI (RAG, chat, lessons/exams/plans generate, media helpers), User AI keys (Gemini), **User HTTP API keys + usage** (`/users/me/api-keys*`, backed by `api_access_log` when migrated).
 
 ---
 
@@ -170,6 +170,12 @@ This section captures the **product and engineering themes** completed in the re
 - [DECISIONS.md](./DECISIONS.md) — storage, proxy, Gemini, structured errors.
 - [API_SUMMARY.md](./API_SUMMARY.md) — endpoint groups and quick checklist.
 
+### 7.5 API integration & usage analytics (0.2.5)
+
+- **Usage** tab reads `GET /v1/users/me/api-keys/usage`, aggregating **`api_access_log`** for traffic without the first-party client marker.
+- Official Next.js server calls send **`X-Eduator-Client: web-app`** so document/chat navigation does not inflate integration metrics.
+- **Lessons:** `GET /v1/lessons/:id` returns absolute media URLs when possible for non-browser API consumers.
+
 ---
 
 ## 8. Suggested “report” outputs for stakeholders
@@ -191,8 +197,9 @@ This section captures the **product and engineering themes** completed in the re
 | [DECISIONS.md](./DECISIONS.md) | ADR-style decisions |
 | [API_SUMMARY.md](./API_SUMMARY.md) | REST groups and checklist |
 | `apps/backend/openapi.yaml` | OpenAPI |
+| `apps/web-app/src/lib/web-app-backend-headers.ts` | First-party backend fetch headers (`X-Eduator-Client`) |
 | `apps/web-app/src/lib/i18n.ts` | Translation tables |
 
 ---
 
-*Last updated to reflect delivery themes through bilingual school-admin/platform-owner work and API Integration localization. Adjust dates and bullets when you cut a formal release.*
+*Last updated for release **0.2.5** (access logging, usage semantics, school-admin landing/nav, lesson media URLs, docs/OpenAPI alignment).*

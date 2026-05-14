@@ -1,6 +1,6 @@
 # Clean Backend API Documentation
 
-This is the full API contract for the clean backend running in `apps/backend`.
+This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.5**).
 
 ## Base
 - Base URL: `http://localhost:<PORT>`
@@ -181,6 +181,32 @@ Response:
   "keyHint": null
 }
 ```
+
+---
+
+## 2.2) User HTTP API keys & usage analytics (0.2.5+)
+
+Requires DB migration `006_api_access_log.sql` (`npm run db:migrate` from `apps/backend`).
+
+### GET `/v1/users/me/api-keys` (Protected)
+
+Returns active keys for the current user (prefix only; full secret is never returned for existing keys).
+
+### POST `/v1/users/me/api-keys` (Protected)
+
+Create a new API key. Response includes the **raw key once** (store it immediately).
+
+### DELETE `/v1/users/me/api-keys/:id` (Protected)
+
+Revoke/delete a key by id (owner scoped).
+
+### GET `/v1/users/me/api-keys/usage` (Protected)
+
+Returns aggregate and recent HTTP usage used by the school-admin **Usage** tab:
+
+- Primary source: **`api_access_log`** (method, route pattern, status code).
+- Rows are **not** recorded for requests that include `X-Eduator-Client: web-app` (official Next.js server traffic).
+- If `api_access_log` is not present yet, the service may fall back to legacy **`ai_requests`** data only.
 
 ---
 

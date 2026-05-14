@@ -15,6 +15,8 @@ Backend-only service with local PostgreSQL and JWT authentication.
 - RAG processing pipeline (extract/chunk/embed/retrieve)
 - AI generation endpoints (chat, lessons, exams, education plans, translation/media helpers)
 - Per-user Gemini API key management (encrypted at rest)
+- **User HTTP API keys** (`/v1/users/me/api-keys`) and **usage** (`/v1/users/me/api-keys/usage`) backed by **`api_access_log`** after migration `006_api_access_log.sql`
+- **Access logging:** first-party Next.js server calls send `X-Eduator-Client: web-app` and are excluded from `api_access_log` (see `apps/web-app/src/lib/web-app-backend-headers.ts`)
 
 ## Local Setup
 1. Create `apps/backend/.env.local` from `apps/backend/.env.example`.
@@ -107,6 +109,13 @@ JWT Bearer token required for protected endpoints.
 - `POST /v1/ai/tts` (protected)
 - `POST /v1/ai/stt` (protected)
 - `POST /v1/ai/image/generate` (protected)
+
+### User HTTP API keys & usage (0.2.5+)
+
+- `GET /v1/users/me/api-keys` — list keys (prefix only)
+- `POST /v1/users/me/api-keys` — create (returns raw key once)
+- `DELETE /v1/users/me/api-keys/:id` — revoke
+- `GET /v1/users/me/api-keys/usage` — usage stats (see `API_DOCUMENTATION.md` §2.2)
 
 ## Quick Validation Flow
 1. `GET /health`

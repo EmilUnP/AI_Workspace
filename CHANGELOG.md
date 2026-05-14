@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.5 - 2026-05-14
+
+### Added
+
+- **`api_access_log` table** (migration `006_api_access_log.sql`) — one row per authenticated HTTP response used for **API Integration → Usage** analytics.
+- **`api-access-log` Fastify plugin** — records method, route pattern, and status code; skips `GET /v1/users/me/api-keys/usage` to avoid self-polling noise.
+
+### Changed
+
+- **Usage analytics semantics** — `GET /v1/users/me/api-keys/usage` aggregates from `api_access_log` (with fallback to `ai_requests` if the new table is not migrated). Success/error counts use HTTP status (`<400` / `>=400`). Legacy `ai_requests` mapping now treats `completed` / `done` as success.
+- **First-party vs external traffic** — Official Next.js server calls send `X-Eduator-Client: web-app` via `webAppBackendAuthHeaders()` (`apps/web-app/src/lib/web-app-backend-headers.ts`); the access-log plugin **does not insert** rows for those requests so normal UI refreshes do not flood the DB. External tools (curl, Postman, integrations) omit that header so their calls appear in Usage.
+- **School admin** — `/school-admin` redirects to **Document Library** (`/school-admin/documents`); **Dashboard** removed from the school-admin nav where applicable; **API Integration** remains documented in-app.
+- **Lessons API** — `GET /v1/lessons/:id` normalizes relative `images[].url` and `audio_url` to **absolute** URLs when possible for third-party consumers.
+- **Docs & OpenAPI** — API summaries, technical overview, project report, backend README, and `openapi.yaml` metadata aligned with **0.2.5** and the behaviors above.
+
+### Notes
+
+- Run `npm run db:migrate` in `apps/backend` after deploy so `api_access_log` exists.
+- `X-Eduator-Client` is an **analytics opt-out for the official app only**, not a security boundary.
+
 ## 0.2.0 - 2026-05-08
 
 ### Changed

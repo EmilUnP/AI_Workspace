@@ -1,24 +1,25 @@
 # Eduator AI Workspace
 
-Current baseline version: **0.2.0**.
+Current baseline version: **0.2.5**.
 
 ## Current Scope
 
 - `apps/web-app` (Next.js 15) for auth, school-admin, and platform-owner flows
 - `apps/backend` (Fastify + PostgreSQL) for auth, users, documents, and AI endpoints
 - Per-user Gemini API key management in API Integration
+- **HTTP API keys** (create/list/revoke) and **Usage** analytics backed by `api_access_log` (external `/v1` calls); first-party server traffic sends `X-Eduator-Client: web-app` and is excluded from Usage rows
 - Token-based product surfaces removed from active web app routes
 
 ## Product Modules
 
 - **Auth**: login flow with backend-issued JWT access/refresh tokens.
 - **School Admin**:
-  - Documents (upload/list/view/download/delete)
+  - Documents (upload/list/view/download/delete); default landing after login to school-admin is the document library
   - Lessons (AI generation + detail pages + media support)
   - Exams (AI generation and management)
   - Education Plans (AI generation + normalized detail rendering)
   - AI Tutor chat
-  - API Integration (user Gemini key management)
+  - API Integration (HTTP API keys, Usage tab, Gemini key, in-app docs aligned with `/v1`)
 - **Platform Owner**:
   - Dashboard
   - Users management
@@ -60,6 +61,12 @@ Use app-level env files:
 4. If missing, API returns:
    - `code: MISSING_GEMINI_API_KEY`
    - user-facing hint for next action.
+
+## API usage analytics (0.2.5+)
+
+- After `apps/backend` migration **`006_api_access_log.sql`**, authenticated `/v1` responses can be stored for the **Usage** tab (`GET /v1/users/me/api-keys/usage`).
+- The official web app marks server-to-backend calls with **`X-Eduator-Client: web-app`** so routine UI traffic is not logged as “integration usage.”
+- Postman, scripts, and other clients should **not** send that header if you want calls to appear under Usage.
 
 ## Core Technical Docs
 

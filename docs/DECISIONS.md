@@ -36,7 +36,13 @@
 - Missing-key situations return structured API payload (`error`, `code`, `hint`) instead of generic internal error.
 - Reason: improve operator UX and reduce support/debug time.
 
-## 8) Remove token product surfaces from active web app
+## 8) Separate integration usage from first-party UI traffic
+
+- Authenticated `/v1` responses can be written to **`api_access_log`** for the Usage dashboard.
+- The official Next.js app sends **`X-Eduator-Client: web-app`** on server-side backend fetches; the access-log hook skips those rows.
+- Reason: avoid treating every page refresh as “API integration” traffic while still allowing external clients (no header) to populate Usage.
+
+## 9) Remove token product surfaces from active web app
 
 - Token pages/settings/usage UI removed from school-admin and platform-owner active routes.
 - Reason: simplify product scope and reduce maintenance overhead during migration stabilization.
