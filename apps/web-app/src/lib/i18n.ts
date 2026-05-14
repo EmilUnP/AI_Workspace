@@ -273,20 +273,6 @@ const translations: I18nTable = {
       planGeneratedNotSaved: 'Plan generated but not saved yet.',
       generateFailed: 'Failed to generate plan.',
       failedToCreatePlan: 'Failed to create plan.',
-      editTitle: 'Edit education plan',
-      editSubtitle: 'Update schedule and content.',
-      detailsSchedule: 'Details & schedule',
-      planContentWeekByWeek: 'Plan content (week by week)',
-      planContentHint: 'Define weekly titles, topics, and objectives.',
-      weekTitlePlaceholder: 'Week {week} title',
-      topicsPerLine: 'Topics (one per line)',
-      oneTopicPerLine: 'One topic per line',
-      objectivesPerLine: 'Objectives (one per line)',
-      oneObjectivePerLine: 'One objective per line',
-      notesOptional: 'Notes (optional)',
-      notesPlaceholder: 'Additional notes...',
-      saveChanges: 'Save changes',
-      failedToSave: 'Failed to save changes.'
     },
     teacherApiIntegration: {
       title: 'API Integration',
@@ -583,11 +569,6 @@ const translations: I18nTable = {
     },
     teacherExamCreate: {
       title: 'Create Exam'
-    },
-    teacherExamEdit: {
-      title: 'Edit Exam',
-      subtitle: 'Update questions, settings, and translations.',
-      backToExams: 'Back to exams'
     },
     teacherExamCreator: {
       generateActionUnavailable: 'Generate action is unavailable.',
@@ -886,20 +867,6 @@ const translations: I18nTable = {
       planGeneratedNotSaved: 'Plan yaradıldı, amma hələ saxlanmayıb.',
       generateFailed: 'Plan yaratmaq mümkün olmadı.',
       failedToCreatePlan: 'Plan yaratmaq mümkün olmadı.',
-      editTitle: 'Tədris planını redaktə et',
-      editSubtitle: 'Cədvəli və məzmunu yeniləyin.',
-      detailsSchedule: 'Detallar və cədvəl',
-      planContentWeekByWeek: 'Plan məzmunu (həftə-həftə)',
-      planContentHint: 'Həftəlik başlıq, mövzu və məqsədləri qeyd edin.',
-      weekTitlePlaceholder: '{week}-ci həftə başlığı',
-      topicsPerLine: 'Mövzular (sətr başına bir)',
-      oneTopicPerLine: 'Sətr başına bir mövzu',
-      objectivesPerLine: 'Məqsədlər (sətr başına bir)',
-      oneObjectivePerLine: 'Sətr başına bir məqsəd',
-      notesOptional: 'Qeydlər (opsional)',
-      notesPlaceholder: 'Əlavə qeydlər...',
-      saveChanges: 'Dəyişiklikləri saxla',
-      failedToSave: 'Dəyişiklikləri saxlamaq mümkün olmadı.'
     },
     teacherApiIntegration: {
       title: 'API inteqrasiya',
@@ -1196,11 +1163,6 @@ const translations: I18nTable = {
     },
     teacherExamCreate: {
       title: 'İmtahan yarat'
-    },
-    teacherExamEdit: {
-      title: 'İmtahanı redaktə et',
-      subtitle: 'Sualları, ayarları və tərcümələri yeniləyin.',
-      backToExams: 'İmtahanlara qayıt'
     },
     teacherExamCreator: {
       generateActionUnavailable: 'Yaratma əməliyyatı əlçatan deyil.',
