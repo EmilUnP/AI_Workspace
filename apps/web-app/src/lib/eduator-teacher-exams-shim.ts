@@ -10,7 +10,6 @@ export type TeacherExamRow = {
   languages: string[]
   questionCount: number
   duration_minutes: number | null
-  is_published: boolean
   created_at: string
 }
 
@@ -62,7 +61,7 @@ export async function getTeacherExamStats(_supabase: unknown, _teacherId: string
   const { cookies } = await import('next/headers')
   const token = (await cookies()).get('access_token')?.value
   if (!token) {
-    return { total: 0, published: 0, draft: 0, totalQuestions: 0 }
+    return { total: 0, totalQuestions: 0 }
   }
 
   const response = await fetch(`${backendBase}/v1/exams/stats`, {
@@ -70,19 +69,15 @@ export async function getTeacherExamStats(_supabase: unknown, _teacherId: string
     cache: 'no-store',
   })
   if (!response.ok) {
-    return { total: 0, published: 0, draft: 0, totalQuestions: 0 }
+    return { total: 0, totalQuestions: 0 }
   }
 
   const payload = (await response.json()) as {
     total?: number
-    published?: number
-    draft?: number
     totalQuestions?: number
   }
   return {
     total: Number(payload.total || 0),
-    published: Number(payload.published || 0),
-    draft: Number(payload.draft || 0),
     totalQuestions: Number(payload.totalQuestions || 0),
   }
 }

@@ -11,7 +11,6 @@ const examSchema = z.object({
   documentIds: z.array(z.uuid()).default([]),
   documentText: z.string().optional(),
   title: z.string().optional(),
-  subject: z.string().optional(),
   gradeLevel: z.string().optional(),
   language: z.string().default('en'),
   durationMinutes: z.number().int().min(1).max(300).default(60),
@@ -73,13 +72,12 @@ export class ExamAiService {
     const normalizedQuestions = this.normalizeGeneratedQuestions(exam.questions || [])
 
     const { rows } = await this.app.db.query<{ id: string }>(
-      `INSERT INTO exams (user_id, title, description, subject, grade_level, questions, language, duration_minutes)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8) RETURNING id`,
+      `INSERT INTO exams (user_id, title, description, grade_level, questions, language, duration_minutes)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING id`,
       [
         userId,
         exam.title || data.title || 'Generated Exam',
         exam.description || null,
-        data.subject || null,
         data.gradeLevel || null,
         JSON.stringify(normalizedQuestions),
         data.language,
@@ -108,7 +106,8 @@ export class ExamAiService {
 
   private buildRetrievalQuery(data: z.infer<typeof examSchema>) {
     const topicText = data.topics?.length ? ` Topics: ${data.topics.join(', ')}.` : ''
-    return `Generate exam questions for ${data.subject || 'general subject'}.${topicText}`
+    const scope = data.topics?.length ? data.topics.join(', ') : 'document content'
+    return `Generate exam questions for ${scope}.${topicText}`
   }
 
   private buildGenerationPrompt(data: z.infer<typeof examSchema>, contextText: string) {
@@ -121,7 +120,6 @@ export class ExamAiService {
 
     return [
       `Generate ${data.questionCount} exam questions in ${data.language}.`,
-      `Subject: ${data.subject || 'General'}.`,
       `Grade: ${data.gradeLevel || 'N/A'}.`,
       `Allowed question types: ${questionTypes}.`,
       'For multiple_choice and multiple_select questions, ALWAYS return exactly 4 options.',

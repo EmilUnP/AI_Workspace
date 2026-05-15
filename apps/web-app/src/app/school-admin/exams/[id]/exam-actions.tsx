@@ -8,12 +8,11 @@ import { deleteExam } from '../new/actions'
 
 interface ExamActionsProps {
   examId: string
-  isPublished: boolean
   fromCourse?: string
   fromRun?: string
 }
 
-export function ExamActions({ examId, isPublished: _isPublished, fromCourse, fromRun }: ExamActionsProps) {
+export function ExamActions({ examId, fromCourse, fromRun }: ExamActionsProps) {
   const t = useTranslations('teacherExams')
   const tl = (key: string, fallback: string) => {
     const value = t(key as never)

@@ -16,11 +16,9 @@ interface CreateExamInput {
   organizationId: string
   title: string
   description?: string | null
-  subject?: string | null
   gradeLevel?: string | null
   durationMinutes: number
   questions: Question[]
-  isPublished: boolean
   language?: string // Primary language code (e.g., 'en', 'az', 'tr')
   translations?: Record<string, Question[]> // Translations in other languages
   /** Show correct answers in published exam results (default true) */
@@ -38,7 +36,6 @@ export async function createExam(input: CreateExamInput) {
     const examData = {
       title: input.title,
       description: input.description,
-      subject: input.subject,
       gradeLevel: input.gradeLevel,
       durationMinutes: input.durationMinutes,
       questions: input.questions,
@@ -55,7 +52,6 @@ export async function createExam(input: CreateExamInput) {
         show_correct_answers: input.showCorrectAnswers !== false,
         show_explanations: input.showExplanations !== false,
       },
-      isPublished: input.isPublished,
       topics: [],
     }
 

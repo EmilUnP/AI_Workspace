@@ -20,7 +20,6 @@ type LessonDetailsRow = {
   description: string | null
   created_at: string
   duration_minutes: number | null
-  is_published?: boolean | null
   audio_url?: string | null
   content: unknown
   images: unknown
@@ -109,7 +108,6 @@ export async function lessonsRoutes(app: FastifyInstance) {
       id: row.id,
       title: row.title,
       duration_minutes: row.duration_minutes ?? 45,
-      is_published: false,
       languages: row.language ? [row.language] : [],
       objectivesCount: Number(row.objectives_count || 0),
       created_at: row.created_at,
@@ -139,7 +137,6 @@ export async function lessonsRoutes(app: FastifyInstance) {
          l.description,
          l.created_at,
          l.duration_minutes,
-         l.is_published,
          l.audio_url,
          l.content,
          l.images,
@@ -159,7 +156,7 @@ export async function lessonsRoutes(app: FastifyInstance) {
       const message = error instanceof Error ? error.message : String(error)
       const isSchemaMismatch =
         message.includes('column') &&
-        (message.includes('audio_url') || message.includes('is_published'))
+        (message.includes('audio_url'))
 
       if (!isSchemaMismatch) throw error
 
@@ -188,7 +185,6 @@ export async function lessonsRoutes(app: FastifyInstance) {
       if (lesson) {
         lesson = {
           ...lesson,
-          is_published: false,
           audio_url: null,
         }
       }
@@ -223,7 +219,6 @@ export async function lessonsRoutes(app: FastifyInstance) {
         description: lesson.description,
         created_at: lesson.created_at,
         duration_minutes: lesson.duration_minutes ?? 45,
-        is_published: lesson.is_published ?? false,
         audio_url: audioUrl,
         content: lesson.content,
         images,

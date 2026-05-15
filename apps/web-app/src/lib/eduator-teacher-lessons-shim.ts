@@ -43,8 +43,6 @@ export async function getTeacherLessons(
 export async function getTeacherLessonStats(_supabase: unknown, _teacherId: string, _workspaceId: string) {
   return {
     total: 0,
-    published: 0,
-    draft: 0,
     totalDuration: 0,
   }
 }

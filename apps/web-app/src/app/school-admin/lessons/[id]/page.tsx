@@ -31,7 +31,6 @@ type LessonRecord = {
   description?: string | null
   created_at: string
   duration_minutes?: number | null
-  is_published?: boolean | null
   audio_url?: string | null
   content?: unknown
   images?: unknown
@@ -162,7 +161,6 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                 description={lesson.description}
                 content={contentText}
                 durationMinutes={lesson.duration_minutes}
-                isPublished={lesson.is_published}
                 hasAudio={!!lesson.audio_url}
                 onUpdateLesson={updateLesson}
                 onRegenerateAudio={regenerateAudio}

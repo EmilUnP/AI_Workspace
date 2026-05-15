@@ -85,12 +85,8 @@ export default async function SchoolAdminExamsPage({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex items-center gap-3 sm:hidden">
             <div className="rounded-xl bg-gray-100 px-3 py-2 text-center ring-1 ring-gray-200">
-              <p className="text-lg font-semibold text-gray-900">{stats.published}</p>
-              <p className="text-xs text-gray-600">{t('published')}</p>
-            </div>
-            <div className="rounded-xl bg-gray-100 px-3 py-2 text-center ring-1 ring-gray-200">
-              <p className="text-lg font-semibold text-gray-900">{stats.draft}</p>
-              <p className="text-xs text-gray-600">{t('unused')}</p>
+              <p className="text-lg font-semibold text-gray-900">{stats.total}</p>
+              <p className="text-xs text-gray-600">{t('totalExams')}</p>
             </div>
             <div className="rounded-xl bg-gray-100 px-3 py-2 text-center ring-1 ring-gray-200">
               <p className="text-lg font-semibold text-gray-900">{stats.totalQuestions}</p>
@@ -176,7 +172,7 @@ export default async function SchoolAdminExamsPage({
                         </div>
                       </Link>
                     </div>
-                    <ExamRowActions examId={exam.id} isPublished={exam.is_published} />
+                    <ExamRowActions examId={exam.id} />
                   </div>
                   <div className="mt-3 flex items-center">
                     <div className="flex items-center gap-3 text-sm">
@@ -302,7 +298,7 @@ export default async function SchoolAdminExamsPage({
                     {/* Actions */}
                     <td className="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
                       <div className="flex items-center justify-end">
-                        <ExamRowActions examId={exam.id} isPublished={exam.is_published} />
+                        <ExamRowActions examId={exam.id} />
                       </div>
                     </td>
                   </tr>

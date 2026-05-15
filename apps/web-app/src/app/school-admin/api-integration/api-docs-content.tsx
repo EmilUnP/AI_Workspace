@@ -163,7 +163,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('mainFields')}</h4>
               <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
                 <li><code className="bg-gray-100 px-1">documentId</code>, <code className="bg-gray-100 px-1">documentIds</code>, or <code className="bg-gray-100 px-1">documentText</code></li>
-                <li><code className="bg-gray-100 px-1">title</code>, <code className="bg-gray-100 px-1">subject</code>, <code className="bg-gray-100 px-1">gradeLevel</code>, <code className="bg-gray-100 px-1">language</code></li>
+                <li><code className="bg-gray-100 px-1">title</code>, <code className="bg-gray-100 px-1">gradeLevel</code>, <code className="bg-gray-100 px-1">language</code>, <code className="bg-gray-100 px-1">topics</code></li>
                 <li><code className="bg-gray-100 px-1">questionCount</code> (1-50), <code className="bg-gray-100 px-1">questionTypes</code> ({questionTypesList})</li>
                 <li><code className="bg-gray-100 px-1">difficultyDistribution</code> with <code className="bg-gray-100 px-1">easy</code>, <code className="bg-gray-100 px-1">medium</code>, <code className="bg-gray-100 px-1">hard</code></li>
               </ul>
@@ -177,8 +177,8 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   -d '{
     "documentId": "uuid-from-documents",
     "title": "Quiz 1",
-    "subject": "Math",
     "gradeLevel": "10",
+    "topics": ["algebra"],
     "language": "en",
     "questionCount": 10,
     "questionTypes": ["multiple_choice", "true_false"],
@@ -208,7 +208,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /exams/:id · POST /exams · DELETE /exams/:id</h4>
-              <p className="mb-2">GET returns full <code className="bg-gray-100 px-1">exam</code> JSON. POST uses camelCase (e.g. <code className="bg-gray-100 px-1">durationMinutes</code>, <code className="bg-gray-100 px-1">isPublished</code>, <code className="bg-gray-100 px-1">questions</code>).</p>
+              <p className="mb-2">GET returns full <code className="bg-gray-100 px-1">exam</code> JSON. POST uses camelCase (e.g. <code className="bg-gray-100 px-1">durationMinutes</code>, <code className="bg-gray-100 px-1">questions</code>).</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X GET "${examsRestUrl}/EXAM_UUID" \\
   -H "Authorization: Bearer YOUR_API_KEY"`}
@@ -221,7 +221,6 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
     "title": "Saved quiz",
     "language": "en",
     "durationMinutes": 45,
-    "isPublished": false,
     "questions": []
   }'`}
               </pre>

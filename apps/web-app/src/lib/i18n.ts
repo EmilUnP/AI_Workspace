@@ -565,8 +565,7 @@ const translations: I18nTable = {
     teacherExams: {
       title: 'Exams',
       searchPlaceholder: 'Search exams...',
-      published: 'Published',
-      unused: 'Draft',
+      totalExams: 'Total exams',
       questions: 'Questions',
       createExam: 'Create exam',
       create: 'Create',
@@ -1203,8 +1202,7 @@ const translations: I18nTable = {
     teacherExams: {
       title: 'İmtahanlar',
       searchPlaceholder: 'İmtahan axtar...',
-      published: 'Yayımlanıb',
-      unused: 'Qaralama',
+      totalExams: 'Ümumi imtahan',
       questions: 'Suallar',
       createExam: 'İmtahan yarat',
       create: 'Yarat',

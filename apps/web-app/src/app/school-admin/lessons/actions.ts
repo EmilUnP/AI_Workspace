@@ -8,7 +8,6 @@ interface UpdateLessonInput {
   description?: string
   content?: string
   duration_minutes?: number
-  is_published?: boolean
 }
 
 type ProfileRow = { id: string }
@@ -67,7 +66,6 @@ export async function updateLesson(lessonId: string, input: UpdateLessonInput) {
     if (input.topic !== undefined) updateData.topic = input.topic
     if (input.description !== undefined) updateData.description = input.description
     if (input.duration_minutes !== undefined) updateData.duration_minutes = input.duration_minutes
-    if (input.is_published !== undefined) updateData.is_published = input.is_published
     if (input.content !== undefined) {
       updateData.content = { text: input.content }
     }
@@ -173,64 +171,6 @@ export async function regenerateAudio(lessonId: string) {
     return { success: true, audioUrl }
   } catch (error) {
     console.error('Regenerate audio error:', error)
-    return { error: 'An unexpected error occurred' }
-  }
-}
-
-export async function toggleLessonPublished(lessonId: string, isPublished: boolean) {
-  try {
-    const supabase = await createClient()
-    const adminSupabase = supabase as any
-    
-    // Get current user
-    const authUser = (await supabase.auth.getUser()).data.user as AuthUser | null
-    if (!authUser) {
-      return { error: 'Not authenticated' }
-    }
-
-    // Get teacher profile
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', authUser.id)
-      .single()
-    const profile = profileData as ProfileRow | null
-
-    if (!profile) {
-      return { error: 'Profile not found' }
-    }
-
-    // Verify ownership
-    const { data: existingLessonData } = await adminSupabase
-      .from('lessons')
-      .select('id, created_by')
-      .eq('id', lessonId)
-      .single()
-    const existingLesson = existingLessonData as LessonRow | null
-
-    if (!existingLesson || existingLesson.created_by !== profile.id) {
-      return { error: 'Lesson not found or access denied' }
-    }
-
-    // Update published status
-    const { data: lesson, error: dbError } = await adminSupabase
-      .from('lessons')
-      .update({ 
-        is_published: isPublished,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', lessonId)
-      .select()
-      .single()
-
-    if (dbError) {
-      console.error('Database error:', dbError)
-      return { error: 'Failed to update lesson' }
-    }
-
-    return { success: true, data: lesson }
-  } catch (error) {
-    console.error('Toggle published error:', error)
     return { error: 'An unexpected error occurred' }
   }
 }

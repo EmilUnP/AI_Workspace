@@ -22,7 +22,6 @@ type ExamRow = {
   language?: string | null
   translations?: Record<string, unknown> | null
   questions?: AnyQuestion[] | null
-  is_published?: boolean | null
   duration_minutes?: number | null
   created_at: string
 }
@@ -147,7 +146,7 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <ExamActions examId={exam.id} isPublished={Boolean(exam.is_published)} />
+              <ExamActions examId={exam.id} />
             </div>
           </div>
         </div>

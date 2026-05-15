@@ -1,4 +1,4 @@
-# API Summary (0.2.6)
+# API Summary (0.2.7)
 
 Base URL (local): `http://localhost:4000/v1`
 
@@ -59,7 +59,7 @@ Do **not** use `POST /auth/login` JWTs for production integrations — create an
 - `GET /exams` — list (`page`, `perPage`, `search`)
 - `GET /exams/stats` — aggregate counts
 - `GET /exams/:id` — full exam JSON
-- `POST /exams` — create (camelCase body, e.g. `durationMinutes`, `isPublished`, `questions`)
+- `POST /exams` — create (camelCase body, e.g. `durationMinutes`, `questions`)
 - `DELETE /exams/:id` — delete
 
 ## AI / RAG

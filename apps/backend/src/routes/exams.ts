@@ -4,10 +4,8 @@ type ExamRow = {
   id: string
   title: string
   description: string | null
-  subject: string | null
   duration_minutes: number | null
   language: string | null
-  is_published: boolean
   metadata: Record<string, unknown> | null
   questions: unknown
   created_at: string
@@ -42,11 +40,9 @@ export async function examsRoutes(app: FastifyInstance) {
         id,
         title,
         description,
-        subject,
         grade_level,
         duration_minutes,
         language,
-        is_published,
         metadata,
         questions,
         created_at
@@ -65,11 +61,9 @@ export async function examsRoutes(app: FastifyInstance) {
         id: row.id,
         title: row.title,
         description: row.description,
-        subject: row.subject,
         grade_level: row.grade_level,
         duration_minutes: row.duration_minutes ?? 60,
         language: row.language ?? 'en',
-        is_published: Boolean(row.is_published),
         questions: parseQuestions(row.questions),
         translations: parseObject(metadata.translations),
         settings: parseObject(metadata.settings),
@@ -88,11 +82,9 @@ export async function examsRoutes(app: FastifyInstance) {
     if (!title) return reply.code(400).send({ error: 'Title is required' })
 
     const description = body.description == null ? null : String(body.description)
-    const subject = body.subject == null ? null : String(body.subject)
     const gradeLevel = body.gradeLevel == null ? null : String(body.gradeLevel)
     const durationMinutes = Number(body.durationMinutes || 60)
     const language = String(body.language || 'en')
-    const isPublished = Boolean(body.isPublished)
     const questions = parseQuestions(body.questions)
     const topics = toStringArray(body.topics)
     const translations = parseObject(body.translations)
@@ -106,19 +98,17 @@ export async function examsRoutes(app: FastifyInstance) {
 
     const { rows } = await app.db.query<{ id: string }>(
       `INSERT INTO exams (
-        user_id, title, description, subject, grade_level, duration_minutes,
-        language, is_published, questions, metadata
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10::jsonb)
+        user_id, title, description, grade_level, duration_minutes,
+        language, questions, metadata
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb)
       RETURNING id`,
       [
         userId,
         title,
         description,
-        subject,
         gradeLevel,
         Number.isFinite(durationMinutes) ? durationMinutes : 60,
         language,
-        isPublished,
         JSON.stringify(questions),
         JSON.stringify(metadata),
       ]
@@ -143,11 +133,9 @@ export async function examsRoutes(app: FastifyInstance) {
 
     if (body.title !== undefined) add('title', String(body.title || '').trim())
     if (body.description !== undefined) add('description', body.description == null ? null : String(body.description))
-    if (body.subject !== undefined) add('subject', body.subject == null ? null : String(body.subject))
     if (body.gradeLevel !== undefined) add('grade_level', body.gradeLevel == null ? null : String(body.gradeLevel))
     if (body.durationMinutes !== undefined) add('duration_minutes', Number(body.durationMinutes || 60))
     if (body.language !== undefined) add('language', String(body.language || 'en'))
-    if (body.isPublished !== undefined) add('is_published', Boolean(body.isPublished))
     if (body.questions !== undefined) add('questions', JSON.stringify(parseQuestions(body.questions)))
     if (body.metadata !== undefined) add('metadata', JSON.stringify(parseObject(body.metadata)))
     add('updated_at', new Date().toISOString())
@@ -201,7 +189,6 @@ export async function examsRoutes(app: FastifyInstance) {
         AND (
           $2 = ''
           OR title ILIKE '%' || $2 || '%'
-          OR COALESCE(subject, '') ILIKE '%' || $2 || '%'
         )
     `
 
@@ -210,10 +197,8 @@ export async function examsRoutes(app: FastifyInstance) {
         id,
         title,
         description,
-        subject,
         duration_minutes,
         language,
-        is_published,
         metadata,
         questions,
         created_at
@@ -222,7 +207,6 @@ export async function examsRoutes(app: FastifyInstance) {
         AND (
           $2 = ''
           OR title ILIKE '%' || $2 || '%'
-          OR COALESCE(subject, '') ILIKE '%' || $2 || '%'
         )
       ORDER BY created_at DESC
       LIMIT $3 OFFSET $4
@@ -248,7 +232,6 @@ export async function examsRoutes(app: FastifyInstance) {
         languages: Array.from(new Set([...baseLanguage, ...translationLanguages])),
         questionCount: parseQuestions(row.questions).length,
         duration_minutes: row.duration_minutes ?? 60,
-        is_published: Boolean(row.is_published),
         created_at: row.created_at,
       }
     })
@@ -268,8 +251,6 @@ export async function examsRoutes(app: FastifyInstance) {
     const statsSql = `
       SELECT
         COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE is_published = true)::int AS published,
-        COUNT(*) FILTER (WHERE is_published = false)::int AS draft,
         COALESCE(SUM(CASE
           WHEN jsonb_typeof(questions) = 'array' THEN jsonb_array_length(questions)
           ELSE 0
@@ -280,16 +261,12 @@ export async function examsRoutes(app: FastifyInstance) {
 
     const { rows } = await app.db.query<{
       total: number
-      published: number
-      draft: number
       total_questions: number
     }>(statsSql, [userId])
 
     const row = rows[0]
     return reply.send({
       total: Number(row?.total || 0),
-      published: Number(row?.published || 0),
-      draft: Number(row?.draft || 0),
       totalQuestions: Number(row?.total_questions || 0),
     })
   })

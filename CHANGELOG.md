@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.7 - 2026-05-15
+
+### Changed
+
+- **School-admin API Integration docs** — **Keys & Docs** is explicitly **third-party only**: all examples use `Authorization: Bearer YOUR_API_KEY` (`ed_…`); login JWT and `X-Eduator-Client: web-app` are called out as not for integrations.
+- **Auth documentation** — `API_SUMMARY.md`, `API_DOCUMENTATION.md`, and `TECHNICAL_SUMMARY.md` distinguish the official web app (JWT + internal header) from external HTTP API keys.
+- **Exams list stats** — mobile summary shows **total exams** and **total questions** (removed unused published/draft counts).
+
+### Removed
+
+- Unused **`subject`** field from exams/lessons REST, AI exam generation, web exam create payload, OpenAPI, and in-app integration docs.
+- Unused **`is_published` / `isPublished`** from exams and lessons APIs, exam stats, web UI components, and API docs.
+- **`toggleLessonPublished`** server action (unused).
+
 ## 0.2.6 - 2026-05-15
 
 ### Added

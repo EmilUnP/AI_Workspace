@@ -1,6 +1,6 @@
 # Eduator AI Workspace
 
-Current baseline version: **0.2.6**.
+Current baseline version: **0.2.7**.
 
 ## Current Scope
 

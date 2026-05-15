@@ -1109,15 +1109,14 @@ export class LessonAiService {
 
     try {
       await this.app.db.query(
-        `INSERT INTO lessons (id, user_id, document_id, title, description, subject, grade_level, topic, duration_minutes, content, learning_objectives, mini_test, images, metadata, language)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14::jsonb, $15)`,
+        `INSERT INTO lessons (id, user_id, document_id, title, description, grade_level, topic, duration_minutes, content, learning_objectives, mini_test, images, metadata, language)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14)`,
         [
           lessonId,
           userId,
           primaryDocumentId,
           generated.title,
           `AI-generated lesson: ${generated.title}`,
-          null,
           body.gradeLevel || null,
           topic,
           generated.duration_minutes || 10,
@@ -1191,7 +1190,6 @@ export const lessonGenerator = {
   generateLesson,
   createLesson: async (_params: {
     topic: string
-    subject?: string
     gradeLevel: string
     durationMinutes: number
     learningObjectives?: string[]

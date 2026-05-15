@@ -1,5 +1,4 @@
 export type TeacherChatContext = {
-  subject?: string
   grade_level?: string
   organization_id?: string
   document_ids?: string[]

@@ -1,6 +1,6 @@
 # Clean Backend API Documentation
 
-This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.6**).
+This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.7**).
 
 ## Base
 - Base URL: `http://localhost:<PORT>`
@@ -525,7 +525,6 @@ Response `200`:
       "id": "uuid",
       "title": "Fractions",
       "duration_minutes": 45,
-      "is_published": false,
       "languages": ["en"],
       "objectivesCount": 4,
       "created_at": "..."
@@ -551,7 +550,6 @@ Response `200` (abridged):
     "description": "...",
     "created_at": "...",
     "duration_minutes": 45,
-    "is_published": false,
     "audio_url": "/v1/lessons/uuid/media/audio.wav",
     "content": {},
     "images": [],
@@ -591,7 +589,6 @@ Request:
   "topic": "Photosynthesis",
   "language": "en",
   "gradeLevel": "grade_9",
-  "subject": "Biology"
 }
 ```
 
@@ -625,7 +622,6 @@ Request example:
 ```json
 {
   "documentIds": ["uuid"],
-  "subject": "Biology",
   "gradeLevel": "grade_9",
   "language": "en",
   "questionCount": 10,
@@ -670,7 +666,7 @@ Response:
 
 ### Exams (saved rows) — REST
 
-These routes manage **persisted** exams (including rows created by `POST /v1/ai/exams/generate` or `POST /v1/exams`). JSON bodies for write routes use **camelCase** to match the web app (`durationMinutes`, `isPublished`, …).
+These routes manage **persisted** exams (including rows created by `POST /v1/ai/exams/generate` or `POST /v1/exams`). JSON bodies for write routes use **camelCase** to match the web app (`durationMinutes`, `questions`, …).
 
 #### GET `/v1/exams` (Protected)
 
@@ -678,7 +674,7 @@ Query:
 
 - `page` (default `1`)
 - `perPage` (default `10`, max `50`)
-- `search` (optional; matches `title` and `subject`)
+- `search` (optional; matches `title`)
 
 Response `200`:
 ```json
@@ -692,7 +688,6 @@ Response `200`:
       "languages": ["en"],
       "questionCount": 10,
       "duration_minutes": 60,
-      "is_published": false,
       "created_at": "..."
     }
   ],
@@ -710,8 +705,6 @@ Response `200`:
 ```json
 {
   "total": 10,
-  "published": 4,
-  "draft": 6,
   "totalQuestions": 120
 }
 ```
@@ -725,11 +718,9 @@ Response `200` (abridged):
     "id": "uuid",
     "title": "...",
     "description": null,
-    "subject": "Math",
     "grade_level": "10",
     "duration_minutes": 60,
     "language": "en",
-    "is_published": false,
     "questions": [],
     "translations": {},
     "settings": {},
@@ -748,11 +739,9 @@ Request (typical):
 {
   "title": "Midterm",
   "description": null,
-  "subject": "Math",
   "gradeLevel": "10",
   "durationMinutes": 60,
   "language": "en",
-  "isPublished": false,
   "questions": [],
   "topics": [],
   "translations": {},
@@ -767,7 +756,7 @@ Response `201`:
 
 #### PATCH `/v1/exams/:id` (Protected)
 
-Partial update. Supported fields include: `title`, `description`, `subject`, `gradeLevel`, `durationMinutes`, `language`, `isPublished`, `questions`, `metadata`.
+Partial update. Supported fields include: `title`, `description`, `gradeLevel`, `durationMinutes`, `language`, `questions`, `metadata`.
 
 Response `200`:
 ```json
