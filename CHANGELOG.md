@@ -2,6 +2,10 @@
 
 ## 0.2.8 - 2026-05-15
 
+### Changed
+
+- **AI Tutor data model** — `teacher_chat_assistants` (configured bot: name, core documents) is separate from `teacher_chat_conversations` (chat threads). Migration `010_teacher_chat_assistants.sql` + repair `011`. UI: create assistant → **New chat** for each thread.
+
 ### Added
 
 - **AI chat `externalUserId` for third-party API keys** — migration `009_teacher_chat_external_user.sql`; integrators pass their platform user id (`externalUserId` in JSON, `?externalUserId=`, or `X-Eduator-External-User-Id`) so each end user has isolated threads under the Eduator account. In-app JWT chat unchanged (`external_user_id` null).

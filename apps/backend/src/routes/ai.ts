@@ -1,4 +1,5 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyReply } from 'fastify'
+import { resolveChatScope } from '../lib/chat-scope.js'
 import { AiService } from '../services/ai.service.js'
 import { DocumentRagService } from '../services/document-rag.service.js'
 import { TeacherChatbotService } from '../services/teacher-chatbot.service.js'
@@ -50,77 +51,163 @@ export async function aiRoutes(app: FastifyInstance) {
     reply.send(result)
   })
 
-  app.get('/ai/chat/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const items = await chatService.listConversations(userId)
-    reply.send({ items })
+  const sendChatError = (reply: FastifyReply, error: unknown, fallback: string) => {
+    const message = error instanceof Error ? error.message : String(error)
+    const statusCode = (error as { statusCode?: number })?.statusCode ?? 500
+    const code = (error as { code?: string })?.code
+    const hint = (error as { hint?: string })?.hint
+    reply.code(statusCode).send({ error: message || fallback, code, hint })
+  }
+
+  app.get('/ai/chat/assistants', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      const scope = resolveChatScope(request)
+      const items = await chatService.listAssistants(scope)
+      reply.send({ items })
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to list assistants')
+    }
   })
 
-  app.post('/ai/chat/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+  app.post('/ai/chat/assistants', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
+      const scope = resolveChatScope(request)
       const body = request.body as { title?: string; documentIds?: string[] }
-      const conversation = await chatService.createConversation(userId, body?.title)
-      if (body?.documentIds && body.documentIds.length > 0) {
-        const updated = await chatService.updateConversation(userId, conversation.id, {
-          documentIds: body.documentIds,
-        })
-        reply.code(201).send({ conversation: updated || conversation })
-        return
-      }
-      reply.code(201).send({ conversation })
+      const assistant = await chatService.createAssistant(scope, body?.title, body?.documentIds)
+      reply.code(201).send({ assistant })
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      request.log.error({ error, userId }, 'Create chat conversation failed')
-      const statusCode = (error as { statusCode?: number })?.statusCode ?? 500
-      reply.code(statusCode).send({ error: message || 'Failed to create conversation' })
+      request.log.error({ error, userId: request.authUser?.sub }, 'Create chat assistant failed')
+      sendChatError(reply, error, 'Failed to create assistant')
+    }
+  })
+
+  app.get('/ai/chat/assistants/:assistantId', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      const scope = resolveChatScope(request)
+      const assistantId = (request.params as { assistantId: string }).assistantId
+      const assistant = await chatService.getAssistant(scope, assistantId)
+      if (!assistant) return reply.code(404).send({ error: 'Assistant not found' })
+      reply.send({ assistant })
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to load assistant')
+    }
+  })
+
+  app.patch('/ai/chat/assistants/:assistantId', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      const scope = resolveChatScope(request)
+      const assistantId = (request.params as { assistantId: string }).assistantId
+      const assistant = await chatService.updateAssistant(scope, assistantId, request.body)
+      if (!assistant) return reply.code(404).send({ error: 'Assistant not found' })
+      reply.send({ assistant })
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to update assistant')
+    }
+  })
+
+  app.delete('/ai/chat/assistants/:assistantId', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      const scope = resolveChatScope(request)
+      const assistantId = (request.params as { assistantId: string }).assistantId
+      const ok = await chatService.deleteAssistant(scope, assistantId)
+      if (!ok) return reply.code(404).send({ error: 'Assistant not found' })
+      reply.send({ success: true })
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to delete assistant')
+    }
+  })
+
+  app.get('/ai/chat/assistants/:assistantId/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      const scope = resolveChatScope(request)
+      const assistantId = (request.params as { assistantId: string }).assistantId
+      const result = await chatService.listConversations(scope, assistantId)
+      if (!result) return reply.code(404).send({ error: 'Assistant not found' })
+      reply.send(result)
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to list conversations')
+    }
+  })
+
+  app.post('/ai/chat/assistants/:assistantId/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      const scope = resolveChatScope(request)
+      const assistantId = (request.params as { assistantId: string }).assistantId
+      const body = request.body as { title?: string }
+      const created = await chatService.createConversation(scope, assistantId, body?.title)
+      reply.code(201).send({ conversation: created, assistant: created.assistant })
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to create conversation')
+    }
+  })
+
+  /** @deprecated Prefer POST /ai/chat/assistants then POST .../conversations */
+  app.post('/ai/chat/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      const scope = resolveChatScope(request)
+      const body = request.body as { title?: string; documentIds?: string[] }
+      const { assistant, conversation } = await chatService.createAssistantWithConversation(
+        scope,
+        body?.title,
+        body?.documentIds
+      )
+      reply.code(201).send({
+        assistant,
+        conversation,
+        deprecated: 'Use POST /ai/chat/assistants and POST /ai/chat/assistants/:id/conversations',
+      })
+    } catch (error) {
+      request.log.error({ error, userId: request.authUser?.sub }, 'Create chat (legacy) failed')
+      sendChatError(reply, error, 'Failed to create chat')
     }
   })
 
   app.get('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const id = (request.params as { id: string }).id
-    const conversation = await chatService.getConversation(userId, id)
-    if (!conversation) return reply.code(404).send({ error: 'Conversation not found' })
-    reply.send({ conversation })
+    try {
+      const scope = resolveChatScope(request)
+      const id = (request.params as { id: string }).id
+      const payload = await chatService.getConversation(scope, id)
+      if (!payload) return reply.code(404).send({ error: 'Conversation not found' })
+      reply.send(payload)
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to load conversation')
+    }
   })
 
   app.post('/ai/chat/conversations/:id/messages', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
     const id = (request.params as { id: string }).id
     try {
-      const result = await chatService.sendMessage(userId, id, request.body)
+      const scope = resolveChatScope(request)
+      const result = await chatService.sendMessage(scope, id, request.body)
       reply.send(result)
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      request.log.error({ error, userId, conversationId: id }, 'Chat message failed')
-      const statusCode = (error as { statusCode?: number })?.statusCode ?? 500
-      const code = (error as { code?: string })?.code
-      const hint = (error as { hint?: string })?.hint
-      reply.code(statusCode).send({ error: message || 'Chat message failed', code, hint })
+      request.log.error({ error, userId: request.authUser?.sub, conversationId: id }, 'Chat message failed')
+      sendChatError(reply, error, 'Chat message failed')
     }
   })
 
   app.delete('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const id = (request.params as { id: string }).id
-    const ok = await chatService.deleteConversation(userId, id)
-    if (!ok) return reply.code(404).send({ error: 'Conversation not found' })
-    reply.send({ success: true })
+    try {
+      const scope = resolveChatScope(request)
+      const id = (request.params as { id: string }).id
+      const ok = await chatService.deleteConversation(scope, id)
+      if (!ok) return reply.code(404).send({ error: 'Conversation not found' })
+      reply.send({ success: true })
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to delete conversation')
+    }
   })
 
   app.patch('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const userId = request.authUser?.sub
-    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const id = (request.params as { id: string }).id
-    const conversation = await chatService.updateConversation(userId, id, request.body)
-    if (!conversation) return reply.code(404).send({ error: 'Conversation not found' })
-    reply.send({ conversation })
+    try {
+      const scope = resolveChatScope(request)
+      const id = (request.params as { id: string }).id
+      const conversation = await chatService.updateConversation(scope, id, request.body)
+      if (!conversation) return reply.code(404).send({ error: 'Conversation not found' })
+      reply.send({ conversation })
+    } catch (error) {
+      sendChatError(reply, error, 'Failed to update conversation')
+    }
   })
 
   app.post('/ai/lessons/generate', { preHandler: [app.authenticate] }, async (request, reply) => {
