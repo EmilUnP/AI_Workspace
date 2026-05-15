@@ -1,6 +1,6 @@
 # Eduator AI Platform — Overview & Delivery Report
 
-**Version:** 0.2.5  
+**Version:** 0.2.6  
 **Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, **where APIs live**, and **what shipped recently**.
 
 For deeper dives, use the linked docs at the end — this file is the map, not a duplicate of every endpoint.
@@ -170,11 +170,13 @@ This section captures the **product and engineering themes** completed in the re
 - [DECISIONS.md](./DECISIONS.md) — storage, proxy, Gemini, structured errors.
 - [API_SUMMARY.md](./API_SUMMARY.md) — endpoint groups and quick checklist.
 
-### 7.5 API integration & usage analytics (0.2.5)
+### 7.5 API integration & usage analytics (0.2.6)
 
-- **Usage** tab reads `GET /v1/users/me/api-keys/usage`, aggregating **`api_access_log`** for traffic without the first-party client marker.
+- **Usage** tab reads `GET /v1/users/me/api-keys/usage?range=today|30d|all`, aggregating **`api_access_log`** (per **`api_key_id`** when callers use `ed_…` keys).
+- **HTTP API keys** authenticate protected routes: `Authorization: Bearer ed_<secret>`.
 - Official Next.js server calls send **`X-Eduator-Client: web-app`** so document/chat navigation does not inflate integration metrics.
 - **Lessons:** `GET /v1/lessons/:id` returns absolute media URLs when possible for non-browser API consumers.
+- In-app **API documentation** covers documents, lessons, exams, education plans, and AI chat endpoints.
 
 ---
 
@@ -202,4 +204,4 @@ This section captures the **product and engineering themes** completed in the re
 
 ---
 
-*Last updated for release **0.2.5** (access logging, usage semantics, school-admin landing/nav, lesson media URLs, docs/OpenAPI alignment).*
+*Last updated for release **0.2.6** (per-key usage, API key auth, usage date ranges, expanded in-app API docs).*

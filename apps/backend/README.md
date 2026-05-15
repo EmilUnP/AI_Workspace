@@ -110,7 +110,7 @@ JWT Bearer token required for protected endpoints.
 - `POST /v1/ai/stt` (protected)
 - `POST /v1/ai/image/generate` (protected)
 
-### User HTTP API keys & usage (0.2.5+)
+### User HTTP API keys & usage (0.2.6+)
 
 - `GET /v1/users/me/api-keys` — list keys (prefix only)
 - `POST /v1/users/me/api-keys` — create (returns raw key once)

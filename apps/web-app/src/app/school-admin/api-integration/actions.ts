@@ -29,7 +29,14 @@ export type UsageStatsResult = {
   errorCount?: number
   byKey?: Array<{ keyId: string; keyName: string; keyPrefix: string; total: number; success: number; error: number }>
   byEndpoint?: Array<{ method: string; endpoint: string; total: number; success: number; error: number }>
-  recent?: Array<{ method: string; endpoint: string; status: string; statusCode: number | null; createdAt: string }>
+  recent?: Array<{
+    method: string
+    endpoint: string
+    status: string
+    statusCode: number | null
+    createdAt: string
+    apiKeyId?: string | null
+  }>
   range?: UsageDateRange
 }
 

@@ -1,4 +1,4 @@
-# API Summary (0.2.5)
+# API Summary (0.2.6)
 
 Base URL (local): `http://localhost:4000/v1`
 
@@ -91,14 +91,15 @@ Authentication: `Authorization: Bearer <accessToken>` required for protected rou
 - `PUT /users/me/ai-keys/gemini` - save/update authenticated user key
 - `DELETE /users/me/ai-keys/gemini` - remove authenticated user key
 
-## User HTTP API keys & usage (0.2.5+)
+## User HTTP API keys & usage (0.2.6+)
 
 Requires migration `006_api_access_log.sql` on the backend database.
 
 - `GET /users/me/api-keys` — list active keys (prefix only, never full secret)
 - `POST /users/me/api-keys` — create key; response includes **raw key once** in `key`
 - `DELETE /users/me/api-keys/:id` — revoke key
-- `GET /users/me/api-keys/usage` — totals, per-endpoint aggregates, and recent rows derived from **`api_access_log`** (authenticated calls that are **not** tagged with `X-Eduator-Client: web-app`). If the table is missing, the service falls back to legacy **`ai_requests`** rows only.
+- `GET /users/me/api-keys/usage` — totals, **per API key** (`byKey`), per-endpoint aggregates, and recent rows from **`api_access_log`** (`api_key_id` when the call used `Authorization: Bearer ed_…`). Optional query `range=today|30d|all`. Excludes `X-Eduator-Client: web-app` traffic.
+- **HTTP API keys** — use `Authorization: Bearer ed_<secret>` on `/v1/*` routes (same as JWT). Requires migration `007_api_access_log_api_key_id.sql`.
 
 ### Missing Key Error (AI Routes)
 

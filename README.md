@@ -1,6 +1,6 @@
 # Eduator AI Workspace
 
-Current baseline version: **0.2.5**.
+Current baseline version: **0.2.6**.
 
 ## Current Scope
 
@@ -62,9 +62,9 @@ Use app-level env files:
    - `code: MISSING_GEMINI_API_KEY`
    - user-facing hint for next action.
 
-## API usage analytics (0.2.5+)
+## API usage analytics (0.2.6+)
 
-- After `apps/backend` migration **`006_api_access_log.sql`**, authenticated `/v1` responses can be stored for the **Usage** tab (`GET /v1/users/me/api-keys/usage`).
+- After `apps/backend` migrations **`006_api_access_log.sql`** and **`007_api_access_log_api_key_id.sql`**, authenticated `/v1` responses are stored for the **Usage** tab (`GET /v1/users/me/api-keys/usage?range=today|30d|all`), with **per HTTP API key** breakdown when callers use `Authorization: Bearer ed_…`.
 - The official web app marks server-to-backend calls with **`X-Eduator-Client: web-app`** so routine UI traffic is not logged as “integration usage.”
 - Postman, scripts, and other clients should **not** send that header if you want calls to appear under Usage.
 

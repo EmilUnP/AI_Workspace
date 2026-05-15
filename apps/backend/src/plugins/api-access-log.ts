@@ -1,5 +1,6 @@
 import fp from 'fastify-plugin'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
+import { UserApiKeysService } from '../services/user-api-keys.service.js'
 
 /** Avoid logging the usage poll itself (would inflate counts each dashboard refresh). */
 const SKIP_PATHS = new Set(['/v1/users/me/api-keys/usage'])
@@ -17,6 +18,8 @@ function resolveLoggedPath(request: FastifyRequest): string {
 }
 
 async function apiAccessLogPlugin(app: FastifyInstance) {
+  const apiKeysService = new UserApiKeysService(app)
+
   app.addHook('onResponse', async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return
@@ -30,11 +33,17 @@ async function apiAccessLogPlugin(app: FastifyInstance) {
     const path = resolveLoggedPath(request)
     if (SKIP_PATHS.has(path)) return
 
+    const apiKeyId = request.authApiKeyId ?? null
+
     try {
       await app.db.query(
-        `INSERT INTO api_access_log (user_id, method, path, status_code) VALUES ($1, $2, $3, $4)`,
-        [userId, request.method, path, reply.statusCode]
+        `INSERT INTO api_access_log (user_id, api_key_id, method, path, status_code)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [userId, apiKeyId, request.method, path, reply.statusCode]
       )
+      if (apiKeyId) {
+        await apiKeysService.touchLastUsed(apiKeyId)
+      }
     } catch (err) {
       request.log.warn({ err }, 'api_access_log insert failed')
     }

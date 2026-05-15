@@ -9,6 +9,8 @@ declare module 'fastify' {
       role: string
       tokenType: 'access' | 'refresh'
     }
+    /** Set when the request is authenticated with a user HTTP API key (`ed_…`). */
+    authApiKeyId?: string
   }
 
   interface FastifyInstance {

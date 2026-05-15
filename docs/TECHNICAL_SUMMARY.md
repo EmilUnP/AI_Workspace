@@ -1,4 +1,4 @@
-# Technical Summary (0.2.5)
+# Technical Summary (0.2.6)
 
 ## Architecture
 
@@ -14,14 +14,15 @@
 - **Auth model**: backend-issued JWT access token + refresh token.
 - **Frontend-backend bridge**: Next.js server actions and API routes proxy to backend endpoints with JWT and **`X-Eduator-Client: web-app`** on first-party calls (`webAppBackendAuthHeaders` in `apps/web-app/src/lib/web-app-backend-headers.ts`).
 
-## API access logging (0.2.5+)
+## API access logging (0.2.6+)
 
-- Table **`api_access_log`** stores `(user_id, method, path, status_code, created_at)` for authenticated responses used by **API Integration → Usage**.
+- Table **`api_access_log`** stores `(user_id, api_key_id, method, path, status_code, created_at)` for authenticated responses used by **API Integration → Usage**. `api_key_id` is set when the caller uses an HTTP API key (`Authorization: Bearer ed_…`).
 - The Fastify **`api-access-log`** plugin skips:
   - unauthenticated requests (no `authUser`)
   - **`GET /v1/users/me/api-keys/usage`** (avoids feedback loop)
   - requests with header **`X-Eduator-Client: web-app`** (official app traffic)
-- Run **`npm run db:migrate`** in `apps/backend` so migration `006_api_access_log.sql` is applied.
+- Run **`npm run db:migrate`** in `apps/backend` so migrations `006_api_access_log.sql` and `007_api_access_log_api_key_id.sql` are applied.
+- **`GET /v1/users/me/api-keys/usage`** supports `?range=today|30d|all` and returns **`byKey`** aggregates.
 
 ## AI Key Resolution Model
 

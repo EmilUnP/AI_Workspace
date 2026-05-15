@@ -1,6 +1,6 @@
 # Clean Backend API Documentation
 
-This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.5**).
+This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.6**).
 
 ## Base
 - Base URL: `http://localhost:<PORT>`
@@ -195,9 +195,19 @@ Response:
 
 ---
 
-## 2.2) User HTTP API keys & usage analytics (0.2.5+)
+## 2.2) User HTTP API keys & usage analytics (0.2.6+)
 
-Requires DB migration `006_api_access_log.sql` (`npm run db:migrate` from `apps/backend`).
+Requires DB migrations `006_api_access_log.sql` and `007_api_access_log_api_key_id.sql` (`npm run db:migrate` from `apps/backend`).
+
+### Authenticating with an HTTP API key
+
+In addition to JWT access tokens, protected routes accept a user HTTP API key:
+
+```http
+Authorization: Bearer ed_<hex>
+```
+
+The key is the raw value returned once from **POST** `/v1/users/me/api-keys`. Each key belongs to one user; usage is attributed to that key in **`api_access_log.api_key_id`**.
 
 ### GET `/v1/users/me/api-keys` (Protected)
 
@@ -213,10 +223,14 @@ Revoke/delete a key by id (owner scoped).
 
 ### GET `/v1/users/me/api-keys/usage` (Protected)
 
+Query: optional `range=today|30d|all` (default `all`).
+
 Returns aggregate and recent HTTP usage used by the school-admin **Usage** tab:
 
-- Primary source: **`api_access_log`** (method, route pattern, status code).
+- Primary source: **`api_access_log`** (`user_id`, optional **`api_key_id`**, method, route pattern, status code, `created_at`).
+- **`byKey`**: per HTTP API key (plus an **Other (login token)** bucket when calls used a JWT instead of `ed_…`).
 - Rows are **not** recorded for requests that include `X-Eduator-Client: web-app` (official Next.js server traffic).
+- Successful API-key calls update **`user_api_keys.last_used_at`**.
 - If `api_access_log` is not present yet, the service may fall back to legacy **`ai_requests`** data only.
 
 ---

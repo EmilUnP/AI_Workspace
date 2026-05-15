@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.6 - 2026-05-15
+
+### Added
+
+- **HTTP API key authentication** — Protected `/v1/*` routes accept `Authorization: Bearer ed_…` (raw key from **POST** `/v1/users/me/api-keys`), in addition to JWT.
+- **`api_access_log.api_key_id`** (migration `007_api_access_log_api_key_id.sql`) — attributes each logged request to the HTTP API key when used.
+- **Per-key usage analytics** — `GET /v1/users/me/api-keys/usage` returns **`byKey`** breakdowns; recent rows include **`apiKeyId`**. Usage UI shows a **Key** column, key filter on recent requests, and an **Other (login token)** bucket for JWT-only traffic.
+- **Usage date ranges** — `GET /v1/users/me/api-keys/usage?range=today|30d|all`; school-admin **Usage** tab buttons: **Today**, **Last 30 days**, **All**.
+- **In-app API documentation** — Expanded curls for documents, lessons (incl. delete), exams REST, education plans (GET/POST/DELETE), AI chat tutor, and saved exams; aligned with backend routes actually shipped.
+
+### Changed
+
+- **`user_api_keys.last_used_at`** updates when a request is authenticated with that HTTP API key.
+- School-admin API docs no longer document **PATCH** for documents, saved exams, or education plans (not exposed in the integration UI for those resources).
+
+### Notes
+
+- Run `npm run db:migrate` in `apps/backend` so `007_api_access_log_api_key_id.sql` is applied.
+- External integrations should use **`ed_` API keys** (not login JWT) for per-project usage in the Usage tab.
+
 ## 0.2.5 - 2026-05-14
 
 ### Added

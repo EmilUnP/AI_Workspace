@@ -90,16 +90,34 @@ export function UsageSection({ usageStats: initialUsageStats }: UsageSectionProp
     return rows
   }, [byEndpoint, endpointSearch, endpointSort, endpointSortDesc])
 
+  const keyLabelById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const row of byKey) {
+      map.set(
+        row.keyId,
+        row.keyId === '__other__' ? t('usageOtherLoginToken') : row.keyName
+      )
+    }
+    return map
+  }, [byKey, t])
+
   const filteredRecent = useMemo(() => {
     const search = endpointSearch.trim().toLowerCase()
     let rows = recent
+    if (keyFilter !== 'all') {
+      if (keyFilter === '__other__') {
+        rows = rows.filter((r) => !r.apiKeyId)
+      } else {
+        rows = rows.filter((r) => r.apiKeyId === keyFilter)
+      }
+    }
     if (statusFilter === 'success') rows = rows.filter((r) => r.status === 'success')
     else if (statusFilter === 'error') rows = rows.filter((r) => r.status === 'error')
     if (search) {
       rows = rows.filter((r) => r.endpoint.toLowerCase().includes(search) || r.method.toLowerCase().includes(search))
     }
     return rows.slice(0, recentLimit)
-  }, [recent, statusFilter, endpointSearch, recentLimit])
+  }, [recent, keyFilter, statusFilter, endpointSearch, recentLimit])
 
   const hasFilters = keyFilter !== 'all' || statusFilter !== 'all' || endpointSearch.trim() !== ''
 
@@ -219,7 +237,7 @@ export function UsageSection({ usageStats: initialUsageStats }: UsageSectionProp
                     <option value="all">{t('allKeys')}</option>
                     {byKey.map((k) => (
                       <option key={k.keyId} value={k.keyId}>
-                        {k.keyName} ({k.keyPrefix}…)
+                        {k.keyId === '__other__' ? t('usageOtherLoginToken') : `${k.keyName} (${k.keyPrefix}…)`}
                       </option>
                     ))}
                   </select>
@@ -321,7 +339,9 @@ export function UsageSection({ usageStats: initialUsageStats }: UsageSectionProp
                       const rate = row.total > 0 ? Math.round((row.success / row.total) * 100) : 0
                       return (
                         <tr key={row.keyId} className="hover:bg-gray-50/50">
-                          <td className="py-3 px-4 font-medium text-gray-900">{row.keyName}</td>
+                          <td className="py-3 px-4 font-medium text-gray-900">
+                            {row.keyId === '__other__' ? t('usageOtherLoginToken') : row.keyName}
+                          </td>
                           <td className="py-3 px-4 font-mono text-gray-500">{row.keyPrefix}…</td>
                           <td className="py-3 px-4 text-right">{row.total}</td>
                           <td className="py-3 px-4 text-right text-gray-700">{row.success}</td>
@@ -412,6 +432,7 @@ export function UsageSection({ usageStats: initialUsageStats }: UsageSectionProp
                   <thead>
                     <tr className="bg-gray-50/80 text-left text-gray-500">
                       <th className="py-3 px-4 font-medium">{t('when')}</th>
+                      <th className="py-3 px-4 font-medium">{t('key')}</th>
                       <th className="py-3 px-4 font-medium">{t('method')}</th>
                       <th className="py-3 px-4 font-medium">{t('endpoint')}</th>
                       <th className="py-3 px-4 font-medium">{t('status')}</th>
@@ -422,6 +443,11 @@ export function UsageSection({ usageStats: initialUsageStats }: UsageSectionProp
                       <tr key={i} className="hover:bg-gray-50/50">
                         <td className="py-2.5 px-4 text-gray-600 whitespace-nowrap">
                           {new Date(row.createdAt).toLocaleString()}
+                        </td>
+                        <td className="py-2.5 px-4 text-gray-600 whitespace-nowrap">
+                          {row.apiKeyId
+                            ? keyLabelById.get(row.apiKeyId) ?? '—'
+                            : t('usageOtherLoginToken')}
                         </td>
                         <td className="py-2.5 px-4">
                           <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs">{row.method}</span>

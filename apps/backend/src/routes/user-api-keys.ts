@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { UserApiKeysService, type UsageDateRange } from '../services/user-api-keys.service.js'
 
-const usageRangeSchema = z.enum(['today', '30d', 'all']).default('all')
+const usageRangeSchema = z.enum(['today', '30d', 'all']).default('today')
 
 const createApiKeySchema = z.object({
   name: z.string().trim().min(1, 'Key name is required').max(120, 'Key name is too long'),
