@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOpen, MessageSquare, Sparkles } from 'lucide-react'
+import { AlertCircle, BookOpen, Key, MessageSquare, Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { QUESTION_TYPES, SUPPORTED_LANGUAGES } from '@eduator/config'
 
@@ -11,7 +11,6 @@ interface ApiDocsContentProps {
 export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   const t = useTranslations('teacherApiIntegration')
   const openApiDocsUrl = `${apiBaseUrl.replace(/\/$/, '')}/docs`
-  const loginUrl = `${apiBaseUrl}/auth/login`
   const documentsUrl = `${apiBaseUrl}/documents`
   const examsGenerateUrl = `${apiBaseUrl}/ai/exams/generate`
   const lessonsGenerateUrl = `${apiBaseUrl}/ai/lessons/generate`
@@ -22,36 +21,51 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   const lessonsRestUrl = `${apiBaseUrl}/lessons`
   const languagesList = SUPPORTED_LANGUAGES.map((l) => `"${l.code}"`).join(', ')
   const questionTypesList = Object.values(QUESTION_TYPES).map((q) => `"${q}"`).join(', ')
+  const authHeaderExample = 'Authorization: Bearer YOUR_API_KEY'
 
   return (
     <section>
       <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">
         {t('apiDocumentation')}
       </h2>
-      <p className="text-sm text-gray-600 mb-2">{t('jwtAuthDescription')}</p>
+      <p className="text-sm text-gray-600 mb-4">{t('thirdPartyDocsIntro')}</p>
       <p className="text-sm text-gray-600 mb-6">
         {t('baseUrlLabel')}: <code className="rounded bg-gray-100 px-2 py-1 font-mono text-sm">{apiBaseUrl}</code>
       </p>
 
+      <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50/80 p-5">
+        <div className="flex gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" aria-hidden />
+          <div className="text-sm text-amber-950 space-y-2">
+            <p className="font-semibold">{t('thirdPartyDocsBannerTitle')}</p>
+            <p>{t('thirdPartyDocsBannerBody')}</p>
+            <ul className="list-disc list-inside space-y-1 text-amber-900/90">
+              <li>{t('thirdPartyDocsUseApiKey')}</li>
+              <li>{t('thirdPartyDocsNotJwt')}</li>
+              <li>{t('thirdPartyDocsNotWebAppHeader')}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-8">
         <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4">
-            <h3 className="text-lg font-semibold text-gray-900">{t('quickStartWorkingNow')}</h3>
+            <div className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-gray-600" aria-hidden />
+              <h3 className="text-lg font-semibold text-gray-900">{t('quickStartWorkingNow')}</h3>
+            </div>
           </div>
           <div className="p-6 space-y-4 text-sm text-gray-700">
-            <p>{t('quickStartStep1')} <code className="bg-gray-100 px-1">tokens.accessToken</code>.</p>
+            <ol className="list-decimal list-inside space-y-2 text-gray-700">
+              <li>{t('quickStartStep1')}</li>
+              <li>{t('quickStartStep2')}</li>
+              <li>{t('quickStartStep3')}</li>
+            </ol>
             <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
-{`curl -X POST ${loginUrl} \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "email": "admin@example.com",
-    "password": "your-password"
-  }'`}
+{authHeaderExample}
             </pre>
-            <p>{t('quickStartStep2')}</p>
-            <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
-{`Authorization: Bearer ACCESS_TOKEN`}
-            </pre>
+            <p className="text-xs text-gray-500">{t('quickStartKeyFormat')}</p>
             <p>
               {t('interactiveBackendDocs')}:{' '}
               <a className="underline text-gray-800 hover:text-black" href={openApiDocsUrl} target="_blank" rel="noreferrer">
@@ -77,7 +91,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('documentsPostUploadDetail')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${documentsUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Math Chapter 1",
@@ -95,7 +109,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('documentsGetListReturns')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET ${documentsUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
             <div>
@@ -104,7 +118,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('documentsGetByIdIntro')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET ${documentsUrl}/DOCUMENT_UUID \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
             <div>
@@ -113,7 +127,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('documentsGetFileIntro')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET ${documentsUrl}/DOCUMENT_UUID/file \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   --output downloaded.pdf`}
               </pre>
             </div>
@@ -122,7 +136,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('documentsDeleteIntro')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X DELETE ${documentsUrl}/DOCUMENT_UUID \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
           </div>
@@ -158,7 +172,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('example')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${examsGenerateUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "documentId": "uuid-from-documents",
@@ -185,11 +199,11 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /exams · GET /exams/stats</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X GET "${examsRestUrl}?page=1&perPage=10&search=biology" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET "${examsRestUrl}/stats" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
             <div>
@@ -197,11 +211,11 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="mb-2">GET returns full <code className="bg-gray-100 px-1">exam</code> JSON. POST uses camelCase (e.g. <code className="bg-gray-100 px-1">durationMinutes</code>, <code className="bg-gray-100 px-1">isPublished</code>, <code className="bg-gray-100 px-1">questions</code>).</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X GET "${examsRestUrl}/EXAM_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X POST ${examsRestUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Saved quiz",
@@ -213,7 +227,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X DELETE "${examsRestUrl}/EXAM_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
           </div>
@@ -256,7 +270,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('exampleFullSettings')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${lessonsGenerateUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "documentId": "uuid-primary-document",
@@ -308,7 +322,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons — {t('listWithPagination')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET "${apiBaseUrl}/lessons?page=1&perPage=20" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
               <p className="mt-2 text-sm text-gray-600">
                 {t('queryParamsLabel')} <code className="bg-gray-100 px-1">page</code>, <code className="bg-gray-100 px-1">perPage</code>, <code className="bg-gray-100 px-1">search</code>.
@@ -319,7 +333,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /lessons/:id — {t('fullLessonPayload')}</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET "${apiBaseUrl}/lessons/LESSON_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
               <ul className="mt-2 text-sm text-gray-600 space-y-1 list-disc list-inside">
                 <li>{t('includesFullFields')} <code className="bg-gray-100 px-1">content</code>, <code className="bg-gray-100 px-1">images</code>, <code className="bg-gray-100 px-1">mini_test</code>, <code className="bg-gray-100 px-1">learning_objectives</code>, <code className="bg-gray-100 px-1">metadata</code>, <code className="bg-gray-100 px-1">audio_url</code></li>
@@ -356,7 +370,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('apiDocsLessonDeleteIntro')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X DELETE "${lessonsRestUrl}/LESSON_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
           </div>
@@ -378,16 +392,16 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('plansRestGetList')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-3">
 {`curl -X GET "${plansRestUrl}" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X GET "${plansRestUrl}?search=math" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
               <p className="text-sm text-gray-600 mb-2">{t('plansRestWriteNote')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X POST ${plansRestUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "name": "Semester plan",
@@ -402,7 +416,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X DELETE "${plansRestUrl}/PLAN_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
             <div>
@@ -421,7 +435,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="text-sm text-gray-600 mb-2">{t('plansGenerateResponseNote')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${plansGenerateUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "documentId": "uuid-from-documents",
@@ -449,7 +463,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/conversations</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X GET ${chatConversationsUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
             <div>
@@ -457,7 +471,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="mb-2">Optional JSON: <code className="bg-gray-100 px-1">title</code>, <code className="bg-gray-100 px-1">documentIds</code> (array of UUIDs).</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${chatConversationsUrl} \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Lesson prep",
@@ -469,17 +483,17 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/conversations/:id · PATCH · DELETE</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X GET "${chatConversationsUrl}/CONVERSATION_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words mb-2">
 {`curl -X PATCH "${chatConversationsUrl}/CONVERSATION_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{ "title": "Renamed thread", "documentIds": ["DOCUMENT_UUID"] }'`}
               </pre>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X DELETE "${chatConversationsUrl}/CONVERSATION_UUID" \\
-  -H "Authorization: Bearer ACCESS_TOKEN"`}
+  -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
             <div>
@@ -489,7 +503,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               </p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
-  -H "Authorization: Bearer ACCESS_TOKEN" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "message": "Summarize the key ideas for my next class.",
@@ -519,13 +533,10 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
       </div>
 
       <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-5 flex items-start gap-3 mt-8">
-        <BookOpen className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+        <Key className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" aria-hidden />
         <div className="text-sm text-blue-900">
           <p className="font-medium">{t('authentication')}</p>
-          <p className="mt-1 text-blue-800">
-            {t('sendAuthorizationHeader')} <code className="rounded bg-blue-100 px-1 font-mono">Authorization: Bearer ACCESS_TOKEN</code> {t('onEveryProtectedRoute')}
-            {t('accessTokenComesFrom')} <code className="rounded bg-blue-100 px-1 font-mono">POST /v1/auth/login</code>.
-          </p>
+          <p className="mt-1 text-blue-800">{t('apiKeyAuthFooter')}</p>
         </div>
       </div>
     </section>

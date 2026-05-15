@@ -17,6 +17,23 @@ function resolveLoggedPath(request: FastifyRequest): string {
   return request.url.split('?')[0] ?? '/'
 }
 
+/** Prefer auth plugin value; re-resolve from Bearer when the request used an `ed_…` key. */
+async function resolveApiKeyIdForLog(
+  request: FastifyRequest,
+  apiKeysService: UserApiKeysService
+): Promise<string | null> {
+  if (request.authApiKeyId) return request.authApiKeyId
+
+  const authHeader = request.headers.authorization
+  if (!authHeader?.startsWith('Bearer ')) return null
+
+  const token = authHeader.slice('Bearer '.length).trim()
+  if (!token.startsWith('ed_')) return null
+
+  const resolved = await apiKeysService.verifyRawKey(token)
+  return resolved?.keyId ?? null
+}
+
 async function apiAccessLogPlugin(app: FastifyInstance) {
   const apiKeysService = new UserApiKeysService(app)
 
@@ -33,7 +50,7 @@ async function apiAccessLogPlugin(app: FastifyInstance) {
     const path = resolveLoggedPath(request)
     if (SKIP_PATHS.has(path)) return
 
-    const apiKeyId = request.authApiKeyId ?? null
+    const apiKeyId = await resolveApiKeyIdForLog(request, apiKeysService)
 
     try {
       await app.db.query(

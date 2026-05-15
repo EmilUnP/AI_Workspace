@@ -2,9 +2,14 @@
 
 Base URL (local): `http://localhost:4000/v1`
 
-Authentication: `Authorization: Bearer <accessToken>` required for protected routes.
+Authentication (protected routes):
 
-**First-party web app (Next.js server):** all built-in server calls to the backend also send `X-Eduator-Client: web-app` so **API Integration → Usage** does not treat normal UI traffic as external API usage. External clients should omit that header if they want calls counted in Usage.
+| Client | Header | Notes |
+|--------|--------|--------|
+| **Eduator web app** (Next.js server) | `Authorization: Bearer <JWT>` + `X-Eduator-Client: web-app` | Login session; Usage tab does **not** log this traffic. |
+| **Third-party integrations** (Postman, scripts, partner apps) | `Authorization: Bearer ed_<full_secret>` | HTTP API key from **School admin → API Integration → Create API key**. Documented in-app under Keys & Docs. Usage is attributed per key. |
+
+Do **not** use `POST /auth/login` JWTs for production integrations — create an HTTP API key instead. Omit `X-Eduator-Client: web-app` on external calls so they appear under **API Integration → Usage**.
 
 ## API Groups
 

@@ -11,8 +11,9 @@
 
 - **Database**: PostgreSQL for users, auth tokens, documents, chats, lessons, exams, education plans, and user AI keys.
 - **File storage**: backend local storage (`AI_STORAGE_DIR`) for uploaded docs and generated lesson media.
-- **Auth model**: backend-issued JWT access token + refresh token.
+- **Auth model**: backend-issued JWT access token + refresh token for the web app; **HTTP API keys** (`ed_…`) for third-party `/v1` callers.
 - **Frontend-backend bridge**: Next.js server actions and API routes proxy to backend endpoints with JWT and **`X-Eduator-Client: web-app`** on first-party calls (`webAppBackendAuthHeaders` in `apps/web-app/src/lib/web-app-backend-headers.ts`).
+- **School admin → API Integration → Keys & Docs**: in-app curl reference is **third-party only** (API key in `Authorization: Bearer`, not login JWT). The web app itself is unchanged.
 
 ## API access logging (0.2.6+)
 

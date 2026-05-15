@@ -8,9 +8,15 @@ This is the full API contract for the clean backend running in `apps/backend` (*
 - Health: `GET /health`
 
 ## Auth Model
-- Access type: Bearer JWT
-- Send header on protected routes:
-  - `Authorization: Bearer <accessToken>`
+
+Two clients, two credentials:
+
+| Client | Credential | Header |
+|--------|------------|--------|
+| **Eduator web app** (Next.js) | JWT from `POST /v1/auth/login` | `Authorization: Bearer <accessToken>` plus `X-Eduator-Client: web-app` (UI traffic is not logged in API Integration → Usage). |
+| **Third-party integrations** | HTTP API key (`ed_…`) from `POST /v1/users/me/api-keys` | `Authorization: Bearer ed_<full_secret>` — omit `X-Eduator-Client: web-app` so Usage attributes calls to the key. |
+
+Protected routes accept **either** a valid JWT or a valid HTTP API key. Prefer API keys for Postman, scripts, and partner apps; do not document login JWTs as the integration path.
 
 ## Error Format
 Most errors return:
