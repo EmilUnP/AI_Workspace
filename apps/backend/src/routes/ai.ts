@@ -60,16 +60,23 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post('/ai/chat/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const body = request.body as { title?: string; documentIds?: string[] }
-    const conversation = await chatService.createConversation(userId, body?.title)
-    if (body?.documentIds && body.documentIds.length > 0) {
-      const updated = await chatService.updateConversation(userId, conversation.id, {
-        documentIds: body.documentIds,
-      })
-      reply.code(201).send({ conversation: updated || conversation })
-      return
+    try {
+      const body = request.body as { title?: string; documentIds?: string[] }
+      const conversation = await chatService.createConversation(userId, body?.title)
+      if (body?.documentIds && body.documentIds.length > 0) {
+        const updated = await chatService.updateConversation(userId, conversation.id, {
+          documentIds: body.documentIds,
+        })
+        reply.code(201).send({ conversation: updated || conversation })
+        return
+      }
+      reply.code(201).send({ conversation })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      request.log.error({ error, userId }, 'Create chat conversation failed')
+      const statusCode = (error as { statusCode?: number })?.statusCode ?? 500
+      reply.code(statusCode).send({ error: message || 'Failed to create conversation' })
     }
-    reply.code(201).send({ conversation })
   })
 
   app.get('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
@@ -85,8 +92,17 @@ export async function aiRoutes(app: FastifyInstance) {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
     const id = (request.params as { id: string }).id
-    const result = await chatService.sendMessage(userId, id, request.body)
-    reply.send(result)
+    try {
+      const result = await chatService.sendMessage(userId, id, request.body)
+      reply.send(result)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      request.log.error({ error, userId, conversationId: id }, 'Chat message failed')
+      const statusCode = (error as { statusCode?: number })?.statusCode ?? 500
+      const code = (error as { code?: string })?.code
+      const hint = (error as { hint?: string })?.hint
+      reply.code(statusCode).send({ error: message || 'Chat message failed', code, hint })
+    }
   })
 
   app.delete('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {

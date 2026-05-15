@@ -417,7 +417,9 @@ Missing Gemini key example:
 
 ## 6) AI Chat (assistant)
 
-Conversations are **owner-scoped** (JWT `sub`). JSON bodies use **camelCase** (`documentIds`, `shortAnswer`).
+Conversations are **owner-scoped** (same user as your HTTP API key or JWT). JSON bodies use **camelCase** (`documentIds`, `shortAnswer`).
+
+**Third-party quick flow:** `POST /v1/ai/chat/conversations` → copy `conversation.id` → `POST /v1/ai/chat/conversations/:id/messages` with `{ "message": "...", "documentIds": [], "shortAnswer": true }`. Repeat on the **same** `:id` to continue; prior messages are included in the model prompt. Requires a **Gemini API key** on the account (see §2.1) and migration `008_teacher_chat.sql`.
 
 ### GET `/v1/ai/chat/conversations` (Protected)
 

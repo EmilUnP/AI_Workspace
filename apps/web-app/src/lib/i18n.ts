@@ -386,6 +386,11 @@ const translations: I18nTable = {
       apiDocsAiChatTitle: 'AI assistant (chat)',
       apiDocsAiChatIntro:
         'Owner-scoped threads under /v1/ai/chat/conversations. Request bodies use camelCase: documentIds, shortAnswer. Up to three document UUIDs are used as RAG context when sending a message.',
+      apiDocsAiChatQuickStartTitle: 'Simple tutor chat (3 steps)',
+      apiDocsAiChatQuickStartBody:
+        'Create a conversation, send messages with the same conversation id, and keep chatting. Use documentIds: [] when you only need plain text (no document RAG). Prior messages in the thread are included automatically.',
+      apiDocsAiChatGeminiNote:
+        'Requires a Gemini API key on this account (API Integration → Gemini Key tab) or GOOGLE_GEMINI_API_KEY on the server. Run db:migrate so migration 008_teacher_chat.sql is applied.',
       apiDocsLessonDeleteIntro:
         'Deletes the saved lesson and removes generated media on disk when possible. Response: { "ok": true }.',
       apiDocsExamsRestTitle: 'Exams (saved)',
@@ -1023,6 +1028,11 @@ const translations: I18nTable = {
       apiDocsAiChatTitle: 'AI köməkçi (söhbət)',
       apiDocsAiChatIntro:
         '/v1/ai/chat/conversations altında sahibə görə thread-lər. Sorğu gövdələri camelCase: documentIds, shortAnswer. Mesaj göndərərkən ən çox üç sənəd UUID RAG konteksti kimi istifadə olunur.',
+      apiDocsAiChatQuickStartTitle: 'Sadə repetitor söhbəti (3 addım)',
+      apiDocsAiChatQuickStartBody:
+        'Söhbət yaradın, eyni conversation id ilə mesaj göndərin və davam edin. Yalnız mətn üçün documentIds: [] istifadə edin (sənəd RAG olmadan). Əvvəlki mesajlar avtomatik daxil edilir.',
+      apiDocsAiChatGeminiNote:
+        'Hesabda Gemini API açarı lazımdır (API İnteqrasiya → Gemini Key) və ya serverdə GOOGLE_GEMINI_API_KEY. db:migrate ilə 008_teacher_chat.sql tətbiq olunmalıdır.',
       apiDocsLessonDeleteIntro:
         'Saxlanılmış dərsi silir və mümkünsə yaradılmış media fayllarını diskdən təmizləyir. Cavab: { "ok": true }.',
       apiDocsExamsRestTitle: 'İmtahanlar (saxlanmış)',

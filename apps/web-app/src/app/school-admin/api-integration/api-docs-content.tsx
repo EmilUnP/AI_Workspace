@@ -458,6 +458,24 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
             <p className="mt-1 text-sm text-gray-600">{t('apiDocsAiChatIntro')}</p>
           </div>
           <div className="p-6 space-y-5 text-sm text-gray-600">
+            <div className="rounded-lg border border-violet-100 bg-violet-50/60 p-4 space-y-3">
+              <p className="font-medium text-violet-950">{t('apiDocsAiChatQuickStartTitle')}</p>
+              <p className="text-violet-900/90">{t('apiDocsAiChatQuickStartBody')}</p>
+              <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
+{`# 1) Create thread → copy conversation.id
+curl -X POST ${chatConversationsUrl} \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "title": "My tutor" }'
+
+# 2) Send message (documentIds: [] for plain text chat)
+curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "message": "Hello", "documentIds": [], "shortAnswer": true }'`}
+              </pre>
+              <p className="text-xs text-violet-800">{t('apiDocsAiChatGeminiNote')}</p>
+            </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/conversations</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">

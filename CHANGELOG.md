@@ -8,6 +8,10 @@
 - **Auth documentation** — `API_SUMMARY.md`, `API_DOCUMENTATION.md`, and `TECHNICAL_SUMMARY.md` distinguish the official web app (JWT + internal header) from external HTTP API keys.
 - **Exams list stats** — mobile summary shows **total exams** and **total questions** (removed unused published/draft counts).
 
+### Fixed
+
+- **AI tutor chat via HTTP API key** — migration `008_teacher_chat.sql` creates `teacher_chat_conversations` / `teacher_chat_messages` if missing; multi-turn replies now include conversation history; stored `documentIds` on a thread are used when the message body omits them; clearer errors for missing Gemini key or DB issues.
+
 ### Removed
 
 - Unused **`subject`** field from exams/lessons REST, AI exam generation, web exam create payload, OpenAPI, and in-app integration docs.

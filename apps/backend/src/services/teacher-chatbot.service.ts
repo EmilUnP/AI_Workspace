@@ -34,6 +34,13 @@ type MessageRow = {
   created_at: string
 }
 
+const parseDocumentIds = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((item) => String(item || '').trim())
+    .filter((id) => /^[0-9a-f-]{36}$/i.test(id))
+}
+
 export class TeacherChatbotService {
   private readonly rag: DocumentRagService
   constructor(private readonly app: FastifyInstance) {
@@ -124,7 +131,10 @@ export class TeacherChatbotService {
   async sendMessage(userId: string, conversationId: string, input: unknown) {
     const data = sendSchema.parse(input)
     const { rows: convRows } = await this.app.db.query<ConversationRow>(
-      `SELECT id, user_id, title FROM teacher_chat_conversations WHERE id = $1 AND user_id = $2 LIMIT 1`,
+      `SELECT id, user_id, title, document_ids
+       FROM teacher_chat_conversations
+       WHERE id = $1 AND user_id = $2
+       LIMIT 1`,
       [conversationId, userId]
     )
     const conversation = convRows[0]
@@ -134,32 +144,61 @@ export class TeacherChatbotService {
       throw err
     }
 
+    const { rows: historyBefore } = await this.app.db.query<Pick<MessageRow, 'role' | 'content'>>(
+      `SELECT role, content
+       FROM teacher_chat_messages
+       WHERE conversation_id = $1
+       ORDER BY created_at ASC
+       LIMIT 40`,
+      [conversationId]
+    )
+
     await this.app.db.query(
       `INSERT INTO teacher_chat_messages (conversation_id, role, content) VALUES ($1, 'user', $2)`,
       [conversationId, data.message]
     )
 
-    const docIds = data.documentIds.slice(0, 3)
+    const storedDocIds = parseDocumentIds(conversation.document_ids)
+    const docIds = Array.from(new Set([...data.documentIds, ...storedDocIds])).slice(0, 3)
     const retrievedDocs = await Promise.all(
       docIds.map(async (id) => {
-        const retrieved = await this.rag.retrieve(userId, { documentId: id, query: data.message, topK: 2 })
-        const chunks = (retrieved.chunks || []).slice(0, 2).map((chunk) => String(chunk).slice(0, 700))
-        return `\n\n[Doc:${id}]\n${chunks.join('\n')}`
+        try {
+          const retrieved = await this.rag.retrieve(userId, { documentId: id, query: data.message, topK: 2 })
+          const chunks = (retrieved.chunks || []).slice(0, 2).map((chunk) => String(chunk).slice(0, 700))
+          if (!chunks.length) return ''
+          return `\n\n[Doc:${id}]\n${chunks.join('\n')}`
+        } catch {
+          return ''
+        }
       })
     )
-    const context = retrievedDocs.join('').slice(0, 3000)
+    const ragContext = retrievedDocs.join('').slice(0, 3000)
+
+    const transcript = [...historyBefore, { role: 'user', content: data.message }]
+      .map((row) => `${row.role === 'assistant' ? 'Assistant' : 'User'}: ${String(row.content).slice(0, 1200)}`)
+      .join('\n')
+      .slice(-8000)
 
     const style = data.shortAnswer
       ? 'Respond briefly in 1-4 bullet points. Keep it short and practical.'
       : 'Respond with detailed guidance.'
     const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const replyRaw = await generateText(
-      `You are Eduator teacher assistant. ${style}
-If the user asks a direct definition, answer in max 3 short bullets.
-Avoid long introductions and avoid repeating the same idea.
-User question: ${data.message}
-Relevant context:${context}`
-    , 'gemini-2.5-flash', { apiKey })
+      [
+        `You are Eduator teacher assistant. ${style}`,
+        'Use the conversation history for follow-up questions. Stay consistent with prior answers.',
+        'If the user asks a direct definition, answer in max 3 short bullets when a short answer is requested.',
+        'Avoid long introductions and avoid repeating the same idea.',
+        transcript ? `Conversation so far:\n${transcript}` : '',
+        ragContext ? `Relevant document excerpts:${ragContext}` : '',
+        `Latest user message: ${data.message}`,
+        'Reply as the assistant only (no role prefix).',
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
+      'gemini-2.5-flash',
+      { apiKey }
+    )
     const reply = String(replyRaw || '').trim().slice(0, 1600)
 
     const { rows: msgRows } = await this.app.db.query<{ id: string; content: string }>(
