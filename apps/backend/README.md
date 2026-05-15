@@ -95,10 +95,12 @@ JWT Bearer token required for protected endpoints.
 ### AI - RAG
 - `POST /v1/ai/rag/retrieve` (protected)
 
-### AI - Teacher Chat
-- `GET /v1/ai/chat/conversations` (protected)
-- `POST /v1/ai/chat/conversations` (protected)
+### AI - Tutor (assistants + conversations, 0.2.9+)
+- `GET/POST/PATCH/DELETE /v1/ai/chat/assistants` (protected)
+- `GET/POST /v1/ai/chat/assistants/:assistantId/conversations` (protected)
+- `GET/PATCH/DELETE /v1/ai/chat/conversations/:id` (protected)
 - `POST /v1/ai/chat/conversations/:id/messages` (protected)
+- Legacy: `POST /v1/ai/chat/conversations` (assistant + first thread)
 
 ### AI - Generation
 - `POST /v1/ai/lessons/generate` (protected)

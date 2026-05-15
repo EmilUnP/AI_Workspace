@@ -1,10 +1,30 @@
 # Changelog
 
+## 0.2.9 - 2026-05-15
+
+### Added
+
+- **AI Tutor assistants + conversations** — `teacher_chat_assistants` (tutor config: title, `documentIds`) and `teacher_chat_conversations` (chat threads). Migrations `008`–`012`.
+- **Third-party chat** — optional `externalUserId` on **conversations** only; **`conversation.id`** is the session handle for messages.
+- **Assistant API** — `GET/POST/PATCH/DELETE /v1/ai/chat/assistants`, `GET/POST /v1/ai/chat/assistants/:id/conversations`.
+- **Short answer toggle** in School admin AI Tutor UI (`shortAnswer` on send).
+- **Multi-turn chat** — prior messages in a thread are included in the model prompt.
+
+### Changed
+
+- **AI Tutor UI** — three-column flow: create **assistant** → **New chat** (thread) → messages. Core file saved on the assistant.
+- **In-app API docs** — assistants/conversations quick-start, `externalUserId` on conversations, legacy `POST /conversations` noted.
+
+### Fixed
+
+- **HTTP API key chat** — Gemini errors, missing tables, and conversation history for follow-up messages.
+
 ## 0.2.8 - 2026-05-15
 
 ### Changed
 
 - **AI Tutor data model** — `teacher_chat_assistants` (configured bot: name, core documents) is separate from `teacher_chat_conversations` (chat threads). Migration `010_teacher_chat_assistants.sql` + repair `011`. UI: create assistant → **New chat** for each thread.
+- **`external_user_id` on conversations only** (migration `012`) — removed from assistants; optional on threads for third-party list/filter; **`conversation.id` is the session handle** for messages (no `externalUserId` on every request).
 
 ### Added
 

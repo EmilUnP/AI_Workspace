@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply } from 'fastify'
-import { resolveChatScope } from '../lib/chat-scope.js'
+import { readOptionalExternalUserId, resolveOwnerScope } from '../lib/chat-scope.js'
 import { AiService } from '../services/ai.service.js'
 import { DocumentRagService } from '../services/document-rag.service.js'
 import { TeacherChatbotService } from '../services/teacher-chatbot.service.js'
@@ -61,7 +61,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.get('/ai/chat/assistants', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const items = await chatService.listAssistants(scope)
       reply.send({ items })
     } catch (error) {
@@ -71,7 +71,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.post('/ai/chat/assistants', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const body = request.body as { title?: string; documentIds?: string[] }
       const assistant = await chatService.createAssistant(scope, body?.title, body?.documentIds)
       reply.code(201).send({ assistant })
@@ -83,7 +83,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.get('/ai/chat/assistants/:assistantId', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const assistantId = (request.params as { assistantId: string }).assistantId
       const assistant = await chatService.getAssistant(scope, assistantId)
       if (!assistant) return reply.code(404).send({ error: 'Assistant not found' })
@@ -95,7 +95,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.patch('/ai/chat/assistants/:assistantId', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const assistantId = (request.params as { assistantId: string }).assistantId
       const assistant = await chatService.updateAssistant(scope, assistantId, request.body)
       if (!assistant) return reply.code(404).send({ error: 'Assistant not found' })
@@ -107,7 +107,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.delete('/ai/chat/assistants/:assistantId', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const assistantId = (request.params as { assistantId: string }).assistantId
       const ok = await chatService.deleteAssistant(scope, assistantId)
       if (!ok) return reply.code(404).send({ error: 'Assistant not found' })
@@ -119,9 +119,10 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.get('/ai/chat/assistants/:assistantId/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const assistantId = (request.params as { assistantId: string }).assistantId
-      const result = await chatService.listConversations(scope, assistantId)
+      const externalUserId = readOptionalExternalUserId(request)
+      const result = await chatService.listConversations(scope, assistantId, externalUserId)
       if (!result) return reply.code(404).send({ error: 'Assistant not found' })
       reply.send(result)
     } catch (error) {
@@ -131,10 +132,16 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.post('/ai/chat/assistants/:assistantId/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const assistantId = (request.params as { assistantId: string }).assistantId
-      const body = request.body as { title?: string }
-      const created = await chatService.createConversation(scope, assistantId, body?.title)
+      const body = request.body as { title?: string; externalUserId?: string }
+      const externalUserId = readOptionalExternalUserId(request)
+      const created = await chatService.createConversation(
+        scope,
+        assistantId,
+        body?.title,
+        externalUserId
+      )
       reply.code(201).send({ conversation: created, assistant: created.assistant })
     } catch (error) {
       sendChatError(reply, error, 'Failed to create conversation')
@@ -144,12 +151,15 @@ export async function aiRoutes(app: FastifyInstance) {
   /** @deprecated Prefer POST /ai/chat/assistants then POST .../conversations */
   app.post('/ai/chat/conversations', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const body = request.body as { title?: string; documentIds?: string[] }
+      const externalUserId = readOptionalExternalUserId(request)
       const { assistant, conversation } = await chatService.createAssistantWithConversation(
         scope,
         body?.title,
-        body?.documentIds
+        body?.documentIds,
+        undefined,
+        externalUserId
       )
       reply.code(201).send({
         assistant,
@@ -164,7 +174,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.get('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const id = (request.params as { id: string }).id
       const payload = await chatService.getConversation(scope, id)
       if (!payload) return reply.code(404).send({ error: 'Conversation not found' })
@@ -177,7 +187,7 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post('/ai/chat/conversations/:id/messages', { preHandler: [app.authenticate] }, async (request, reply) => {
     const id = (request.params as { id: string }).id
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const result = await chatService.sendMessage(scope, id, request.body)
       reply.send(result)
     } catch (error) {
@@ -188,7 +198,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.delete('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const id = (request.params as { id: string }).id
       const ok = await chatService.deleteConversation(scope, id)
       if (!ok) return reply.code(404).send({ error: 'Conversation not found' })
@@ -200,7 +210,7 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.patch('/ai/chat/conversations/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
-      const scope = resolveChatScope(request)
+      const scope = resolveOwnerScope(request)
       const id = (request.params as { id: string }).id
       const conversation = await chatService.updateConversation(scope, id, request.body)
       if (!conversation) return reply.code(404).send({ error: 'Conversation not found' })

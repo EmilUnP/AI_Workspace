@@ -16,6 +16,7 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
   const lessonsGenerateUrl = `${apiBaseUrl}/ai/lessons/generate`
   const plansGenerateUrl = `${apiBaseUrl}/ai/education-plans/generate`
   const plansRestUrl = `${apiBaseUrl}/education-plans`
+  const chatAssistantsUrl = `${apiBaseUrl}/ai/chat/assistants`
   const chatConversationsUrl = `${apiBaseUrl}/ai/chat/conversations`
   const examsRestUrl = `${apiBaseUrl}/exams`
   const lessonsRestUrl = `${apiBaseUrl}/lessons`
@@ -462,17 +463,21 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="font-medium text-violet-950">{t('apiDocsAiChatQuickStartTitle')}</p>
               <p className="text-violet-900/90">{t('apiDocsAiChatQuickStartBody')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
-{`# externalUserId = your platform user (student) id — required with API keys
-# 1) Create thread → copy conversation.id
-curl -X POST ${chatConversationsUrl} \\
+{`# 1) Create assistant (tutor config) → copy assistant.id
+curl -X POST ${chatAssistantsUrl} \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{ "title": "My tutor", "externalUserId": "student-42" }'
+  -d '{ "title": "Math tutor", "documentIds": [] }'
 
-# 2) Send message (documentIds: [] for plain text chat)
+# 2) New chat thread → copy conversation.id (store per end-user on your side)
+curl -X POST "${chatAssistantsUrl}/ASSISTANT_UUID/conversations" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "title": "Session 1", "externalUserId": "student-42" }'
+
+# 3) Send messages using only conversation.id (no externalUserId needed)
 curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "X-Eduator-External-User-Id: student-42" \\
   -H "Content-Type: application/json" \\
   -d '{ "message": "Hello", "documentIds": [], "shortAnswer": true }'`}
               </pre>
@@ -484,14 +489,14 @@ curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
               <p className="text-xs text-amber-800">{t('apiDocsAiChatExternalUserHow')}</p>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/conversations</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/assistants/:id/conversations</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
-{`curl -X GET "${chatConversationsUrl}?externalUserId=student-42" \\
+{`curl -X GET "${chatAssistantsUrl}/ASSISTANT_UUID/conversations?externalUserId=student-42" \\
   -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">POST /ai/chat/conversations</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">POST /ai/chat/conversations (legacy)</h4>
               <p className="mb-2">Optional JSON: <code className="bg-gray-100 px-1">title</code>, <code className="bg-gray-100 px-1">documentIds</code> (array of UUIDs).</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
 {`curl -X POST ${chatConversationsUrl} \\

@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: Eduator Clean Backend API
-  version: 0.2.8
+  version: 0.2.9
   description: >-
-    Clean backend API contract for local PostgreSQL + JWT + HTTP API keys (baseline **0.2.8**).
+    Clean backend API contract for local PostgreSQL + JWT + HTTP API keys (baseline **0.2.9**).
     Includes user HTTP API keys, usage analytics (`api_access_log` after migration `006_api_access_log.sql`),
     and first-party traffic exclusion via `X-Eduator-Client` (see docs).
 servers:
@@ -563,17 +563,17 @@ paths:
       responses:
         '200':
           description: Retrieved chunks
-  /v1/ai/chat/conversations:
+  /v1/ai/chat/assistants:
     get:
       tags: [AI]
-      summary: List chat conversations
+      summary: List AI tutor assistants
       security: [{ bearerAuth: [] }]
       responses:
         '200':
-          description: Conversation list
+          description: Assistant list
     post:
       tags: [AI]
-      summary: Create chat conversation
+      summary: Create AI tutor assistant
       security: [{ bearerAuth: [] }]
       requestBody:
         content:
@@ -583,6 +583,132 @@ paths:
               properties:
                 title:
                   type: string
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '201':
+          description: Created
+  /v1/ai/chat/assistants/{assistantId}:
+    get:
+      tags: [AI]
+      summary: Get assistant by ID
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: assistantId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Assistant detail
+    patch:
+      tags: [AI]
+      summary: Update assistant
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: assistantId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [AI]
+      summary: Delete assistant
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: assistantId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deleted
+  /v1/ai/chat/assistants/{assistantId}/conversations:
+    get:
+      tags: [AI]
+      summary: List conversations for assistant
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: assistantId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: externalUserId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation list
+    post:
+      tags: [AI]
+      summary: Create conversation thread
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: assistantId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                externalUserId:
+                  type: string
+      responses:
+        '201':
+          description: Created
+  /v1/ai/chat/conversations:
+    post:
+      tags: [AI]
+      summary: Legacy — create assistant + first conversation
+      deprecated: true
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
       responses:
         '201':
           description: Created
@@ -623,11 +749,6 @@ paths:
               properties:
                 title:
                   type: string
-                documentIds:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
       responses:
         '200':
           description: Conversation updated
@@ -635,7 +756,7 @@ paths:
           description: Not found
     delete:
       tags: [AI]
-      summary: Delete chat conversation
+      summary: Delete chat conversation thread
       security: [{ bearerAuth: [] }]
       parameters:
         - in: path

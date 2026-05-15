@@ -1,9 +1,10 @@
 import type { FastifyRequest } from 'fastify'
 
-export type ChatScope = {
+/** Eduator account that owns assistants and conversations. */
+export type OwnerScope = {
   ownerUserId: string
-  /** Third-party end-user id when using HTTP API key; null for in-app JWT users. */
-  externalUserId: string | null
+  /** True when authenticated with HTTP API key (ed_…). */
+  isApiKey: boolean
 }
 
 const EXTERNAL_USER_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,126}[a-zA-Z0-9]$|^[a-zA-Z0-9]$/
@@ -23,39 +24,29 @@ export function normalizeExternalUserId(raw: unknown): string | null {
   return id
 }
 
-function readExternalUserIdFromRequest(request: FastifyRequest): unknown {
+export function readOptionalExternalUserId(request: FastifyRequest): string | null {
   const header = request.headers['x-eduator-external-user-id']
-  if (typeof header === 'string' && header.trim()) return header
+  if (typeof header === 'string' && header.trim()) {
+    return normalizeExternalUserId(header)
+  }
   const query = (request.query as { externalUserId?: string })?.externalUserId
-  if (query) return query
+  if (query) return normalizeExternalUserId(query)
   const body = request.body as { externalUserId?: string } | undefined
-  if (body && typeof body === 'object' && 'externalUserId' in body) return body.externalUserId
+  if (body && typeof body === 'object' && body.externalUserId) {
+    return normalizeExternalUserId(body.externalUserId)
+  }
   return null
 }
 
-export function resolveChatScope(request: FastifyRequest): ChatScope {
+export function resolveOwnerScope(request: FastifyRequest): OwnerScope {
   const ownerUserId = request.authUser?.sub
   if (!ownerUserId) {
     const err = new Error('Unauthorized') as Error & { statusCode?: number }
     err.statusCode = 401
     throw err
   }
-
-  const parsed = normalizeExternalUserId(readExternalUserIdFromRequest(request))
-
-  if (request.authApiKeyId) {
-    if (!parsed) {
-      const err = new Error(
-        'externalUserId is required for chat when using an HTTP API key. Pass it in the JSON body, query ?externalUserId=, or header X-Eduator-External-User-Id.'
-      ) as Error & { statusCode?: number; code?: string; hint?: string }
-      err.statusCode = 400
-      err.code = 'MISSING_EXTERNAL_USER_ID'
-      err.hint =
-        'Use your platform’s user id (e.g. student id). Each value gets its own isolated chat threads under your Eduator account.'
-      throw err
-    }
-    return { ownerUserId, externalUserId: parsed }
+  return {
+    ownerUserId,
+    isApiKey: Boolean(request.authApiKeyId),
   }
-
-  return { ownerUserId, externalUserId: null }
 }

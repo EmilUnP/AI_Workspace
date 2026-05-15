@@ -385,17 +385,17 @@ const translations: I18nTable = {
         'Deletes the document row and removes the stored file from disk when successful. Response: { "success": true } or 404 if not found / not owned.',
       apiDocsAiChatTitle: 'AI assistant (chat)',
       apiDocsAiChatIntro:
-        'Owner-scoped threads under /v1/ai/chat/conversations. Request bodies use camelCase: documentIds, shortAnswer. Up to three document UUIDs are used as RAG context when sending a message.',
-      apiDocsAiChatQuickStartTitle: 'Simple tutor chat (3 steps)',
+        'Assistants (/v1/ai/chat/assistants) hold tutor config (title, documentIds). Conversations are chat threads under an assistant. Store conversation.id per end-user on your platform — that UUID is the session handle for messages.',
+      apiDocsAiChatQuickStartTitle: 'Third-party tutor chat (3 steps)',
       apiDocsAiChatQuickStartBody:
-        'Create a conversation, send messages with the same conversation id, and keep chatting. Use documentIds: [] when you only need plain text (no document RAG). Prior messages in the thread are included automatically.',
+        'Create an assistant, open a conversation (thread), then send messages to conversation.id only. Optional externalUserId on create/list labels threads for your student id; in-app login does not use it.',
       apiDocsAiChatGeminiNote:
-        'Requires a Gemini API key on this account (API Integration → Gemini Key tab) or GOOGLE_GEMINI_API_KEY on the server. Run db:migrate so migration 008_teacher_chat.sql is applied.',
-      apiDocsAiChatExternalUserTitle: 'Third-party end users (externalUserId)',
+        'Requires a Gemini API key on this account (API Integration → Gemini Key tab) or GOOGLE_GEMINI_API_KEY on the server. Run db:migrate in apps/backend (migrations 008–012).',
+      apiDocsAiChatExternalUserTitle: 'Optional: externalUserId on conversations',
       apiDocsAiChatExternalUserBody:
-        'When you call chat with an HTTP API key (ed_…), pass your platform’s user id as externalUserId. Each id gets its own threads and message history under your Eduator account. In-app login does not use this field.',
+        'Set externalUserId only when creating or listing conversations (not on assistants). Your main handle is conversation.id. Use externalUserId to group threads by your student id when listing.',
       apiDocsAiChatExternalUserHow:
-        'JSON body externalUserId, query ?externalUserId=, or header X-Eduator-External-User-Id. Required on every chat request with an API key.',
+        'POST .../assistants/:id/conversations with optional externalUserId. List with ?externalUserId=. Messages use conversation UUID only.',
       apiDocsLessonDeleteIntro:
         'Deletes the saved lesson and removes generated media on disk when possible. Response: { "ok": true }.',
       apiDocsExamsRestTitle: 'Exams (saved)',
@@ -1047,17 +1047,17 @@ const translations: I18nTable = {
         'Sənəd qeydini silir və uğurlu olduqda faylı diskdən silir. Cavab: { "success": true } və ya tapılmadı/məxsus deyilsə 404.',
       apiDocsAiChatTitle: 'AI köməkçi (söhbət)',
       apiDocsAiChatIntro:
-        '/v1/ai/chat/conversations altında sahibə görə thread-lər. Sorğu gövdələri camelCase: documentIds, shortAnswer. Mesaj göndərərkən ən çox üç sənəd UUID RAG konteksti kimi istifadə olunur.',
-      apiDocsAiChatQuickStartTitle: 'Sadə repetitor söhbəti (3 addım)',
+        'Köməkçilər (/v1/ai/chat/assistants) repetitor konfiqurasiyasıdır. Söhbətlər köməkçi altında thread-lərdir. conversation.id-ni platformanızda saxlayın — mesajlar üçün sessiya identifikatorudur.',
+      apiDocsAiChatQuickStartTitle: 'Üçüncü tərəf repetitor söhbəti (3 addım)',
       apiDocsAiChatQuickStartBody:
         'Söhbət yaradın, eyni conversation id ilə mesaj göndərin və davam edin. Yalnız mətn üçün documentIds: [] istifadə edin (sənəd RAG olmadan). Əvvəlki mesajlar avtomatik daxil edilir.',
       apiDocsAiChatGeminiNote:
-        'Hesabda Gemini API açarı lazımdır (API İnteqrasiya → Gemini Key) və ya serverdə GOOGLE_GEMINI_API_KEY. db:migrate ilə 008_teacher_chat.sql tətbiq olunmalıdır.',
-      apiDocsAiChatExternalUserTitle: 'Üçüncü tərəf istifadəçiləri (externalUserId)',
+        'Hesabda Gemini API açarı lazımdır (API İnteqrasiya → Gemini Key) və ya serverdə GOOGLE_GEMINI_API_KEY. apps/backend-də db:migrate (008–012 migrasiyaları).',
+      apiDocsAiChatExternalUserTitle: 'Opsional: externalUserId söhbətlərdə',
       apiDocsAiChatExternalUserBody:
-        'HTTP API açarı (ed_…) ilə söhbət çağırarkən platformanızın istifadəçi id-sini externalUserId kimi göndərin. Hər id Eduator hesabınız altında ayrı thread və mesaj tarixçəsi alır. Tətbiqdaxili giriş bu sahəni istifadə etmir.',
+        'externalUserId yalnız söhbət yaradarkən və ya siyahılayarkən verin (köməkçidə yox). Əsas identifikator conversation.id-dir. Siyahıda tələbə id-sinə görə qruplaşdırmaq üçün istifadə edin.',
       apiDocsAiChatExternalUserHow:
-        'JSON externalUserId, sorğu ?externalUserId= və ya başlıq X-Eduator-External-User-Id. API açarı ilə hər söhbət sorğusunda mütləqdir.',
+        'POST .../assistants/:id/conversations — opsional externalUserId. Siyahı ?externalUserId= ilə. Mesajlar yalnız conversation UUID ilə.',
       apiDocsLessonDeleteIntro:
         'Saxlanılmış dərsi silir və mümkünsə yaradılmış media fayllarını diskdən təmizləyir. Cavab: { "ok": true }.',
       apiDocsExamsRestTitle: 'İmtahanlar (saxlanmış)',

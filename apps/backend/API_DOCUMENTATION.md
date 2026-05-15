@@ -1,6 +1,6 @@
 # Clean Backend API Documentation
 
-This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.8**).
+This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.9**).
 
 ## Base
 - Base URL: `http://localhost:<PORT>`
@@ -415,77 +415,86 @@ Missing Gemini key example:
 
 ---
 
-## 6) AI Chat (assistant)
+## 6) AI Tutor (assistants + conversations)
 
-Conversations are **owner-scoped** (same user as your HTTP API key or JWT). JSON bodies use **camelCase** (`documentIds`, `shortAnswer`).
+**Owner-scoped** (same Eduator user as JWT or HTTP API key). JSON bodies use **camelCase** (`documentIds`, `shortAnswer`, `externalUserId`).
 
-**Third-party quick flow:** With an HTTP API key (`ed_…`), pass **`externalUserId`** (your platform’s user id — e.g. student id) on every chat call so each end user has isolated threads. Use JSON `externalUserId`, query `?externalUserId=`, or header `X-Eduator-External-User-Id`.
+| Concept | Table / route | Notes |
+|---------|----------------|-------|
+| **Assistant** | `teacher_chat_assistants`, `/ai/chat/assistants` | Tutor name + core `documentIds` (RAG) |
+| **Conversation** | `teacher_chat_conversations`, `/ai/chat/assistants/:id/conversations` | One chat thread; optional `externalUserId` |
+| **Messages** | `teacher_chat_messages`, `POST .../conversations/:id/messages` | History + send |
 
-1. `POST /v1/ai/chat/conversations` with `{ "title": "...", "externalUserId": "student-42" }` → copy `conversation.id`
-2. `POST /v1/ai/chat/conversations/:id/messages` with `{ "message": "...", "documentIds": [], "shortAnswer": true }` and the same `externalUserId` (body, query, or header)
+**Third-party quick flow** (HTTP API key `ed_…`):
 
-Repeat on the **same** `:id` to continue; prior messages are included in the model prompt. **In-app JWT** users do not send `externalUserId` (threads use `external_user_id` null). Requires a **Gemini API key** (see §2.1) and migrations `008_teacher_chat.sql` + `009_teacher_chat_external_user.sql`.
+1. `POST /v1/ai/chat/assistants` → `{ "title": "Math tutor", "documentIds": [] }` → `assistant.id`
+2. `POST /v1/ai/chat/assistants/:assistantId/conversations` → optional `{ "title": "Session 1", "externalUserId": "student-42" }` → **`conversation.id`** (store per end-user)
+3. `POST /v1/ai/chat/conversations/:id/messages` → `{ "message": "...", "documentIds": [], "shortAnswer": true }` — only **`conversation.id`** needed after step 2
 
-### GET `/v1/ai/chat/conversations` (Protected)
+`externalUserId` is on **conversations** (optional for list/filter), not assistants. **In-app JWT** threads use `external_user_id` null. Requires **Gemini API key** (§2.1) and migrations `008`–`012` (`npm run db:migrate`).
 
-Response `200`:
-```json
-{
-  "items": [
-    {
-      "id": "uuid",
-      "title": "Untitled",
-      "document_ids": [],
-      "created_at": "...",
-      "updated_at": "..."
-    }
-  ]
-}
-```
+### Assistants
 
-### POST `/v1/ai/chat/conversations` (Protected)
+#### `GET /v1/ai/chat/assistants` (Protected)
 
-Create a conversation. Optional body:
+Response `200`: `{ "items": [ { "id", "title", "document_ids", "created_at", "updated_at" } ] }`
+
+#### `POST /v1/ai/chat/assistants` (Protected)
 
 ```json
-{
-  "title": "Biology Q&A",
-  "documentIds": ["uuid-doc-1", "uuid-doc-2"]
-}
+{ "title": "Biology tutor", "documentIds": ["uuid-doc-1"] }
 ```
 
-- When `documentIds` is provided (non-empty), the server persists them on the new conversation before responding.
+Response `201`: `{ "assistant": { ... } }`
 
-Response `201`:
-```json
-{ "conversation": { "id": "uuid", "title": "...", "document_ids": [] } }
-```
+#### `GET /v1/ai/chat/assistants/:assistantId` (Protected)
 
-### GET `/v1/ai/chat/conversations/:id` (Protected)
+Response `200`: `{ "assistant": { ... } }`
 
-Returns the conversation **with recent messages** embedded (shape from `TeacherChatbotService.getConversation`).
-
-### PATCH `/v1/ai/chat/conversations/:id` (Protected)
-
-Partial update (validated). Allowed fields:
+#### `PATCH /v1/ai/chat/assistants/:assistantId` (Protected)
 
 ```json
-{
-  "title": "Renamed thread",
-  "documentIds": ["uuid-doc-1"]
-}
+{ "title": "Renamed tutor", "documentIds": ["uuid-doc-1"] }
 ```
 
-Both fields are optional; send only what changes.
+#### `DELETE /v1/ai/chat/assistants/:assistantId` (Protected)
 
-### DELETE `/v1/ai/chat/conversations/:id` (Protected)
+Response `200`: `{ "success": true }` (cascades conversations + messages)
 
-Response `200`:
+### Conversations (threads)
+
+#### `GET /v1/ai/chat/assistants/:assistantId/conversations` (Protected)
+
+- In-app: returns threads with `external_user_id` null.
+- API key: optional `?externalUserId=student-42` to filter.
+
+Response `200`: `{ "assistant": { ... }, "items": [ { "id", "assistant_id", "external_user_id", "title", ... } ] }`
+
+#### `POST /v1/ai/chat/assistants/:assistantId/conversations` (Protected)
+
 ```json
-{ "success": true }
+{ "title": "New chat", "externalUserId": "student-42" }
 ```
 
-### POST `/v1/ai/chat/conversations/:id/messages` (Protected)
+`externalUserId` optional (body, query, or header `X-Eduator-External-User-Id`). Response `201`: `{ "conversation": { ... }, "assistant": { ... } }`
+
+#### `POST /v1/ai/chat/conversations` (Protected, legacy)
+
+Creates assistant + first thread. Prefer the two-step flow above. Response includes `deprecated` hint.
+
+#### `GET /v1/ai/chat/conversations/:id` (Protected)
+
+Response `200`: `{ "conversation", "assistant", "messages": [ ... ] }`
+
+#### `PATCH /v1/ai/chat/conversations/:id` (Protected)
+
+Thread title only: `{ "title": "Renamed chat" }`
+
+#### `DELETE /v1/ai/chat/conversations/:id` (Protected)
+
+Response `200`: `{ "success": true }`
+
+### `POST /v1/ai/chat/conversations/:id/messages` (Protected)
 
 Send a user message; response includes the assistant reply and suggested follow-ups.
 

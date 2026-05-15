@@ -1,6 +1,6 @@
 # Eduator AI Platform — Overview & Delivery Report
 
-**Version:** 0.2.8  
+**Version:** 0.2.9  
 **Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, **where APIs live**, and **what shipped recently**.
 
 For deeper dives, use the linked docs at the end — this file is the map, not a duplicate of every endpoint.
@@ -179,6 +179,14 @@ This section captures the **product and engineering themes** completed in the re
 - **Lessons:** `GET /v1/lessons/:id` returns absolute media URLs when possible for non-browser API consumers.
 - In-app **API documentation** covers documents, lessons, exams, education plans, and AI chat endpoints (no unused `subject` or `is_published` fields).
 
+### 7.6 AI Tutor (0.2.9)
+
+- **Assistants** (`teacher_chat_assistants`) — configured tutor (name, core documents).
+- **Conversations** (`teacher_chat_conversations`) — chat threads; optional `external_user_id` for third-party list/filter.
+- **In-app UI:** create assistant → **New chat** → messages; **short answer** toggle.
+- **Third-party:** store `conversation.id` per end-user; `POST .../messages` uses that UUID only.
+- **Migrations:** `008`–`012` in `apps/backend` (`npm run db:migrate`).
+
 ---
 
 ## 8. Suggested “report” outputs for stakeholders
@@ -205,4 +213,4 @@ This section captures the **product and engineering themes** completed in the re
 
 ---
 
-*Last updated for release **0.2.8** (AI tutor chat for third-party API keys, `externalUserId` scoping, short-answer UI toggle).*
+*Last updated for release **0.2.9** (AI Tutor assistants vs conversations, third-party `conversation.id` sessions, migrations 008–012).*

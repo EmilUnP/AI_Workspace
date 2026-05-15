@@ -88,9 +88,11 @@ Service/repository split was implemented for users, documents, AI, and refresh t
 
 New AI routes under `/v1`:
 - `POST /ai/rag/retrieve`
-- `GET /ai/chat/conversations`
-- `POST /ai/chat/conversations`
+- `GET/POST/PATCH/DELETE /ai/chat/assistants`
+- `GET/POST /ai/chat/assistants/:assistantId/conversations`
+- `GET/PATCH/DELETE /ai/chat/conversations/:id`
 - `POST /ai/chat/conversations/:id/messages`
+- Legacy: `POST /ai/chat/conversations` (assistant + first thread)
 - `POST /ai/lessons/generate`
 - `POST /ai/exams/generate`
 - `POST /ai/education-plans/generate`

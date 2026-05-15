@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { generateText } from '../ai/gemini.js'
 import { DocumentRagService } from './document-rag.service.js'
 import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
-import type { ChatScope } from '../lib/chat-scope.js'
+import type { OwnerScope } from '../lib/chat-scope.js'
 import type { FastifyInstance } from 'fastify'
 
 const sendSchema = z.object({
@@ -23,7 +23,6 @@ const updateConversationSchema = z.object({
 type AssistantRow = {
   id: string
   user_id: string
-  external_user_id?: string | null
   title: string
   document_ids?: unknown
   context?: unknown
@@ -34,6 +33,7 @@ type AssistantRow = {
 type ConversationRow = {
   id: string
   assistant_id: string
+  external_user_id?: string | null
   title: string
   created_at?: string
   updated_at?: string
@@ -48,9 +48,9 @@ type MessageRow = {
   created_at: string
 }
 
-const ASSISTANT_COLUMNS =
-  'id, user_id, external_user_id, title, document_ids, context, created_at, updated_at'
-const CONVERSATION_COLUMNS = 'id, assistant_id, title, created_at, updated_at'
+const ASSISTANT_COLUMNS = 'id, user_id, title, document_ids, context, created_at, updated_at'
+const CONVERSATION_COLUMNS =
+  'id, assistant_id, external_user_id, title, created_at, updated_at'
 
 const parseDocumentIds = (value: unknown): string[] => {
   if (!Array.isArray(value)) return []
@@ -59,71 +59,67 @@ const parseDocumentIds = (value: unknown): string[] => {
     .filter((id) => /^[0-9a-f-]{36}$/i.test(id))
 }
 
-const assistantScopeWhere = 'user_id = $1 AND external_user_id IS NOT DISTINCT FROM $2'
-
 export class TeacherChatbotService {
   private readonly rag: DocumentRagService
   constructor(private readonly app: FastifyInstance) {
     this.rag = new DocumentRagService(app)
   }
 
-  private async getAssistantForScope(scope: ChatScope, assistantId: string) {
+  private async getAssistantForOwner(scope: OwnerScope, assistantId: string) {
     const { rows } = await this.app.db.query<AssistantRow>(
       `SELECT ${ASSISTANT_COLUMNS}
        FROM teacher_chat_assistants
-       WHERE id = $3 AND ${assistantScopeWhere}
+       WHERE id = $2 AND user_id = $1
        LIMIT 1`,
-      [scope.ownerUserId, scope.externalUserId, assistantId]
+      [scope.ownerUserId, assistantId]
     )
     return rows[0] || null
   }
 
-  private async getConversationWithAssistant(scope: ChatScope, conversationId: string) {
+  private async getConversationWithAssistant(scope: OwnerScope, conversationId: string) {
     const { rows } = await this.app.db.query<
       ConversationRow & { document_ids?: unknown; assistant_title?: string }
     >(
-      `SELECT c.id, c.assistant_id, c.title, c.created_at, c.updated_at,
+      `SELECT c.id, c.assistant_id, c.external_user_id, c.title, c.created_at, c.updated_at,
               a.document_ids, a.title AS assistant_title
        FROM teacher_chat_conversations c
        INNER JOIN teacher_chat_assistants a ON a.id = c.assistant_id
-       WHERE c.id = $3 AND a.user_id = $1 AND a.external_user_id IS NOT DISTINCT FROM $2
+       WHERE c.id = $2 AND a.user_id = $1
        LIMIT 1`,
-      [scope.ownerUserId, scope.externalUserId, conversationId]
+      [scope.ownerUserId, conversationId]
     )
-    return rows[0] || null
+    const row = rows[0]
+    if (!row) return null
+    if (!scope.isApiKey && row.external_user_id != null) return null
+    return row
   }
 
-  async createAssistant(scope: ChatScope, title?: string, documentIds?: string[]) {
+  async createAssistant(scope: OwnerScope, title?: string, documentIds?: string[]) {
     const { rows } = await this.app.db.query<AssistantRow>(
-      `INSERT INTO teacher_chat_assistants (user_id, external_user_id, title, document_ids)
-       VALUES ($1, $2, $3, $4::jsonb)
+      `INSERT INTO teacher_chat_assistants (user_id, title, document_ids)
+       VALUES ($1, $2, $3::jsonb)
        RETURNING ${ASSISTANT_COLUMNS}`,
-      [
-        scope.ownerUserId,
-        scope.externalUserId,
-        title || 'New Assistant',
-        JSON.stringify(documentIds || []),
-      ]
+      [scope.ownerUserId, title || 'New Assistant', JSON.stringify(documentIds || [])]
     )
     return rows[0]
   }
 
-  async listAssistants(scope: ChatScope) {
+  async listAssistants(scope: OwnerScope) {
     const { rows } = await this.app.db.query<AssistantRow>(
       `SELECT ${ASSISTANT_COLUMNS}
        FROM teacher_chat_assistants
-       WHERE ${assistantScopeWhere}
+       WHERE user_id = $1
        ORDER BY updated_at DESC`,
-      [scope.ownerUserId, scope.externalUserId]
+      [scope.ownerUserId]
     )
     return rows
   }
 
-  async getAssistant(scope: ChatScope, assistantId: string) {
-    return this.getAssistantForScope(scope, assistantId)
+  async getAssistant(scope: OwnerScope, assistantId: string) {
+    return this.getAssistantForOwner(scope, assistantId)
   }
 
-  async updateAssistant(scope: ChatScope, assistantId: string, input: unknown) {
+  async updateAssistant(scope: OwnerScope, assistantId: string, input: unknown) {
     const data = updateAssistantSchema.parse(input)
     const sets: string[] = ['updated_at = NOW()']
     const values: unknown[] = []
@@ -137,41 +133,46 @@ export class TeacherChatbotService {
       sets.push(`document_ids = $${values.length}::jsonb`)
     }
 
-    values.push(assistantId, scope.ownerUserId, scope.externalUserId)
+    values.push(assistantId, scope.ownerUserId)
 
     const { rows } = await this.app.db.query<AssistantRow>(
       `UPDATE teacher_chat_assistants
        SET ${sets.join(', ')}
-       WHERE id = $${values.length - 2}
-         AND user_id = $${values.length - 1}
-         AND external_user_id IS NOT DISTINCT FROM $${values.length}
+       WHERE id = $${values.length - 1} AND user_id = $${values.length}
        RETURNING ${ASSISTANT_COLUMNS}`,
       values
     )
     return rows[0] || null
   }
 
-  async deleteAssistant(scope: ChatScope, assistantId: string) {
+  async deleteAssistant(scope: OwnerScope, assistantId: string) {
     const { rowCount } = await this.app.db.query(
-      `DELETE FROM teacher_chat_assistants
-       WHERE id = $1 AND user_id = $2 AND external_user_id IS NOT DISTINCT FROM $3`,
-      [assistantId, scope.ownerUserId, scope.externalUserId]
+      `DELETE FROM teacher_chat_assistants WHERE id = $1 AND user_id = $2`,
+      [assistantId, scope.ownerUserId]
     )
     return Boolean(rowCount)
   }
 
-  async createConversation(scope: ChatScope, assistantId: string, title?: string) {
-    const assistant = await this.getAssistantForScope(scope, assistantId)
+  async createConversation(
+    scope: OwnerScope,
+    assistantId: string,
+    title?: string,
+    externalUserId?: string | null
+  ) {
+    const assistant = await this.getAssistantForOwner(scope, assistantId)
     if (!assistant) {
       const err = new Error('Assistant not found') as Error & { statusCode?: number }
       err.statusCode = 404
       throw err
     }
+
+    const storedExternalId = scope.isApiKey ? externalUserId ?? null : null
+
     const { rows } = await this.app.db.query<ConversationRow>(
-      `INSERT INTO teacher_chat_conversations (assistant_id, title)
-       VALUES ($1, $2)
+      `INSERT INTO teacher_chat_conversations (assistant_id, external_user_id, title)
+       VALUES ($1, $2, $3)
        RETURNING ${CONVERSATION_COLUMNS}`,
-      [assistantId, title || 'New chat']
+      [assistantId, storedExternalId, title || 'New chat']
     )
     await this.app.db.query(`UPDATE teacher_chat_assistants SET updated_at = NOW() WHERE id = $1`, [
       assistantId,
@@ -179,20 +180,37 @@ export class TeacherChatbotService {
     return { ...rows[0], assistant }
   }
 
-  async listConversations(scope: ChatScope, assistantId: string) {
-    const assistant = await this.getAssistantForScope(scope, assistantId)
+  async listConversations(
+    scope: OwnerScope,
+    assistantId: string,
+    filterExternalUserId?: string | null
+  ) {
+    const assistant = await this.getAssistantForOwner(scope, assistantId)
     if (!assistant) return null
+
+    if (scope.isApiKey) {
+      const { rows } = await this.app.db.query<ConversationRow>(
+        `SELECT ${CONVERSATION_COLUMNS}
+         FROM teacher_chat_conversations
+         WHERE assistant_id = $1
+           AND external_user_id IS NOT DISTINCT FROM $2
+         ORDER BY updated_at DESC`,
+        [assistantId, filterExternalUserId ?? null]
+      )
+      return { assistant, items: rows }
+    }
+
     const { rows } = await this.app.db.query<ConversationRow>(
       `SELECT ${CONVERSATION_COLUMNS}
        FROM teacher_chat_conversations
-       WHERE assistant_id = $1
+       WHERE assistant_id = $1 AND external_user_id IS NULL
        ORDER BY updated_at DESC`,
       [assistantId]
     )
     return { assistant, items: rows }
   }
 
-  async getConversation(scope: ChatScope, conversationId: string) {
+  async getConversation(scope: OwnerScope, conversationId: string) {
     const row = await this.getConversationWithAssistant(scope, conversationId)
     if (!row) return null
 
@@ -205,7 +223,7 @@ export class TeacherChatbotService {
     )
 
     const { document_ids, assistant_title, ...conversation } = row
-    const assistant = await this.getAssistantForScope(scope, conversation.assistant_id)
+    const assistant = await this.getAssistantForOwner(scope, conversation.assistant_id)
 
     return {
       conversation,
@@ -216,7 +234,7 @@ export class TeacherChatbotService {
     }
   }
 
-  async deleteConversation(scope: ChatScope, conversationId: string) {
+  async deleteConversation(scope: OwnerScope, conversationId: string) {
     const row = await this.getConversationWithAssistant(scope, conversationId)
     if (!row) return false
     const { rowCount } = await this.app.db.query(
@@ -231,7 +249,7 @@ export class TeacherChatbotService {
     return Boolean(rowCount)
   }
 
-  async updateConversation(scope: ChatScope, conversationId: string, input: unknown) {
+  async updateConversation(scope: OwnerScope, conversationId: string, input: unknown) {
     const row = await this.getConversationWithAssistant(scope, conversationId)
     if (!row) return null
     const data = updateConversationSchema.parse(input)
@@ -247,23 +265,24 @@ export class TeacherChatbotService {
     return rows[0] || null
   }
 
-  /** Legacy: create assistant + first conversation in one step (third-party quick start). */
   async createAssistantWithConversation(
-    scope: ChatScope,
+    scope: OwnerScope,
     title?: string,
     documentIds?: string[],
-    conversationTitle?: string
+    conversationTitle?: string,
+    externalUserId?: string | null
   ) {
     const assistant = await this.createAssistant(scope, title, documentIds)
     const conversation = await this.createConversation(
       scope,
       assistant.id,
-      conversationTitle || 'New chat'
+      conversationTitle || 'New chat',
+      externalUserId
     )
     return { assistant, conversation }
   }
 
-  async sendMessage(scope: ChatScope, conversationId: string, input: unknown) {
+  async sendMessage(scope: OwnerScope, conversationId: string, input: unknown) {
     const data = sendSchema.parse(input)
     const row = await this.getConversationWithAssistant(scope, conversationId)
     if (!row) {

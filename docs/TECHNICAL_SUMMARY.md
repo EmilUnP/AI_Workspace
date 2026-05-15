@@ -1,4 +1,4 @@
-# Technical Summary (0.2.8)
+# Technical Summary (0.2.9)
 
 ## Architecture
 
@@ -40,7 +40,7 @@
 
 - Upload documents and monitor processing state.
 - Generate lessons/exams/education plans from documents.
-- Use AI Tutor conversations with optional document context.
+- **AI Tutor (0.2.9):** create **assistants** (`teacher_chat_assistants`) with optional core `documentIds`; start **conversations** (threads) per assistant; messages on `teacher_chat_conversations`. In-app UI: assistant sidebar → chat list → message pane. Optional **short answer** toggle maps to `shortAnswer` on send.
 - Manage personal Gemini key and **HTTP API keys** in API Integration; Usage reflects external-style `/v1` traffic (see Technical Summary — API access logging).
 
 ### Platform Owner
@@ -80,6 +80,18 @@
   - DOCX (`mammoth`)
   - DOC (`word-extractor`)
   - text fallback for plain text/markdown
+
+## AI Tutor data model (0.2.9)
+
+| Table | Role |
+|-------|------|
+| `teacher_chat_assistants` | Tutor config (`title`, `document_ids`) — one per “bot” |
+| `teacher_chat_conversations` | Chat thread (`assistant_id`, optional `external_user_id`, `title`) |
+| `teacher_chat_messages` | Messages (`conversation_id`, `role`, `content`) |
+
+- **In-app (JWT):** `external_user_id` is always `NULL` on conversations.
+- **Third-party (API key):** optional `externalUserId` when creating/listing conversations; integrators store **`conversation.id`** per end-user and use it for `POST .../messages` (no `externalUserId` on every call).
+- **Migrations:** `008_teacher_chat.sql` through `012_external_user_on_conversations.sql` (`npm run db:migrate` in `apps/backend`).
 
 ## Error Handling Contract
 

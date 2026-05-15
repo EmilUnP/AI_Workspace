@@ -1,4 +1,4 @@
-# API Summary (0.2.8)
+# API Summary (0.2.9)
 
 Base URL (local): `http://localhost:4000/v1`
 
@@ -21,7 +21,7 @@ Do **not** use `POST /auth/login` JWTs for production integrations — create an
 - **Exams (REST)**: list/stats/detail/create/delete saved exams (camelCase on POST)
 - **AI**:
   - RAG retrieval
-  - chat conversations/messages
+  - AI tutor: assistants, conversations (threads), messages
   - lessons/exams/education plans generation
   - translation/media helper endpoints
 - **User AI Key**: Gemini key status/save/delete
@@ -67,14 +67,28 @@ Do **not** use `POST /auth/login` JWTs for production integrations — create an
 - `POST /ai/rag/retrieve` - retrieve relevant chunks for query
 - AI generation routes (lesson/exam/etc.) continue to use backend AI modules.
 
-### AI Chat Endpoints
+### AI Tutor (assistants + conversations) — 0.2.9+
 
-- `GET /ai/chat/conversations`
-- `POST /ai/chat/conversations`
-- `GET /ai/chat/conversations/:id`
-- `PATCH /ai/chat/conversations/:id`
+**Assistants** (tutor config, owner-scoped):
+
+- `GET /ai/chat/assistants` — list
+- `POST /ai/chat/assistants` — create (`title`, optional `documentIds`)
+- `GET /ai/chat/assistants/:assistantId`
+- `PATCH /ai/chat/assistants/:assistantId` — `title`, `documentIds`
+- `DELETE /ai/chat/assistants/:assistantId`
+
+**Conversations** (chat threads under an assistant):
+
+- `GET /ai/chat/assistants/:assistantId/conversations` — list threads; API key callers may filter `?externalUserId=`
+- `POST /ai/chat/assistants/:assistantId/conversations` — new thread; optional `externalUserId` (third-party label)
+- `GET /ai/chat/conversations/:id` — thread + messages + assistant config
+- `PATCH /ai/chat/conversations/:id` — rename thread (`title` only)
 - `DELETE /ai/chat/conversations/:id`
-- `POST /ai/chat/conversations/:id/messages`
+- `POST /ai/chat/conversations/:id/messages` — `{ message, documentIds?, shortAnswer? }`; use **`conversation.id`** as the session handle
+
+**Legacy:** `POST /ai/chat/conversations` creates assistant + first thread in one step (deprecated).
+
+**DB:** run migrations `008`–`012` in `apps/backend`. In-app JWT threads use `external_user_id` null on conversations.
 
 ### AI Generation Endpoints
 
