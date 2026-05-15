@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { UserApiKeysService } from '../services/user-api-keys.service.js'
+import { UserApiKeysService, type UsageDateRange } from '../services/user-api-keys.service.js'
+
+const usageRangeSchema = z.enum(['today', '30d', 'all']).default('all')
 
 const createApiKeySchema = z.object({
   name: z.string().trim().min(1, 'Key name is required').max(120, 'Key name is too long'),
@@ -37,7 +39,9 @@ export async function userApiKeysRoutes(app: FastifyInstance) {
   app.get('/users/me/api-keys/usage', { preHandler: [app.authenticate] }, async (request, reply) => {
     const userId = request.authUser?.sub
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
-    const stats = await service.getUsageStats(userId)
-    reply.send(stats)
+    const query = request.query as { range?: string }
+    const range = usageRangeSchema.parse(query.range ?? 'all') as UsageDateRange
+    const stats = await service.getUsageStats(userId, range)
+    reply.send({ ...stats, range })
   })
 }

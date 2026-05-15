@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
 
+export type UsageDateRange = 'today' | '30d' | 'all'
+
 type UserApiKeyRow = {
   id: string
   name: string
@@ -53,23 +55,31 @@ export class UserApiKeysService {
     return (result.rowCount ?? 0) > 0
   }
 
-  async getUsageStats(userId: string) {
+  async getUsageStats(userId: string, range: UsageDateRange = 'all') {
     try {
-      return await this.getUsageStatsFromAccessLog(userId)
+      return await this.getUsageStatsFromAccessLog(userId, range)
     } catch (err: unknown) {
       const code =
         err && typeof err === 'object' && 'code' in err ? String((err as { code: unknown }).code) : ''
       if (code === '42P01') {
-        return this.getUsageStatsFromAiRequestsFallback(userId)
+        return this.getUsageStatsFromAiRequestsFallback(userId, range)
       }
       throw err
     }
   }
 
-  private async getUsageStatsFromAccessLog(userId: string) {
+  private dateFilterSql(range: UsageDateRange): string {
+    if (range === 'today') return ` AND created_at >= CURRENT_DATE`
+    if (range === '30d') return ` AND created_at >= NOW() - INTERVAL '30 days'`
+    return ''
+  }
+
+  private async getUsageStatsFromAccessLog(userId: string, range: UsageDateRange) {
     type Summary = { total_requests: number; success_count: number; error_count: number }
     type RecentRow = { method: string; path: string; status_code: number; created_at: string }
     type EndpointRow = { method: string; path: string; total: number; success: number; error: number }
+
+    const dateFilter = this.dateFilterSql(range)
 
     const [summary, recent, byEndpoint] = await Promise.all([
       this.app.db.query<Summary>(
@@ -78,13 +88,13 @@ export class UserApiKeysService {
            COUNT(*) FILTER (WHERE status_code < 400)::int AS success_count,
            COUNT(*) FILTER (WHERE status_code >= 400)::int AS error_count
          FROM api_access_log
-         WHERE user_id = $1`,
+         WHERE user_id = $1${dateFilter}`,
         [userId]
       ),
       this.app.db.query<RecentRow>(
         `SELECT method, path, status_code, created_at
          FROM api_access_log
-         WHERE user_id = $1
+         WHERE user_id = $1${dateFilter}
          ORDER BY created_at DESC
          LIMIT 50`,
         [userId]
@@ -95,7 +105,7 @@ export class UserApiKeysService {
            COUNT(*) FILTER (WHERE status_code < 400)::int AS success,
            COUNT(*) FILTER (WHERE status_code >= 400)::int AS error
          FROM api_access_log
-         WHERE user_id = $1
+         WHERE user_id = $1${dateFilter}
          GROUP BY method, path
          ORDER BY total DESC`,
         [userId]
@@ -127,7 +137,9 @@ export class UserApiKeysService {
   }
 
   /** When `api_access_log` is not migrated yet; also fixes legacy `done` vs `completed` mismatch. */
-  private async getUsageStatsFromAiRequestsFallback(userId: string) {
+  private async getUsageStatsFromAiRequestsFallback(userId: string, range: UsageDateRange) {
+    const dateFilter = this.dateFilterSql(range)
+
     const summary = await this.app.db.query<{
       total_requests: number
       success_count: number
@@ -138,7 +150,7 @@ export class UserApiKeysService {
          COUNT(*) FILTER (WHERE status IN ('completed', 'done'))::int AS success_count,
          COUNT(*) FILTER (WHERE status = 'failed')::int AS error_count
        FROM ai_requests
-       WHERE user_id = $1`,
+       WHERE user_id = $1${dateFilter}`,
       [userId]
     )
 
@@ -149,7 +161,7 @@ export class UserApiKeysService {
     }>(
       `SELECT type, status, created_at
        FROM ai_requests
-       WHERE user_id = $1
+       WHERE user_id = $1${dateFilter}
        ORDER BY created_at DESC
        LIMIT 50`,
       [userId]

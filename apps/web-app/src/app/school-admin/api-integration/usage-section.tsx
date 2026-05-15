@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { BarChart3, CheckCircle, XCircle, Key, Zap, Clock, Filter, Search, ChevronDown, ArrowUpDown } from 'lucide-react'
+import { useMemo, useState, useTransition } from 'react'
+import { BarChart3, CheckCircle, XCircle, Key, Zap, Clock, Filter, Search, ChevronDown, ArrowUpDown, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import type { UsageStats } from './api-integration-client'
+import { getUsageStats, type UsageDateRange } from './actions'
 
 interface UsageSectionProps {
   usageStats: UsageStats
@@ -13,8 +14,15 @@ type StatusFilter = 'all' | 'success' | 'error'
 type KeySort = 'total' | 'name'
 type EndpointSort = 'total' | 'endpoint'
 
-export function UsageSection({ usageStats }: UsageSectionProps) {
+const DATE_RANGES: UsageDateRange[] = ['today', '30d', 'all']
+
+export function UsageSection({ usageStats: initialUsageStats }: UsageSectionProps) {
   const t = useTranslations('teacherApiIntegration')
+  const [isPending, startTransition] = useTransition()
+  const [dateRange, setDateRange] = useState<UsageDateRange>('all')
+  const [usageStats, setUsageStats] = useState(initialUsageStats)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
   const { totalRequests, successCount, errorCount, byKey, byEndpoint, recent } = usageStats
 
   const [keyFilter, setKeyFilter] = useState<string>('all')
@@ -25,6 +33,33 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
   const [endpointSort, setEndpointSort] = useState<EndpointSort>('total')
   const [keySortDesc, setKeySortDesc] = useState(true)
   const [endpointSortDesc, setEndpointSortDesc] = useState(true)
+
+  const dateRangeLabel: Record<UsageDateRange, string> = {
+    today: t('usageDateToday'),
+    '30d': t('usageDate30d'),
+    all: t('usageDateAll'),
+  }
+
+  const handleDateRangeChange = (range: UsageDateRange) => {
+    if (range === dateRange && !fetchError) return
+    setDateRange(range)
+    setFetchError(null)
+    startTransition(async () => {
+      const result = await getUsageStats(range)
+      if (result.error) {
+        setFetchError(result.error)
+        return
+      }
+      setUsageStats({
+        totalRequests: result.totalRequests ?? 0,
+        successCount: result.successCount ?? 0,
+        errorCount: result.errorCount ?? 0,
+        byKey: result.byKey ?? [],
+        byEndpoint: result.byEndpoint ?? [],
+        recent: result.recent ?? [],
+      })
+    })
+  }
 
   const successRate = totalRequests > 0 ? Math.round((successCount / totalRequests) * 100) : 0
 
@@ -77,8 +112,42 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
         </p>
       </div>
 
+      {/* Date range */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium text-gray-600">{t('usageDateRange')}</span>
+        <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1" role="group" aria-label={t('usageDateRange')}>
+          {DATE_RANGES.map((range) => (
+            <button
+              key={range}
+              type="button"
+              disabled={isPending}
+              onClick={() => handleDateRangeChange(range)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60 ${
+                dateRange === range
+                  ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {dateRangeLabel[range]}
+            </button>
+          ))}
+        </div>
+        {isPending && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            {t('usageLoading')}
+          </span>
+        )}
+      </div>
+
+      {fetchError && (
+        <p className="text-sm text-red-600" role="alert">
+          {fetchError}
+        </p>
+      )}
+
       {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-4 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}>
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
@@ -130,7 +199,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
           <BarChart3 className="mx-auto h-12 w-12 text-gray-400" />
           <p className="mt-3 text-sm font-medium text-gray-600">{t('noUsageYet')}</p>
           <p className="mt-1 text-sm text-gray-500">
-            {t('usageWillAppear')}
+            {dateRange === 'all' ? t('usageWillAppear') : t('noRecentRequestsMatch')}
           </p>
         </div>
       ) : (
@@ -333,7 +402,7 @@ export function UsageSection({ usageStats }: UsageSectionProps) {
                   {t('recentRequests')}
                 </h3>
                 <p className="mt-1 text-xs text-gray-500">
-                  {t('showingUpTo', { count: recentLimit })} • {t('statusFilter')}:{' '}
+                  {t('showingUpTo', { count: recentLimit })} • {dateRangeLabel[dateRange]} • {t('statusFilter')}:{' '}
                   {statusFilter === 'all' ? t('all') : statusFilter === 'success' ? t('successOnly') : t('failedOnly')}
                   {endpointSearch ? ` • ${t('endpointContains', { query: endpointSearch })}` : ''}
                 </p>

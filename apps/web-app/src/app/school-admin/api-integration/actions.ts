@@ -20,6 +20,19 @@ export type ApiKeysResult = {
 export type GeminiKeyStatusResult = { error?: string; hasKey?: boolean; keyHint?: string | null }
 export type SaveGeminiKeyResult = { error?: string; hasKey?: boolean; keyHint?: string | null }
 
+export type UsageDateRange = 'today' | '30d' | 'all'
+
+export type UsageStatsResult = {
+  error?: string
+  totalRequests?: number
+  successCount?: number
+  errorCount?: number
+  byKey?: Array<{ keyId: string; keyName: string; keyPrefix: string; total: number; success: number; error: number }>
+  byEndpoint?: Array<{ method: string; endpoint: string; total: number; success: number; error: number }>
+  recent?: Array<{ method: string; endpoint: string; status: string; statusCode: number | null; createdAt: string }>
+  range?: UsageDateRange
+}
+
 const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
 
 export async function createApiKey(_prev: unknown, formData: FormData): Promise<CreateKeyResult> {
@@ -120,6 +133,31 @@ export async function saveGeminiKey(apiKey: string): Promise<SaveGeminiKeyResult
   const payload = (await response.json()) as { hasKey?: boolean; keyHint?: string | null }
   revalidatePath('/school-admin/api-integration')
   return { hasKey: Boolean(payload.hasKey), keyHint: payload.keyHint ?? null }
+}
+
+export async function getUsageStats(range: UsageDateRange = 'all'): Promise<UsageStatsResult> {
+  const token = await getAccessToken()
+  if (!token) return { error: 'Not authenticated' }
+
+  const qs = range === 'all' ? '' : `?range=${encodeURIComponent(range)}`
+  const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys/usage${qs}`, {
+    headers: webAppBackendAuthHeaders(token),
+    cache: 'no-store',
+  })
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as { error?: string }
+    return { error: payload.error || 'Failed to load usage' }
+  }
+  const payload = (await response.json()) as UsageStatsResult
+  return {
+    totalRequests: payload.totalRequests ?? 0,
+    successCount: payload.successCount ?? 0,
+    errorCount: payload.errorCount ?? 0,
+    byKey: payload.byKey ?? [],
+    byEndpoint: payload.byEndpoint ?? [],
+    recent: payload.recent ?? [],
+    range: payload.range ?? range,
+  }
 }
 
 export async function deleteGeminiKey(): Promise<SaveGeminiKeyResult> {

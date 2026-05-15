@@ -304,6 +304,11 @@ const translations: I18nTable = {
       usageAnalytics: 'Usage analytics',
       usageAnalyticsDescription:
         'Shows `/v1` calls made **outside** this web app (Postman, scripts, other systems). The browser app sends an internal header so routine UI traffic is not logged here.',
+      usageDateRange: 'Period',
+      usageDateToday: 'Today',
+      usageDate30d: 'Last 30 days',
+      usageDateAll: 'All',
+      usageLoading: 'Loading…',
       totalRequests: 'Total requests',
       successful: 'Successful',
       failed: 'Failed',
@@ -926,6 +931,11 @@ const translations: I18nTable = {
       usageAnalytics: 'İstifadə analitikası',
       usageAnalyticsDescription:
         'Bu veb tətbiqdən **kənar** edilən `/v1` sorğularını göstərir (Postman, skript, digər sistemlər). Brauzer tətbiqi daxili başlıq göndərdiyi üçün adi UI trafiki burada qeydə alınmır.',
+      usageDateRange: 'Dövr',
+      usageDateToday: 'Bu gün',
+      usageDate30d: 'Son 30 gün',
+      usageDateAll: 'Hamısı',
+      usageLoading: 'Yüklənir…',
       totalRequests: 'Ümumi sorğu',
       successful: 'Uğurlu',
       failed: 'Uğursuz',
