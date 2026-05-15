@@ -1,6 +1,6 @@
 # Clean Backend API Documentation
 
-This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.7**).
+This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.8**).
 
 ## Base
 - Base URL: `http://localhost:<PORT>`
@@ -419,7 +419,12 @@ Missing Gemini key example:
 
 Conversations are **owner-scoped** (same user as your HTTP API key or JWT). JSON bodies use **camelCase** (`documentIds`, `shortAnswer`).
 
-**Third-party quick flow:** `POST /v1/ai/chat/conversations` → copy `conversation.id` → `POST /v1/ai/chat/conversations/:id/messages` with `{ "message": "...", "documentIds": [], "shortAnswer": true }`. Repeat on the **same** `:id` to continue; prior messages are included in the model prompt. Requires a **Gemini API key** on the account (see §2.1) and migration `008_teacher_chat.sql`.
+**Third-party quick flow:** With an HTTP API key (`ed_…`), pass **`externalUserId`** (your platform’s user id — e.g. student id) on every chat call so each end user has isolated threads. Use JSON `externalUserId`, query `?externalUserId=`, or header `X-Eduator-External-User-Id`.
+
+1. `POST /v1/ai/chat/conversations` with `{ "title": "...", "externalUserId": "student-42" }` → copy `conversation.id`
+2. `POST /v1/ai/chat/conversations/:id/messages` with `{ "message": "...", "documentIds": [], "shortAnswer": true }` and the same `externalUserId` (body, query, or header)
+
+Repeat on the **same** `:id` to continue; prior messages are included in the model prompt. **In-app JWT** users do not send `externalUserId` (threads use `external_user_id` null). Requires a **Gemini API key** (see §2.1) and migrations `008_teacher_chat.sql` + `009_teacher_chat_external_user.sql`.
 
 ### GET `/v1/ai/chat/conversations` (Protected)
 

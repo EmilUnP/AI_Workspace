@@ -462,24 +462,31 @@ export function ApiDocsContent({ apiBaseUrl }: ApiDocsContentProps) {
               <p className="font-medium text-violet-950">{t('apiDocsAiChatQuickStartTitle')}</p>
               <p className="text-violet-900/90">{t('apiDocsAiChatQuickStartBody')}</p>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
-{`# 1) Create thread → copy conversation.id
+{`# externalUserId = your platform user (student) id — required with API keys
+# 1) Create thread → copy conversation.id
 curl -X POST ${chatConversationsUrl} \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{ "title": "My tutor" }'
+  -d '{ "title": "My tutor", "externalUserId": "student-42" }'
 
 # 2) Send message (documentIds: [] for plain text chat)
 curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "X-Eduator-External-User-Id: student-42" \\
   -H "Content-Type: application/json" \\
   -d '{ "message": "Hello", "documentIds": [], "shortAnswer": true }'`}
               </pre>
               <p className="text-xs text-violet-800">{t('apiDocsAiChatGeminiNote')}</p>
             </div>
+            <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-2">
+              <p className="font-medium text-amber-950">{t('apiDocsAiChatExternalUserTitle')}</p>
+              <p className="text-amber-900/90 text-sm">{t('apiDocsAiChatExternalUserBody')}</p>
+              <p className="text-xs text-amber-800">{t('apiDocsAiChatExternalUserHow')}</p>
+            </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">GET /ai/chat/conversations</h4>
               <pre className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words">
-{`curl -X GET ${chatConversationsUrl} \\
+{`curl -X GET "${chatConversationsUrl}?externalUserId=student-42" \\
   -H "Authorization: Bearer YOUR_API_KEY"`}
               </pre>
             </div>

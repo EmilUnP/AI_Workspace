@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.8 - 2026-05-15
+
+### Added
+
+- **AI chat `externalUserId` for third-party API keys** — migration `009_teacher_chat_external_user.sql`; integrators pass their platform user id (`externalUserId` in JSON, `?externalUserId=`, or `X-Eduator-External-User-Id`) so each end user has isolated threads under the Eduator account. In-app JWT chat unchanged (`external_user_id` null).
+- **Short answer toggle** on School admin AI Tutor UI (maps to `shortAnswer` on send message).
+- **AI tutor chat tables** — migration `008_teacher_chat.sql` for `teacher_chat_conversations` / `teacher_chat_messages`.
+
+### Fixed
+
+- **AI tutor chat via HTTP API key** — multi-turn replies include conversation history; stored `documentIds` on a thread are used when the message body omits them; clearer errors for missing Gemini key or DB issues.
+- **In-app API docs** — chat quick-start, `externalUserId` guidance, and `shortAnswer` documented for third-party integrators.
+
 ## 0.2.7 - 2026-05-15
 
 ### Changed
@@ -7,10 +20,6 @@
 - **School-admin API Integration docs** — **Keys & Docs** is explicitly **third-party only**: all examples use `Authorization: Bearer YOUR_API_KEY` (`ed_…`); login JWT and `X-Eduator-Client: web-app` are called out as not for integrations.
 - **Auth documentation** — `API_SUMMARY.md`, `API_DOCUMENTATION.md`, and `TECHNICAL_SUMMARY.md` distinguish the official web app (JWT + internal header) from external HTTP API keys.
 - **Exams list stats** — mobile summary shows **total exams** and **total questions** (removed unused published/draft counts).
-
-### Fixed
-
-- **AI tutor chat via HTTP API key** — migration `008_teacher_chat.sql` creates `teacher_chat_conversations` / `teacher_chat_messages` if missing; multi-turn replies now include conversation history; stored `documentIds` on a thread are used when the message body omits them; clearer errors for missing Gemini key or DB issues.
 
 ### Removed
 

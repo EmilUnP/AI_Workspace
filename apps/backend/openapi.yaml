@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: Eduator Clean Backend API
-  version: 0.2.7
+  version: 0.2.8
   description: >-
-    Clean backend API contract for local PostgreSQL + JWT + HTTP API keys (baseline **0.2.7**).
+    Clean backend API contract for local PostgreSQL + JWT + HTTP API keys (baseline **0.2.8**).
     Includes user HTTP API keys, usage analytics (`api_access_log` after migration `006_api_access_log.sql`),
     and first-party traffic exclusion via `X-Eduator-Client` (see docs).
 servers:

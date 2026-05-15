@@ -1,6 +1,6 @@
 # Eduator AI Platform — Overview & Delivery Report
 
-**Version:** 0.2.7  
+**Version:** 0.2.8  
 **Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, **where APIs live**, and **what shipped recently**.
 
 For deeper dives, use the linked docs at the end — this file is the map, not a duplicate of every endpoint.
@@ -205,4 +205,4 @@ This section captures the **product and engineering themes** completed in the re
 
 ---
 
-*Last updated for release **0.2.7** (third-party API docs, removed unused `subject` and `is_published`, simplified exam stats).*
+*Last updated for release **0.2.8** (AI tutor chat for third-party API keys, `externalUserId` scoping, short-answer UI toggle).*

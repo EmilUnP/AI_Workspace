@@ -391,6 +391,11 @@ const translations: I18nTable = {
         'Create a conversation, send messages with the same conversation id, and keep chatting. Use documentIds: [] when you only need plain text (no document RAG). Prior messages in the thread are included automatically.',
       apiDocsAiChatGeminiNote:
         'Requires a Gemini API key on this account (API Integration → Gemini Key tab) or GOOGLE_GEMINI_API_KEY on the server. Run db:migrate so migration 008_teacher_chat.sql is applied.',
+      apiDocsAiChatExternalUserTitle: 'Third-party end users (externalUserId)',
+      apiDocsAiChatExternalUserBody:
+        'When you call chat with an HTTP API key (ed_…), pass your platform’s user id as externalUserId. Each id gets its own threads and message history under your Eduator account. In-app login does not use this field.',
+      apiDocsAiChatExternalUserHow:
+        'JSON body externalUserId, query ?externalUserId=, or header X-Eduator-External-User-Id. Required on every chat request with an API key.',
       apiDocsLessonDeleteIntro:
         'Deletes the saved lesson and removes generated media on disk when possible. Response: { "ok": true }.',
       apiDocsExamsRestTitle: 'Exams (saved)',
@@ -674,7 +679,8 @@ const translations: I18nTable = {
       cancel: 'Cancel',
       yesDelete: 'Yes, delete',
       createConversationFailed: 'Failed to create conversation',
-      newConversationDefault: 'New Conversation'
+      newConversationDefault: 'New Conversation',
+      shortAnswer: 'Short answers (brief bullet points)'
     }
   },
   az: {
@@ -1033,6 +1039,11 @@ const translations: I18nTable = {
         'Söhbət yaradın, eyni conversation id ilə mesaj göndərin və davam edin. Yalnız mətn üçün documentIds: [] istifadə edin (sənəd RAG olmadan). Əvvəlki mesajlar avtomatik daxil edilir.',
       apiDocsAiChatGeminiNote:
         'Hesabda Gemini API açarı lazımdır (API İnteqrasiya → Gemini Key) və ya serverdə GOOGLE_GEMINI_API_KEY. db:migrate ilə 008_teacher_chat.sql tətbiq olunmalıdır.',
+      apiDocsAiChatExternalUserTitle: 'Üçüncü tərəf istifadəçiləri (externalUserId)',
+      apiDocsAiChatExternalUserBody:
+        'HTTP API açarı (ed_…) ilə söhbət çağırarkən platformanızın istifadəçi id-sini externalUserId kimi göndərin. Hər id Eduator hesabınız altında ayrı thread və mesaj tarixçəsi alır. Tətbiqdaxili giriş bu sahəni istifadə etmir.',
+      apiDocsAiChatExternalUserHow:
+        'JSON externalUserId, sorğu ?externalUserId= və ya başlıq X-Eduator-External-User-Id. API açarı ilə hər söhbət sorğusunda mütləqdir.',
       apiDocsLessonDeleteIntro:
         'Saxlanılmış dərsi silir və mümkünsə yaradılmış media fayllarını diskdən təmizləyir. Cavab: { "ok": true }.',
       apiDocsExamsRestTitle: 'İmtahanlar (saxlanmış)',
@@ -1316,7 +1327,8 @@ const translations: I18nTable = {
       cancel: 'Ləğv et',
       yesDelete: 'Bəli, sil',
       createConversationFailed: 'Söhbət yaratmaq mümkün olmadı',
-      newConversationDefault: 'Yeni söhbət'
+      newConversationDefault: 'Yeni söhbət',
+      shortAnswer: 'Qısa cavablar (qısa maddələr)'
     }
     }
   }

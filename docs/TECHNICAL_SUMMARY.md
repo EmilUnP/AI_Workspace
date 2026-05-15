@@ -1,4 +1,4 @@
-# Technical Summary (0.2.7)
+# Technical Summary (0.2.8)
 
 ## Architecture
 

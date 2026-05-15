@@ -1,4 +1,4 @@
-# API Summary (0.2.7)
+# API Summary (0.2.8)
 
 Base URL (local): `http://localhost:4000/v1`
 

@@ -48,6 +48,7 @@ export function ChatClient() {
   const [newBotDocId, setNewBotDocId] = useState('')
   const [deleteTargetId, setDeleteTargetId] = useState('')
   const [selectedDocByConversation, setSelectedDocByConversation] = useState<Record<string, string>>({})
+  const [shortAnswer, setShortAnswer] = useState(true)
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.id === activeId) || null,
@@ -169,7 +170,7 @@ export function ChatClient() {
     const result = await sendMessage({
       conversation_id: activeId,
       message: body,
-      short_answer: true,
+      short_answer: shortAnswer,
       document_ids: selectedDocByConversation[activeId] ? [selectedDocByConversation[activeId]] : [],
     })
 
@@ -310,6 +311,16 @@ export function ChatClient() {
 
         <div className="border-t border-gray-200 p-3">
           {error ? <p className="mb-2 text-sm text-red-600">{error}</p> : null}
+          <label className="mb-2 flex cursor-pointer items-center gap-2 text-xs text-gray-600">
+            <input
+              type="checkbox"
+              checked={shortAnswer}
+              onChange={(e) => setShortAnswer(e.target.checked)}
+              disabled={!activeId || sending}
+              className="rounded border-gray-300 text-gray-900 focus:ring-gray-400"
+            />
+            {t('shortAnswer')}
+          </label>
           <div className="flex items-center gap-2">
             <input
               value={text}
