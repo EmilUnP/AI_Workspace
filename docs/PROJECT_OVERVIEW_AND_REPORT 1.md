@@ -1,9 +1,11 @@
 # Eduator AI Platform — Overview & Delivery Report
 
-**Version:** 0.2.9  
-**Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, **where APIs live**, and **what shipped recently**.
+**Version:** 0.2.0  
+**Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, and **where APIs live**.
 
-For deeper dives, use the linked docs at the end — this file is the map, not a duplicate of every endpoint.
+This is the **platform map** (architecture, roles, flows). For a **last-week delivery report** focused on third-party API, database work, Gemini keys, and AI Tutor — see **[PROJECT_OVERVIEW_AND_REPORT 2.md](./PROJECT_OVERVIEW_AND_REPORT%202.md)**.
+
+For deeper dives, use the linked docs at the end — this file is not a duplicate of every endpoint.
 
 ---
 
@@ -75,7 +77,7 @@ Canonical technical detail: [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md).
 2. **Lesson generation** — Select documents + topic/options → AI generates lesson → persisted lesson with optional async audio.
 3. **Exam generation** — Select documents + parameters → generated questions → save/edit exam.
 4. **Education plans** — Create/generate structured plans from documents; view week-by-week content; edit/delete.
-5. **AI Tutor chat** — Conversations and messages against document context where applicable.
+5. **AI Tutor** — Create **assistants** (tutor config + core documents), then **conversations** (chat threads) and messages with optional document RAG.
 6. **API integration** — Create/revoke API keys, view usage analytics, save personal Gemini key for AI routes.
 
 ### 4.3 Primary use cases (platform owner)
