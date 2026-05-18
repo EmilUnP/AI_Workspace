@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 export type BackendUser = {
@@ -11,8 +12,6 @@ export type BackendUser = {
   updated_at?: string
 }
 
-const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
-
 export const getAccessToken = async (): Promise<string | null> => {
   const cookieStore = await cookies()
   return cookieStore.get('access_token')?.value ?? null
@@ -22,7 +21,7 @@ export const getCurrentUser = async (): Promise<BackendUser | null> => {
   const token = await getAccessToken()
   if (!token) return null
 
-  const response = await fetch(`${getBackendBase()}/v1/auth/me`, {
+  const response = await fetch(`${getApiUrl()}/v1/auth/me`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
@@ -39,7 +38,7 @@ export const listUsers = async (params?: { limit?: number; offset?: number }): P
   const limit = Math.min(Math.max(params?.limit ?? 100, 1), 200)
   const offset = Math.max(params?.offset ?? 0, 0)
   const query = new URLSearchParams({ limit: String(limit), offset: String(offset) }).toString()
-  const response = await fetch(`${getBackendBase()}/v1/users?${query}`, {
+  const response = await fetch(`${getApiUrl()}/v1/users?${query}`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })

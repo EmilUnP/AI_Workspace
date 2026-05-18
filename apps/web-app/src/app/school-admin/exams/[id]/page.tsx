@@ -1,4 +1,5 @@
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { redirect, notFound } from 'next/navigation'
 import { getTranslations, getLocale } from 'next-intl/server'
@@ -48,7 +49,7 @@ async function getTeacherInfo() {
 async function getExam(examId: string, _teacherId: string) {
   const token = await getAccessToken()
   if (!token) return null
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
   const response = await fetch(`${backendBase}/v1/exams/${examId}`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',

@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { revalidatePath } from 'next/cache'
 
@@ -40,7 +41,7 @@ export type UsageStatsResult = {
   range?: UsageDateRange
 }
 
-const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const getBackendBase = () => getApiUrl()
 
 export async function createApiKey(_prev: unknown, formData: FormData): Promise<CreateKeyResult> {
   const name = (formData.get('name') as string)?.trim()
@@ -53,7 +54,7 @@ export async function createApiKey(_prev: unknown, formData: FormData): Promise<
   if (user.role !== 'operator' && user.role !== 'admin') return { error: 'Not authorized' }
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
-  const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys`, {
+  const response = await fetch(`${getApiUrl()}/v1/users/me/api-keys`, {
     method: 'POST',
     headers: {
       ...webAppBackendAuthHeaders(token),
@@ -79,7 +80,7 @@ export async function revokeApiKey(keyId: string): Promise<RevokeResult> {
   if (user.role !== 'operator' && user.role !== 'admin') return { error: 'Not authorized' }
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
-  const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys/${keyId}`, {
+  const response = await fetch(`${getApiUrl()}/v1/users/me/api-keys/${keyId}`, {
     method: 'DELETE',
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'
@@ -96,7 +97,7 @@ export async function revokeApiKey(keyId: string): Promise<RevokeResult> {
 export async function getApiKeys(): Promise<ApiKeysResult> {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
-  const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys`, {
+  const response = await fetch(`${getApiUrl()}/v1/users/me/api-keys`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'
   })
@@ -112,7 +113,7 @@ export async function getGeminiKeyStatus(): Promise<GeminiKeyStatusResult> {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/users/me/ai-keys/gemini`, {
+  const response = await fetch(`${getApiUrl()}/v1/users/me/ai-keys/gemini`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'
   })
@@ -124,7 +125,7 @@ export async function getGeminiKeyStatus(): Promise<GeminiKeyStatusResult> {
 export async function saveGeminiKey(apiKey: string): Promise<SaveGeminiKeyResult> {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
-  const response = await fetch(`${getBackendBase()}/v1/users/me/ai-keys/gemini`, {
+  const response = await fetch(`${getApiUrl()}/v1/users/me/ai-keys/gemini`, {
     method: 'PUT',
     headers: {
       ...webAppBackendAuthHeaders(token),
@@ -147,7 +148,7 @@ export async function getUsageStats(range: UsageDateRange = 'all'): Promise<Usag
   if (!token) return { error: 'Not authenticated' }
 
   const qs = range === 'all' ? '' : `?range=${encodeURIComponent(range)}`
-  const response = await fetch(`${getBackendBase()}/v1/users/me/api-keys/usage${qs}`, {
+  const response = await fetch(`${getApiUrl()}/v1/users/me/api-keys/usage${qs}`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
@@ -170,7 +171,7 @@ export async function getUsageStats(range: UsageDateRange = 'all'): Promise<Usag
 export async function deleteGeminiKey(): Promise<SaveGeminiKeyResult> {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
-  const response = await fetch(`${getBackendBase()}/v1/users/me/ai-keys/gemini`, {
+  const response = await fetch(`${getApiUrl()}/v1/users/me/ai-keys/gemini`, {
     method: 'DELETE',
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store'

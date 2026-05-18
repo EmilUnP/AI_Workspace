@@ -1,4 +1,5 @@
 import 'server-only'
+import { getApiUrl } from '@/lib/portal-urls'
 import { cookies } from 'next/headers'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
@@ -14,7 +15,7 @@ export async function getTeacherLessons(
   const token = (await cookies()).get('access_token')?.value
   if (!token) return { data: [], count: 0, page }
 
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
   const searchParams = new URLSearchParams({
     page: String(page),
     perPage: String(TEACHER_LESSONS_PER_PAGE),

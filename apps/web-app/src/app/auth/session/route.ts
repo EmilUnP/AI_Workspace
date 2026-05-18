@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getApiUrl } from '@/lib/portal-urls'
 import type { NextRequest } from 'next/server'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'No session cookie' }, { status: 401 })
   }
 
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
   const meResponse = await fetch(`${backendBase}/v1/auth/me`, {
     method: 'GET',
     headers: webAppBackendAuthHeaders(accessToken),

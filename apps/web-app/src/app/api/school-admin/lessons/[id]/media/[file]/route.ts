@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getApiUrl } from '@/lib/portal-urls'
 import { cookies } from 'next/headers'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -31,7 +32,7 @@ export async function GET(
   const { id, file } = await context.params
   const safeFile = path.basename(file)
   const localMediaPath = path.resolve(process.cwd(), '..', 'backend', 'storage', 'lessons', id, safeFile)
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
 
   const cookieToken = (await cookies()).get('access_token')?.value ?? null
   const headerToken =

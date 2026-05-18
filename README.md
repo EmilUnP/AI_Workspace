@@ -33,7 +33,7 @@ npm run dev:all
 
 `dev:all` starts:
 - backend: `http://localhost:4000`
-- web app: `http://localhost:3001`
+- web app: `http://localhost:3000`
 
 ## Main Scripts
 
@@ -51,7 +51,8 @@ Use app-level env files:
   - required: `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
   - optional fallback: `GOOGLE_GEMINI_API_KEY` (user key in DB is preferred)
 - `apps/web-app/.env.local`
-  - `NEXT_PUBLIC_*` values for frontend URLs/integration
+  - `NEXT_PUBLIC_API_URL` — backend API base (e.g. `http://localhost:4000` or `https://api.eduator.ai`)
+  - `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_ERP_URL` — web app origin for redirects and file URLs
 
 ## How AI Keying Works
 

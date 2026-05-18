@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 type QuickUploadInput = {
@@ -17,7 +18,7 @@ type UpdateDocumentInput = {
   tags?: string[] | null
 }
 
-const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const getBackendBase = () => getApiUrl()
 const getFileProxyBase = () => process.env.NEXT_PUBLIC_APP_URL || ''
 
 type NormalizedFileType = 'pdf' | 'markdown' | 'text' | 'doc' | 'docx'
@@ -68,7 +69,7 @@ export async function quickUploadDocument(input: QuickUploadInput) {
     : undefined
 
   try {
-    const response = await fetch(`${getBackendBase()}/v1/documents`, {
+    const response = await fetch(`${getApiUrl()}/v1/documents`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -136,7 +137,7 @@ export async function updateDocument(_input: UpdateDocumentInput) {
   const token = await getAccessToken()
   if (!token) return { success: false, error: 'Not authenticated' }
   try {
-    const response = await fetch(`${getBackendBase()}/v1/documents/${_input.documentId}`, {
+    const response = await fetch(`${getApiUrl()}/v1/documents/${_input.documentId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -167,7 +168,7 @@ export async function deleteDocument(documentId: string) {
   const token = await getAccessToken()
   if (!token) return { success: false, error: 'Not authenticated' }
   try {
-    const response = await fetch(`${getBackendBase()}/v1/documents/${documentId}`, {
+    const response = await fetch(`${getApiUrl()}/v1/documents/${documentId}`, {
       method: 'DELETE',
       headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',

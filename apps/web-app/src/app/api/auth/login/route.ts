@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getApiUrl } from '@/lib/portal-urls'
 import type { NextRequest } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
   const email = (formData.get('email') as string) || ''
   const password = (formData.get('password') as string) || ''
   const origin = getRequestOrigin(request)
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
 
   if (!email || !password) {
     const loginUrl = new URL('/auth/login', origin)

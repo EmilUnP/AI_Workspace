@@ -1,4 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
+import { getApiUrl } from '@/lib/portal-urls'
 import { cookies } from 'next/headers'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { getCurrentUser } from '@/lib/backend-auth'
@@ -53,7 +54,7 @@ async function getLesson(lessonId: string): Promise<LessonRecord | null> {
   const token = (await cookies()).get('access_token')?.value
   if (!token) return null
 
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
   const response = await fetch(`${backendBase}/v1/lessons/${lessonId}`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',

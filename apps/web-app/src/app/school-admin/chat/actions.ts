@@ -1,9 +1,10 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
-const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const getBackendBase = () => getApiUrl()
 
 type Assistant = {
   id: string
@@ -50,7 +51,7 @@ export async function getAssistants() {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/ai/chat/assistants`, {
+  const response = await fetch(`${getApiUrl()}/v1/ai/chat/assistants`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
@@ -63,7 +64,7 @@ export async function createAssistant(input: CreateAssistantInput) {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/ai/chat/assistants`, {
+  const response = await fetch(`${getApiUrl()}/v1/ai/chat/assistants`, {
     method: 'POST',
     headers: {
       ...webAppBackendAuthHeaders(token),
@@ -84,7 +85,7 @@ export async function updateAssistant(
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/ai/chat/assistants/${assistantId}`, {
+  const response = await fetch(`${getApiUrl()}/v1/ai/chat/assistants/${assistantId}`, {
     method: 'PATCH',
     headers: {
       ...webAppBackendAuthHeaders(token),
@@ -105,7 +106,7 @@ export async function deleteAssistant(assistantId: string) {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/ai/chat/assistants/${assistantId}`, {
+  const response = await fetch(`${getApiUrl()}/v1/ai/chat/assistants/${assistantId}`, {
     method: 'DELETE',
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
@@ -119,7 +120,7 @@ export async function getConversations(assistantId: string) {
   if (!token) return { error: 'Not authenticated' }
 
   const response = await fetch(
-    `${getBackendBase()}/v1/ai/chat/assistants/${assistantId}/conversations`,
+    `${getApiUrl()}/v1/ai/chat/assistants/${assistantId}/conversations`,
     {
       headers: webAppBackendAuthHeaders(token),
       cache: 'no-store',
@@ -135,7 +136,7 @@ export async function createConversation(assistantId: string, title?: string) {
   if (!token) return { error: 'Not authenticated' }
 
   const response = await fetch(
-    `${getBackendBase()}/v1/ai/chat/assistants/${assistantId}/conversations`,
+    `${getApiUrl()}/v1/ai/chat/assistants/${assistantId}/conversations`,
     {
       method: 'POST',
       headers: {
@@ -155,7 +156,7 @@ export async function getConversation(conversationId: string) {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
+  const response = await fetch(`${getApiUrl()}/v1/ai/chat/conversations/${conversationId}`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })
@@ -178,7 +179,7 @@ export async function deleteConversation(conversationId: string) {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/ai/chat/conversations/${conversationId}`, {
+  const response = await fetch(`${getApiUrl()}/v1/ai/chat/conversations/${conversationId}`, {
     method: 'DELETE',
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
@@ -192,7 +193,7 @@ export async function sendMessage(input: SendMessageInput) {
   if (!token) return { error: 'Not authenticated' }
 
   const response = await fetch(
-    `${getBackendBase()}/v1/ai/chat/conversations/${input.conversation_id}/messages`,
+    `${getApiUrl()}/v1/ai/chat/conversations/${input.conversation_id}/messages`,
     {
       method: 'POST',
       headers: {
@@ -225,7 +226,7 @@ export async function getDocuments() {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
 
-  const response = await fetch(`${getBackendBase()}/v1/documents`, {
+  const response = await fetch(`${getApiUrl()}/v1/documents`, {
     headers: webAppBackendAuthHeaders(token),
     cache: 'no-store',
   })

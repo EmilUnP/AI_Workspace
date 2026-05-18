@@ -14,5 +14,5 @@ start "Eduator - Web" cmd /k "cd /d ""%~dp0apps\web-app"" && npm run dev"
 echo Both terminals started. Close each window to stop that app.
 echo.
 echo Local URLs:
-echo - Web:       http://localhost:3001
+echo - Web:       http://localhost:3000
 echo - API:       http://localhost:4000

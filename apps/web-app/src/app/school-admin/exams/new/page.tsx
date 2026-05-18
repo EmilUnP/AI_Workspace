@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getApiUrl } from '@/lib/portal-urls'
 import { getTranslations } from 'next-intl/server'
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
@@ -20,7 +21,7 @@ async function getTeacherDocuments(teacherId: string, workspaceId: string) {
   const accessToken = await getAccessToken()
   if (!accessToken) return []
 
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
   try {
     const response = await fetch(`${backendBase}/v1/documents`, {
       headers: webAppBackendAuthHeaders(accessToken),

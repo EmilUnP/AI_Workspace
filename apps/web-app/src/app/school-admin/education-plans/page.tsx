@@ -1,4 +1,5 @@
 import { getAccessToken, getCurrentUser } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -46,7 +47,7 @@ async function getPlans(
   try {
     const token = await getAccessToken()
     if (!token) return []
-    const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+    const backendBase = getApiUrl()
     const qs = new URLSearchParams()
     if (params.search) qs.set('search', params.search)
     const response = await fetch(`${backendBase}/v1/education-plans?${qs.toString()}`, {

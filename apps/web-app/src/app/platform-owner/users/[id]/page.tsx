@@ -1,4 +1,5 @@
 import { getUserById } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { getAccessToken } from '@/lib/backend-auth'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { notFound, redirect } from 'next/navigation'
@@ -33,7 +34,7 @@ const roleConfig: Record<string, { icon: React.ReactNode; color: string; bgColor
   },
 }
 
-const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const getBackendBase = () => getApiUrl()
 
 const buildRedirectUrl = (id: string, status: 'success' | 'error', message: string) => {
   const query = new URLSearchParams({ status, message })
@@ -76,7 +77,7 @@ export default async function UserDetailPage({
     }
 
     try {
-      const response = await fetch(`${getBackendBase()}/v1/users/${id}/password`, {
+      const response = await fetch(`${getApiUrl()}/v1/users/${id}/password`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

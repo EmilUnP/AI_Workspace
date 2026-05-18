@@ -1,10 +1,11 @@
 import { getCurrentUser, getAccessToken } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { ApiIntegrationClient } from './api-integration-client'
 
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const API_BASE = getApiUrl()
 const API_BASE_V1 = `${API_BASE}/v1`
 
 export default async function ApiIntegrationPage() {

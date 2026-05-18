@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getApiUrl } from '@/lib/portal-urls'
 import { cookies } from 'next/headers'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
-const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const getBackendBase = () => getApiUrl()
 
 export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get('access_token')?.value
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(`${getBackendBase()}/v1/ai/lessons/generate`, {
+    const response = await fetch(`${getApiUrl()}/v1/ai/lessons/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

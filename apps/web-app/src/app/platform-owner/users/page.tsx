@@ -1,10 +1,11 @@
 import { listUsers } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { Users, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 
-const getBackendBase = () => process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+const getBackendBase = () => getApiUrl()
 
 const buildRedirectUrl = (status: 'success' | 'error', message: string) => {
   const query = new URLSearchParams({ status, message })
@@ -28,7 +29,7 @@ const createOperatorAction = async (formData: FormData) => {
 
   let response: Response
   try {
-    response = await fetch(`${getBackendBase()}/v1/auth/register`, {
+    response = await fetch(`${getApiUrl()}/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

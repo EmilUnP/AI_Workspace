@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
 interface Question {
@@ -45,7 +46,7 @@ export async function generateExamFromDocuments(input: GenerateInput) {
   try {
     const token = await getAccessToken()
     if (!token) return { error: 'Not authenticated' }
-    const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+    const backendBase = getApiUrl()
 
     const questionTypes = input.questionTypes
       ? (Object.entries(input.questionTypes)
@@ -92,7 +93,7 @@ export async function translateExam(input: TranslateInput) {
   try {
     const token = await getAccessToken()
     if (!token) return { error: 'Not authenticated' }
-    const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+    const backendBase = getApiUrl()
 
     const response = await fetch(`${backendBase}/v1/ai/exams/translate`, {
       method: 'POST',

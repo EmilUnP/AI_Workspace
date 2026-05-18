@@ -3,7 +3,6 @@ const sharedPublicEnv = {
   NEXT_PUBLIC_ERP_URL: 'https://erp.eduator.ai',
   NEXT_PUBLIC_APP_URL: 'https://erp.eduator.ai',
   NEXT_PUBLIC_API_URL: 'https://api.eduator.ai',
-  NEXT_PUBLIC_BACKEND_URL: 'https://api.eduator.ai',
 }
 
 module.exports = {
@@ -27,7 +26,7 @@ module.exports = {
       args: 'run start',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001,
+        PORT: 3000,
         ...sharedPublicEnv,
       },
     },

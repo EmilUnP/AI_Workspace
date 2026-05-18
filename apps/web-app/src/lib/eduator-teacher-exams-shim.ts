@@ -1,4 +1,5 @@
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
+import { getApiUrl } from '@/lib/portal-urls'
 
 export const TEACHER_EXAMS_PER_PAGE = 10
 
@@ -26,7 +27,7 @@ export async function getTeacherExams(
   params?: { page?: string; search?: string }
 ): Promise<TeacherExamsResult> {
   const page = Number(params?.page || 1)
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
   const { cookies } = await import('next/headers')
   const token = (await cookies()).get('access_token')?.value
   if (!token) return { data: [], count: 0, page }
@@ -57,7 +58,7 @@ export async function getTeacherExams(
 }
 
 export async function getTeacherExamStats(_supabase: unknown, _teacherId: string, _workspaceId: string) {
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
   const { cookies } = await import('next/headers')
   const token = (await cookies()).get('access_token')?.value
   if (!token) {

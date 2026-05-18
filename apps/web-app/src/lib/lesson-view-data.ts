@@ -1,3 +1,4 @@
+import { getApiUrl } from '@/lib/portal-urls'
 export interface LessonViewData {
   contentText: string
   images: { url: string; alt: string; description: string; position?: 'top' | 'middle' | 'bottom' }[]
@@ -14,7 +15,7 @@ type LessonLike = {
   metadata?: unknown
 }
 
-const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000').replace(/\/+$/, '')
+const backendBase = getApiUrl()
 
 const normalizeLessonMediaProxyUrl = (raw: string): string => {
   const mediaMatch = raw.match(/^\/v1\/lessons\/([^/]+)\/media\/([^/?#]+)$/)

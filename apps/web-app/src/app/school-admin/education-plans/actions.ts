@@ -1,6 +1,7 @@
 'use server'
 
 import { getAccessToken } from '@/lib/backend-auth'
+import { getApiUrl } from '@/lib/portal-urls'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { revalidatePath } from 'next/cache'
 import type { EducationPlanWeek } from '@eduator/core/types/education-plan'
@@ -17,7 +18,7 @@ export async function createEducationPlan(params: {
 }) {
   const token = await getAccessToken()
   if (!token) return { error: 'Unauthorized', planId: null }
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
 
   const response = await fetch(`${backendBase}/v1/education-plans`, {
     method: 'POST',
@@ -50,7 +51,7 @@ export async function createEducationPlan(params: {
 export async function deleteEducationPlan(planId: string) {
   const token = await getAccessToken()
   if (!token) return { success: false, error: 'Unauthorized' }
-  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:4000'
+  const backendBase = getApiUrl()
 
   const response = await fetch(`${backendBase}/v1/education-plans/${planId}`, {
     method: 'DELETE',
