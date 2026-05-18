@@ -20,7 +20,7 @@ function getRequestOrigin(request: NextRequest) {
     ?.trim()
   const host = forwardedHost || request.headers.get('host')?.split(',')[0]?.trim()
   if (!host) {
-    const explicitOrigin = process.env.NEXT_PUBLIC_ERP_URL || process.env.NEXT_PUBLIC_APP_URL
+    const explicitOrigin = process.env.NEXT_PUBLIC_ERP_URL
     if (explicitOrigin) return explicitOrigin.replace(/\/+$/, '')
     return request.nextUrl.origin
   }

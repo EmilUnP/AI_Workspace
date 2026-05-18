@@ -52,7 +52,7 @@ Use app-level env files:
   - optional fallback: `GOOGLE_GEMINI_API_KEY` (user key in DB is preferred)
 - `apps/web-app/.env.local`
   - `NEXT_PUBLIC_API_URL` — backend API base (e.g. `http://localhost:4000` or `https://api.eduator.ai`)
-  - `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_ERP_URL` — web app origin for redirects and file URLs
+  -`NEXT_PUBLIC_ERP_URL` — web app origin for redirects and file URLs
 
 ## How AI Keying Works
 

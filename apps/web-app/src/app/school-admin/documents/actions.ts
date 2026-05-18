@@ -19,7 +19,7 @@ type UpdateDocumentInput = {
 }
 
 const getBackendBase = () => getApiUrl()
-const getFileProxyBase = () => process.env.NEXT_PUBLIC_APP_URL || ''
+const getFileProxyBase = () => process.env.NEXT_PUBLIC_ERP_URL
 
 type NormalizedFileType = 'pdf' | 'markdown' | 'text' | 'doc' | 'docx'
 

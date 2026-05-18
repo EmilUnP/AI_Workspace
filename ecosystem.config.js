@@ -1,7 +1,6 @@
 const sharedPublicEnv = {
   // Public URLs consumed by Next.js at build/runtime
-  NEXT_PUBLIC_ERP_URL: 'https://erp.eduator.ai',
-  NEXT_PUBLIC_APP_URL: 'https://erp.eduator.ai',
+  NEXT_PUBLIC_ERP_URL: 'https://eduator.ai',
   NEXT_PUBLIC_API_URL: 'https://api.eduator.ai',
 }
 
@@ -15,7 +14,6 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 4000,
-        HOST: '0.0.0.0',
         ...sharedPublicEnv,
       },
     },
