@@ -1,27 +1,30 @@
 const sharedPublicEnv = {
-  // Public URLs consumed by Next.js apps at build/runtime
+  // Public URLs consumed by Next.js at build/runtime
   NEXT_PUBLIC_ERP_URL: 'https://erp.eduator.ai',
-  // Legacy fallback kept for compatibility with older code paths
   NEXT_PUBLIC_APP_URL: 'https://erp.eduator.ai',
   NEXT_PUBLIC_API_URL: 'https://api.eduator.ai',
+  NEXT_PUBLIC_BACKEND_URL: 'https://api.eduator.ai',
 }
 
 module.exports = {
   apps: [
     {
       name: 'edu-api',
+      cwd: './apps/backend',
       script: 'npm',
-      args: 'run start -w @eduator/api-server',
+      args: 'run start',
       env: {
         NODE_ENV: 'production',
         PORT: 4000,
+        HOST: '0.0.0.0',
         ...sharedPublicEnv,
       },
     },
     {
       name: 'edu-web',
+      cwd: './apps/web-app',
       script: 'npm',
-      args: 'run start -w web-app',
+      args: 'run start',
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
