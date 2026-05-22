@@ -28,7 +28,7 @@ INSERT INTO users (email, password_hash, role, manual_note)
 VALUES (
   'admin@clean.local',
   -- bcrypt cost 12 — same as apps/backend/src/utils/security.ts (bcryptjs)
-  '$2b$12$zIn.YvbJlNrI.Qn7zweOKey89rjMfNH.Mp1xiwXLjAelpayhSJvzi',
+  '$2b$12$XIpt744uRmH3bX3OYeeFWO8MGBSTHJOeG65Xx2mCRiR76oPkJm5pW',
   'admin',
   'Initial server admin'
 )
