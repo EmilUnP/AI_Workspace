@@ -1,9 +1,13 @@
 import type { FastifyInstance } from 'fastify'
 import { createReadStream } from 'node:fs'
-import path from 'node:path'
 import { DocumentsService } from '../services/documents.service.js'
 import { DocumentRagService } from '../services/document-rag.service.js'
-import { env } from '../config/env.js'
+import {
+  documentHasStoredFile,
+  readDocumentFileBuffer,
+  resolveDocumentFilePath,
+  useDatabaseFileStorage
+} from '../utils/document-file.js'
 
 export async function documentsRoutes(app: FastifyInstance) {
   const documentsService = new DocumentsService(app)
@@ -54,17 +58,11 @@ export async function documentsRoutes(app: FastifyInstance) {
       reply.code(404).send({ error: 'Document not found' })
       return
     }
-    if (!document.local_path) {
+    const hasFileData = await documentsService.hasFileData(userId, id)
+    if (!documentHasStoredFile({ local_path: document.local_path, has_file_data: hasFileData })) {
       reply.code(404).send({ error: 'Document file missing' })
       return
     }
-
-    const rawPath = document.local_path.replace(/\\/g, '/')
-    const resolvedPath = path.isAbsolute(document.local_path)
-      ? document.local_path
-      : rawPath.startsWith('storage/')
-        ? path.resolve(rawPath)
-        : path.join(env.AI_STORAGE_DIR, rawPath)
 
     const lowerType = String(document.file_type || '').toLowerCase()
     const contentType = lowerType.includes('pdf')
@@ -87,7 +85,16 @@ export async function documentsRoutes(app: FastifyInstance) {
       'Content-Disposition',
       `inline; filename="${safeAsciiFileName}"; filename*=UTF-8''${utf8FileName}`
     )
-    return reply.send(createReadStream(resolvedPath))
+    if (hasFileData || useDatabaseFileStorage()) {
+      const buffer = await readDocumentFileBuffer(app, {
+        id: document.id,
+        owner_user_id: document.owner_user_id,
+        local_path: document.local_path
+      })
+      return reply.send(buffer)
+    }
+
+    return reply.send(createReadStream(resolveDocumentFilePath(document.local_path!)))
   })
 
   app.patch('/documents/:id', { preHandler: [app.authenticate] }, async (request, reply) => {

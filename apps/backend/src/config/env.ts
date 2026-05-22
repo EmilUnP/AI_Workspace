@@ -1,4 +1,5 @@
 import { config as loadDotenv } from 'dotenv'
+import path from 'node:path'
 import { z } from 'zod'
 
 loadDotenv({ path: '.env.local' })
@@ -13,7 +14,11 @@ const envSchema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   GOOGLE_GEMINI_API_KEY: z.string().default(''),
-  AI_STORAGE_DIR: z.string().default('./storage')
+  FILE_STORAGE: z.enum(['local', 'database']).default('database'),
+  AI_STORAGE_DIR: z
+    .string()
+    .default('./storage')
+    .transform((value) => path.resolve(value))
 })
 
 const parsed = envSchema.safeParse(process.env)

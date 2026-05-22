@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import type { FastifyInstance } from 'fastify'
@@ -8,6 +6,7 @@ import WordExtractor from 'word-extractor'
 import pdfParse from '@cedrugs/pdf-parse'
 import { generateEmbedding, generateText } from '../ai/gemini.js'
 import { env } from '../config/env.js'
+import { readDocumentFileBuffer } from '../utils/document-file.js'
 import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 
 const querySchema = z.object({
@@ -230,29 +229,8 @@ export class DocumentRagService {
 
   private async ensureExtractedText(doc: DocRow) {
     if (doc.extracted_text && doc.extracted_text.length > 0) return doc.extracted_text
-    if (!doc.local_path) throw new Error('Document local path is missing')
 
-    const localPath = doc.local_path.replace(/\\/g, '/')
-    const normalizedStorageRoot = path.resolve(env.AI_STORAGE_DIR).replace(/\\/g, '/')
-    let absPath: string
-
-    if (path.isAbsolute(doc.local_path)) {
-      absPath = doc.local_path
-    } else if (localPath.startsWith('storage/')) {
-      // Legacy rows may store relative paths prefixed with "storage/".
-      // Avoid ".../storage/storage/..." by resolving from backend root.
-      absPath = path.resolve(localPath)
-    } else if (localPath.startsWith('documents/')) {
-      // Common relative path format inside storage dir.
-      absPath = path.join(env.AI_STORAGE_DIR, localPath)
-    } else if (localPath.startsWith(normalizedStorageRoot)) {
-      // Safety path in case slashes differ but string isn't detected as absolute.
-      absPath = path.resolve(localPath)
-    } else {
-      absPath = path.join(env.AI_STORAGE_DIR, localPath)
-    }
-
-    const fileBuffer = await readFile(absPath)
+    const fileBuffer = await readDocumentFileBuffer(this.app, doc)
     let text = ''
 
     const normalizedFileType = String(doc.file_type || '').toLowerCase()

@@ -25,6 +25,7 @@ const expectedTables = [
   'education_plans',
   'exams',
   'lessons',
+  'lesson_media_files',
   'teacher_chat_assistants',
   'teacher_chat_conversations',
   'teacher_chat_messages',

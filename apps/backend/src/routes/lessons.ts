@@ -3,6 +3,12 @@ import { createReadStream } from 'node:fs'
 import { access, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../config/env.js'
+import { useDatabaseFileStorage } from '../utils/document-file.js'
+import {
+  contentTypeForLessonMediaFile,
+  getLessonMediaFile,
+  lessonMediaFileExists
+} from '../utils/lesson-media-storage.js'
 
 type LessonRow = {
   id: string
@@ -197,14 +203,15 @@ export async function lessonsRoutes(app: FastifyInstance) {
       ((lesson.metadata as Record<string, unknown> | null)?.audio_url as string | null) ||
       null
 
-    // Fallback: if DB field is not updated yet but local audio file exists, expose it.
+    // Fallback: audio file exists in DB or on disk but audio_url not set yet.
     if (!resolvedAudioUrl) {
-      const audioPath = path.join(env.AI_STORAGE_DIR, 'lessons', lesson.id, 'audio.wav')
-      try {
-        await access(audioPath)
+      const hasAudio = useDatabaseFileStorage()
+        ? await lessonMediaFileExists(lesson.id, 'audio.wav')
+        : await access(path.join(env.AI_STORAGE_DIR, 'lessons', lesson.id, 'audio.wav'))
+            .then(() => true)
+            .catch(() => false)
+      if (hasAudio) {
         resolvedAudioUrl = `/v1/lessons/${lesson.id}/media/audio.wav`
-      } catch {
-        // keep null when audio file is not present
       }
     }
 
@@ -239,6 +246,16 @@ export async function lessonsRoutes(app: FastifyInstance) {
     if (!rows[0]) return reply.code(404).send({ error: 'Lesson not found' })
 
     const safeFile = path.basename(file)
+
+    if (useDatabaseFileStorage()) {
+      const media = await getLessonMediaFile(id, safeFile)
+      if (!media) {
+        return reply.code(404).send({ error: 'Media file not found' })
+      }
+      reply.header('Content-Type', media.content_type)
+      return reply.send(media.file_data)
+    }
+
     const mediaPath = path.join(env.AI_STORAGE_DIR, 'lessons', id, safeFile)
     try {
       await access(mediaPath)
@@ -246,20 +263,8 @@ export async function lessonsRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: 'Media file not found' })
     }
 
-    const ext = path.extname(safeFile).toLowerCase()
-    const contentType =
-      ext === '.wav'
-        ? 'audio/wav'
-        : ext === '.png'
-          ? 'image/png'
-          : ext === '.svg'
-            ? 'image/svg+xml'
-          : ext === '.jpg' || ext === '.jpeg'
-            ? 'image/jpeg'
-            : 'application/octet-stream'
-
-    reply.header('Content-Type', contentType)
-    reply.send(createReadStream(mediaPath))
+    reply.header('Content-Type', contentTypeForLessonMediaFile(safeFile))
+    return reply.send(createReadStream(mediaPath))
   })
 
   app.delete('/lessons/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
@@ -276,15 +281,17 @@ export async function lessonsRoutes(app: FastifyInstance) {
 
     if (!rows[0]) return reply.code(404).send({ error: 'Lesson not found' })
 
-    // Best-effort cleanup: remove local lesson media folder (images/audio).
-    const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', id)
-    try {
-      await rm(lessonDir, { recursive: true, force: true })
-    } catch (error) {
-      request.log.warn(
-        { error, lessonId: id, lessonDir },
-        'Failed to remove lesson media directory after delete'
-      )
+    // Best-effort cleanup of on-disk lesson media (DB rows cascade via FK).
+    if (!useDatabaseFileStorage()) {
+      const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', id)
+      try {
+        await rm(lessonDir, { recursive: true, force: true })
+      } catch (error) {
+        request.log.warn(
+          { error, lessonId: id, lessonDir },
+          'Failed to remove lesson media directory after delete'
+        )
+      }
     }
 
     return reply.send({ ok: true })

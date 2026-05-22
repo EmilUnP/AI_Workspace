@@ -8,6 +8,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../config/env.js'
+import { useDatabaseFileStorage } from '../utils/document-file.js'
+import { saveLessonMediaFile } from '../utils/lesson-media-storage.js'
 import { buildImagePromptContentExcerpt } from './lesson-content-sanitize.js'
 
 const AI_MODELS = {
@@ -292,9 +294,13 @@ async function uploadImageToStorage(
     // Determine file extension from mime type
     const extension = mimeType.split('/')[1] || 'png'
     const fileName = `image_${index}.${extension}`
-    const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', lessonId)
-    await mkdir(lessonDir, { recursive: true })
-    await writeFile(path.join(lessonDir, fileName), imageBuffer)
+    if (useDatabaseFileStorage()) {
+      await saveLessonMediaFile(lessonId, fileName, mimeType, imageBuffer)
+    } else {
+      const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', lessonId)
+      await mkdir(lessonDir, { recursive: true })
+      await writeFile(path.join(lessonDir, fileName), imageBuffer)
+    }
     const mediaUrl = `/v1/lessons/${lessonId}/media/${fileName}`
     console.log(`Image ${index} saved for lesson ${lessonId}:`, mediaUrl)
     return mediaUrl
@@ -590,10 +596,14 @@ export async function generateLessonAudioWithUsage(
     const pcmBuffer = Buffer.from(audioBase64, "base64")
     const wavBuffer = createWavBuffer(pcmBuffer)
 
-    // Save to local lesson storage and serve via backend media route
-    const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', lessonId)
-    await mkdir(lessonDir, { recursive: true })
-    await writeFile(path.join(lessonDir, 'audio.wav'), wavBuffer)
+    const fileName = 'audio.wav'
+    if (useDatabaseFileStorage()) {
+      await saveLessonMediaFile(lessonId, fileName, 'audio/wav', wavBuffer)
+    } else {
+      const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', lessonId)
+      await mkdir(lessonDir, { recursive: true })
+      await writeFile(path.join(lessonDir, fileName), wavBuffer)
+    }
     const mediaUrl = `/v1/lessons/${lessonId}/media/audio.wav`
     console.log(`TTS: Audio saved for lesson ${lessonId}:`, mediaUrl)
     return {

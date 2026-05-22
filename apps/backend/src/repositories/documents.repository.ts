@@ -35,13 +35,14 @@ export class DocumentsRepository {
     fileType: string
     fileSize: number
     status?: DocumentRecord['status']
-    localPath?: string
+    localPath?: string | null
+    fileData?: Buffer | null
     metadata?: Record<string, unknown>
   }) {
     const { rows } = await this.app.db.query<DocumentRecord>(
       `
-        INSERT INTO documents (owner_user_id, title, file_name, file_type, file_size, status, local_path, metadata)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+        INSERT INTO documents (owner_user_id, title, file_name, file_type, file_size, status, local_path, file_data, metadata)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
         RETURNING id, owner_user_id, title, file_name, file_type, file_size, status, local_path, extracted_text, text_chunks, chunk_embeddings, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata, created_at, updated_at
       `,
       [
@@ -52,10 +53,24 @@ export class DocumentsRepository {
         input.fileSize,
         input.status ?? 'uploaded',
         input.localPath ?? null,
+        input.fileData ?? null,
         JSON.stringify(input.metadata ?? {})
       ]
     )
     return rows[0]
+  }
+
+  async hasFileData(id: string, ownerUserId: string) {
+    const { rows } = await this.app.db.query<{ has_file_data: boolean }>(
+      `
+        SELECT (file_data IS NOT NULL AND octet_length(file_data) > 0) AS has_file_data
+        FROM documents
+        WHERE id = $1 AND owner_user_id = $2
+        LIMIT 1
+      `,
+      [id, ownerUserId]
+    )
+    return rows[0]?.has_file_data ?? false
   }
 
   async listByUser(ownerUserId: string) {

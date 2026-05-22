@@ -1,10 +1,14 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { mkdir, writeFile, unlink } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { DocumentsRepository } from '../repositories/documents.repository.js'
 import { env } from '../config/env.js'
+import {
+  resolveDocumentFilePath,
+  useDatabaseFileStorage
+} from '../utils/document-file.js'
 
 const createDocumentSchema = z.object({
   title: z.string().min(1).max(200),
@@ -43,16 +47,28 @@ export class DocumentsService {
   async create(userId: string, input: unknown) {
     const data = createDocumentSchema.parse(input)
     const inferredName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
-    let localPath = data.localPath
+    let localPath: string | null = data.localPath ?? null
+    let fileData: Buffer | null = null
 
-    if (!localPath && data.contentBase64) {
+    if (data.contentBase64) {
+      fileData = Buffer.from(data.contentBase64, 'base64')
+    } else if (data.localPath) {
+      fileData = await readFile(resolveDocumentFilePath(data.localPath))
+    }
+
+    if (useDatabaseFileStorage()) {
+      if (!fileData) {
+        throw new Error('Document upload requires contentBase64 or a readable localPath')
+      }
+      localPath = null
+    } else if (fileData) {
       const userDir = path.join(env.AI_STORAGE_DIR, 'documents', userId)
       await mkdir(userDir, { recursive: true })
       const fileName = `${randomUUID()}-${inferredName}`
       const absPath = path.join(userDir, fileName)
-      const contentBuffer = Buffer.from(data.contentBase64, 'base64')
-      await writeFile(absPath, contentBuffer)
+      await writeFile(absPath, fileData)
       localPath = absPath
+      fileData = null
     }
 
     return this.documentsRepo.create({
@@ -62,6 +78,7 @@ export class DocumentsService {
       fileType: normalizeStoredFileType(data.fileType, data.fileName),
       fileSize: data.fileSize,
       localPath,
+      fileData,
       metadata: data.metadata
     })
   }
@@ -72,6 +89,10 @@ export class DocumentsService {
 
   async getById(userId: string, id: string) {
     return this.documentsRepo.getByIdForUser(id, userId)
+  }
+
+  async hasFileData(userId: string, id: string) {
+    return this.documentsRepo.hasFileData(id, userId)
   }
 
   async update(userId: string, id: string, input: unknown) {
@@ -96,16 +117,9 @@ export class DocumentsService {
     const existing = await this.documentsRepo.getByIdForUser(id, userId)
     if (!existing) return false
 
-    if (existing.local_path) {
-      const rawPath = existing.local_path.replace(/\\/g, '/')
-      const resolvedPath = path.isAbsolute(existing.local_path)
-        ? existing.local_path
-        : rawPath.startsWith('storage/')
-          ? path.resolve(rawPath)
-          : path.join(env.AI_STORAGE_DIR, rawPath)
-
+    if (existing.local_path && !useDatabaseFileStorage()) {
       try {
-        await unlink(resolvedPath)
+        await unlink(resolveDocumentFilePath(existing.local_path))
       } catch (error) {
         // Ignore missing file; still delete DB record.
         if (!(error instanceof Error && 'code' in error && (error as { code?: string }).code === 'ENOENT')) {

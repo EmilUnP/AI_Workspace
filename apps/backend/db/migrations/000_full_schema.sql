@@ -1,14 +1,18 @@
--- Eduator backend — full database schema (structure only, no seed data)
+-- Eduator backend — COMPLETE schema (structure only, no seed data)
 --
--- Run once on an EMPTY PostgreSQL database:
---   psql "postgres://USER:PASSWORD@HOST:5432/eduator_clean" -f apps/backend/db/migrations/000_full_schema.sql
+-- Use this ONE file after you dropped all tables (fresh / reset database):
 --
--- Or from apps/backend:
---   psql "$DATABASE_URL" -f db/migrations/000_full_schema.sql
+--   pgAdmin: open Query Tool on your database → paste/run this entire file
+--   psql:    psql "postgres://USER:PASS@10.10.204.21:5432/eduator_clean" -f apps/backend/db/migrations/000_full_schema.sql
 --
--- Safe to re-run (idempotent). Marks migrations 001–012 as applied so
--- `npm run db:migrate` skips them afterward.
--- (000_full_schema.sql itself is recorded by the migrate runner.)
+-- Includes everything: users, documents (+ file_data in DB), lessons (+ audio_url),
+-- lesson_media_files, teacher chat, API keys, etc.
+--
+-- After this file succeeds, run (optional):
+--   apps/backend/db/seeds/001_admin_user.sql
+--
+-- Do NOT run 001–014 separately — they are already included here.
+-- Safe to re-run (idempotent). Marks all migrations applied for npm run db:migrate.
 
 BEGIN;
 
@@ -54,6 +58,7 @@ CREATE TABLE IF NOT EXISTS documents (
   status TEXT NOT NULL DEFAULT 'uploaded',
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   local_path TEXT,
+  file_data BYTEA,
   extracted_text TEXT,
   text_chunks JSONB,
   chunk_embeddings JSONB,
@@ -71,6 +76,9 @@ CREATE TABLE IF NOT EXISTS documents (
 
 CREATE INDEX IF NOT EXISTS idx_documents_owner_user_id ON documents(owner_user_id);
 CREATE INDEX IF NOT EXISTS idx_documents_file_hash ON documents(file_hash);
+
+-- Idempotent patches when re-running on an older partial schema
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data BYTEA;
 
 -- ---------------------------------------------------------------------------
 -- AI
@@ -194,10 +202,25 @@ CREATE TABLE IF NOT EXISTS lessons (
   images JSONB NOT NULL DEFAULT '[]'::jsonb,
   mini_test JSONB,
   language TEXT NOT NULL DEFAULT 'en',
+  audio_url TEXT NULL,
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE lessons ADD COLUMN IF NOT EXISTS audio_url TEXT NULL;
+
+CREATE TABLE IF NOT EXISTS lesson_media_files (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  lesson_id UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  file_data BYTEA NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (lesson_id, file_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_lesson_media_files_lesson_id ON lesson_media_files(lesson_id);
 
 -- ---------------------------------------------------------------------------
 -- AI Tutor (assistants → conversations → messages)
@@ -248,6 +271,8 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 );
 
 INSERT INTO schema_migrations (id) VALUES
+  ('000_cleanup_wrong_schema.sql'),
+  ('000_full_schema.sql'),
   ('001_init.sql'),
   ('002_ai_expansion.sql'),
   ('003_user_gemini_keys.sql'),
@@ -260,7 +285,9 @@ INSERT INTO schema_migrations (id) VALUES
   ('009_teacher_chat_external_user.sql'),
   ('010_teacher_chat_assistants.sql'),
   ('011_teacher_chat_assistants_repair.sql'),
-  ('012_external_user_on_conversations.sql')
+  ('012_external_user_on_conversations.sql'),
+  ('013_documents_file_data.sql'),
+  ('014_lesson_media_files.sql')
 ON CONFLICT (id) DO NOTHING;
 
 COMMIT;
