@@ -1,6 +1,6 @@
 {
   "name": "@eduator/clean-backend",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "./dist/server.js",
@@ -11,6 +11,7 @@
     "start": "node dist/server.js",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:test-schema": "tsx scripts/test-full-schema.ts",
+    "db:setup-local": "tsx scripts/setup-local-db.ts",
     "db:seed": "tsx src/db/seed.ts",
     "test": "tsx --test tests/**/*.test.ts",
     "lint:forbidden-imports": "tsx scripts/check-forbidden-imports.ts"

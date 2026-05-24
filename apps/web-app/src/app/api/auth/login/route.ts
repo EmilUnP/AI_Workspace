@@ -57,7 +57,10 @@ export async function POST(request: NextRequest) {
     })
   } catch {
     const loginUrl = new URL('/auth/login', origin)
-    loginUrl.searchParams.set('error', 'Backend unavailable. Start backend and try again.')
+    loginUrl.searchParams.set(
+      'error',
+      `Backend unavailable at ${backendBase}. Start backend (npm run dev in apps/backend) and try again.`
+    )
     return redirectTo(loginUrl)
   }
 
@@ -68,6 +71,9 @@ export async function POST(request: NextRequest) {
       if (body?.error) errorMessage = body.error
     } catch {
       // ignore parse issue
+    }
+    if (response.status >= 500) {
+      errorMessage = `${errorMessage} (API ${backendBase} returned ${response.status})`
     }
     const loginUrl = new URL('/auth/login', origin)
     loginUrl.searchParams.set('error', errorMessage)
