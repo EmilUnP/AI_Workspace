@@ -1,4 +1,4 @@
-# Technical Summary (0.2.9)
+# Technical Summary (0.3.0)
 
 ## Architecture
 
@@ -10,7 +10,8 @@
 ## Data and Runtime Topology
 
 - **Database**: PostgreSQL for users, auth tokens, documents, chats, lessons, exams, education plans, and user AI keys.
-- **File storage**: backend local storage (`AI_STORAGE_DIR`) for uploaded docs and generated lesson media.
+- **Vector search**: **pgvector** extension with **`document_chunks`** table (`vector(768)` + HNSW index) for RAG similarity search (0.3.0+).
+- **File storage**: backend local storage (`AI_STORAGE_DIR`) or PostgreSQL `file_data` depending on `FILE_STORAGE`.
 - **Auth model**: backend-issued JWT access token + refresh token for the web app; **HTTP API keys** (`ed_…`) for third-party `/v1` callers.
 - **Frontend-backend bridge**: Next.js server actions and API routes proxy to backend endpoints with JWT and **`X-Eduator-Client: web-app`** on first-party calls (`webAppBackendAuthHeaders` in `apps/web-app/src/lib/web-app-backend-headers.ts`).
 - **School admin → API Integration → Keys & Docs**: in-app curl reference is **third-party only** (API key in `Authorization: Bearer`, not login JWT). The web app itself is unchanged.
@@ -51,12 +52,13 @@
 
 1. Upload from web UI (`DocumentUploadZone`).
 2. Web server action posts to backend `POST /v1/documents`.
-3. Backend stores file to local storage + DB record.
+3. Backend stores file to local storage or DB + DB record.
 4. Background RAG processing queue starts:
    - extract text
    - clean/sanitize text
    - chunk text
-   - generate embeddings
+   - generate embeddings (Gemini `gemini-embedding-001`, 768-dim normalized)
+   - persist vectors to **`document_chunks`** (pgvector)
    - detect language
    - store stats (`total_tokens`, `chunk_count`, `avg_chunk_size`, quality fields)
 5. UI polls while documents are processing and refreshes list.
@@ -67,19 +69,49 @@
 - Web proxy endpoint: `GET /api/school-admin/documents/:id/file` (token-authenticated to backend).
 - Download behavior uses `?download=1`.
 
-## RAG Service Notes
+## RAG / Vector Search (0.3.0+)
 
-- Core methods available in backend service:
-  - `processDocumentOnUpload`
-  - `getParsedDocumentText`
-  - `getRelevantChunks`
-  - `getRelevantContentFromDocuments`
-  - `getDocumentsContent`
-- Parsing currently supports:
-  - PDF (`@cedrugs/pdf-parse`)
-  - DOCX (`mammoth`)
-  - DOC (`word-extractor`)
-  - text fallback for plain text/markdown
+Full architecture guide (legacy JSONB vs pgvector, deployment, future options): **[RAG_AND_VECTOR_SEARCH.md](./RAG_AND_VECTOR_SEARCH.md)**.
+
+### Stack (summary)
+
+| Layer | Technology |
+|--------|------------|
+| Embeddings | Google Gemini `gemini-embedding-001` (768-dim, L2-normalized) |
+| Vector store | PostgreSQL **pgvector** (`document_chunks.embedding vector(768)`) |
+| Index | **HNSW** with `vector_cosine_ops` |
+| Search | SQL `ORDER BY embedding <=> query_vector LIMIT k` |
+
+### Schema
+
+| Table / column | Role |
+|----------------|------|
+| `documents.text_chunks` | Cached chunk text (JSONB); stats on parent row |
+| `documents.chunk_embeddings` | **Legacy** — no longer written; lazy-backfilled into `document_chunks` |
+| `document_chunks` | One row per chunk: `content`, `embedding`, `chunk_index`; cascades on document delete |
+
+### Service methods (`DocumentRagService`)
+
+- `processDocumentOnUpload` — extract, chunk, embed, index in pgvector
+- `getParsedDocumentText` — owner-scoped full text
+- `getRelevantChunks` — single-document vector search
+- `getRelevantContentFromDocuments` — **one SQL query** across multiple documents
+- `retrieveMany` — batch retrieval grouped by document (AI Tutor)
+- `getDocumentsContent` — concatenate full texts
+
+### Migration & ops
+
+- Migration: **`015_pgvector_document_chunks.sql`**
+- Requires **pgvector** installed on PostgreSQL host
+- Run: `npm run db:migrate` in `apps/backend`
+- Legacy documents: JSONB embeddings migrated on first RAG access
+
+### Parsing support
+
+- PDF (`@cedrugs/pdf-parse`)
+- DOCX (`mammoth`)
+- DOC (`word-extractor`)
+- text fallback for plain text/markdown
 
 ## AI Tutor data model (0.2.9)
 
@@ -105,12 +137,13 @@
 ## Data Safety Improvements
 
 - NUL and malformed Unicode sanitization before DB writes.
-- Safer JSON serialization for chunk/embedding payloads.
+- Safer JSON serialization for chunk payloads.
 - File path resolution handles absolute + relative + legacy `storage/...` paths.
 - Sensitive Gemini API keys are encrypted before persistence and never returned in full.
 
 ## Current Constraints
 
+- **pgvector required** for RAG after migration 015 — install extension on DB host before deploy.
 - Some legacy docs/history may still mention removed token surfaces.
 - AI quality depends on source document quality (OCR noise can degrade results).
 - Local storage model requires disk-level backup and cleanup discipline in production-like environments.

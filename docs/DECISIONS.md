@@ -46,3 +46,11 @@
 
 - Token pages/settings/usage UI removed from school-admin and platform-owner active routes.
 - Reason: simplify product scope and reduce maintenance overhead during migration stabilization.
+
+## 10) pgvector for RAG instead of JSONB + in-memory search (0.3.0)
+
+- Store chunk embeddings in **`document_chunks`** with PostgreSQL **pgvector** (`vector(768)`) and an **HNSW** index.
+- Run similarity search in SQL (`<=>` cosine distance) rather than loading all embeddings into Node.js.
+- Use **768-dim** normalized Gemini embeddings (Matryoshka truncation from `gemini-embedding-001`).
+- Reason: scale for multi-document RAG (lessons, exams, tutor chat) under concurrent usage without CPU/memory bottlenecks.
+- Full guide: [RAG_AND_VECTOR_SEARCH.md](./RAG_AND_VECTOR_SEARCH.md).

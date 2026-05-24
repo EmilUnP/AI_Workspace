@@ -114,6 +114,14 @@ The following commands were run successfully:
 - UI integration is intentionally not part of this phase.
 - Old platform concepts (organization/class/calendar/course coupling) are not introduced in this clean service architecture.
 
+## 8) pgvector RAG upgrade (0.3.0)
+
+- Migration **`015_pgvector_document_chunks.sql`**: `document_chunks` table with `vector(768)` + HNSW index.
+- **`DocumentRagService`** refactored: pgvector SQL search, batch `retrieveMany()`, lazy backfill from legacy JSONB.
+- **`src/utils/vector.ts`**: 768-dim truncate + L2 normalize for Gemini embeddings.
+- **`teacher-chatbot.service.ts`**: batch document retrieval for tutor context.
+- Requires **pgvector** PostgreSQL extension on the database host.
+
 ## Next Suggested Steps
 
 1. Add OpenAPI schema generation for these endpoints.

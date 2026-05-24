@@ -1,4 +1,4 @@
-# API Summary (0.2.9)
+# API Summary (0.3.0)
 
 Base URL (local): `http://localhost:4000/v1`
 
@@ -62,10 +62,11 @@ Do **not** use `POST /auth/login` JWTs for production integrations — create an
 - `POST /exams` — create (camelCase body, e.g. `durationMinutes`, `questions`)
 - `DELETE /exams/:id` — delete
 
-## AI / RAG
+## AI / RAG (0.3.0+)
 
-- `POST /ai/rag/retrieve` - retrieve relevant chunks for query
-- AI generation routes (lesson/exam/etc.) continue to use backend AI modules.
+- `POST /ai/rag/retrieve` — retrieve relevant chunks for a query (pgvector similarity search on `document_chunks`)
+- Requires PostgreSQL **pgvector** + migration **`015_pgvector_document_chunks.sql`**
+- AI generation routes (lesson/exam/plan/tutor) use the same indexed RAG pipeline internally.
 
 ### AI Tutor (assistants + conversations) — 0.2.9+
 

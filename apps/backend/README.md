@@ -12,7 +12,7 @@ Backend-only service with local PostgreSQL and JWT authentication.
 
 - User auth and role handling
 - Document metadata and file access
-- RAG processing pipeline (extract/chunk/embed/retrieve)
+- RAG processing pipeline (extract/chunk/embed/index/retrieve via **pgvector**)
 - AI generation endpoints (chat, lessons, exams, education plans, translation/media helpers)
 - Per-user Gemini API key management (encrypted at rest)
 - **User HTTP API keys** (`/v1/users/me/api-keys`) and **usage** (`/v1/users/me/api-keys/usage`) backed by **`api_access_log`** after migration `006_api_access_log.sql`
@@ -21,8 +21,11 @@ Backend-only service with local PostgreSQL and JWT authentication.
 ## Local Setup
 1. Create `apps/backend/.env.local` from `apps/backend/.env.example`.
 2. Ensure PostgreSQL is running and `DATABASE_URL` is valid.
-3. Install dependencies from repo root:
+3. Install **pgvector** on PostgreSQL (required for RAG after migration 015):
+   - Debian/Ubuntu example: `sudo apt install postgresql-16-pgvector`
+4. Install dependencies from repo root:
    - `npm install`
+5. Run migrations: `npm run db:migrate` (includes `015_pgvector_document_chunks.sql`).
 
 ## Run Commands
 From `apps/backend`:
@@ -92,8 +95,10 @@ JWT Bearer token required for protected endpoints.
 - `POST /v1/ai/requests` (protected)
 - `GET /v1/ai/requests/:id` (protected)
 
-### AI - RAG
-- `POST /v1/ai/rag/retrieve` (protected)
+### AI - RAG (0.3.0+)
+
+- `POST /v1/ai/rag/retrieve` (protected) — vector similarity search over indexed document chunks (pgvector).
+- Requires migration **`015_pgvector_document_chunks.sql`** and pgvector extension on PostgreSQL.
 
 ### AI - Tutor (assistants + conversations, 0.2.9+)
 - `GET/POST/PATCH/DELETE /v1/ai/chat/assistants` (protected)
@@ -133,6 +138,7 @@ Use `apps/backend/requests.http` for quick local calls and adapt port if needed.
 ## Full API Docs
 - Detailed human-readable docs: `apps/backend/API_DOCUMENTATION.md`
 - OpenAPI spec (Swagger/Postman import): `apps/backend/openapi.yaml`
+- RAG & vector search architecture: `docs/RAG_AND_VECTOR_SEARCH.md`
 
 ## Troubleshooting
 
@@ -143,5 +149,8 @@ Use `apps/backend/requests.http` for quick local calls and adapt port if needed.
   - AI endpoints may return `MISSING_GEMINI_API_KEY`.
   - Add key from `/school-admin/api-integration` in the web app.
 - **Document processing issues**
-  - Confirm `AI_STORAGE_DIR` exists and backend process can read/write it.
+  - Confirm `AI_STORAGE_DIR` exists and backend process can read/write it (when `FILE_STORAGE=local`).
   - Verify `file_type` is one of supported parser types.
+- **RAG / pgvector errors**
+  - Ensure pgvector extension is installed on PostgreSQL and migration `015_pgvector_document_chunks.sql` has run.
+  - Re-process or re-open documents to trigger lazy backfill from legacy JSONB embeddings if needed.

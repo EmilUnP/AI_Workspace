@@ -1,6 +1,6 @@
 # Eduator AI Platform — Overview & Delivery Report
 
-**Version:** 0.2.0  
+**Version:** 0.3.0  
 **Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, and **where APIs live**.
 
 This is the **platform map** (architecture, roles, flows). For a **last-week delivery report** focused on third-party API, database work, Gemini keys, and AI Tutor — see **[PROJECT_OVERVIEW_AND_REPORT 2.md](./PROJECT_OVERVIEW_AND_REPORT%202.md)**.
@@ -39,7 +39,7 @@ flowchart LR
 |--------|----------------|
 | **web-app** (`apps/web-app`) | UI: auth, school-admin, platform-owner; proxies some file/API calls; locale + i18n. |
 | **backend** (`apps/backend`) | Auth, users, documents, RAG pipeline, AI generation (lessons/exams/plans), chat, encrypted Gemini keys. |
-| **PostgreSQL** | Users, sessions/tokens, documents metadata, chunks/embeddings refs, lessons, exams, plans, **api access log** (`api_access_log`), user API keys, encrypted Gemini keys. |
+| **PostgreSQL** | Users, sessions/tokens, documents metadata, **`document_chunks`** (pgvector RAG index), lessons, exams, plans, **api access log** (`api_access_log`), user API keys, encrypted Gemini keys. |
 | **Local disk** | Uploaded documents and generated lesson media (see backend storage config). |
 
 Canonical technical detail: [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md).
@@ -206,6 +206,7 @@ This section captures the **product and engineering themes** completed in the re
 
 | File | Topic |
 |------|--------|
+| [RAG_AND_VECTOR_SEARCH.md](./RAG_AND_VECTOR_SEARCH.md) | RAG pipeline, pgvector, legacy vs current, future roadmap |
 | [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md) | Architecture, document/RAG flow, error contract |
 | [DECISIONS.md](./DECISIONS.md) | ADR-style decisions |
 | [API_SUMMARY.md](./API_SUMMARY.md) | REST groups and checklist |
@@ -215,4 +216,4 @@ This section captures the **product and engineering themes** completed in the re
 
 ---
 
-*Last updated for release **0.2.9** (AI Tutor assistants vs conversations, third-party `conversation.id` sessions, migrations 008–012).*
+*Last updated for release **0.3.0** (pgvector RAG index, migration 015, batch multi-document retrieval). Prior: **0.2.9** (AI Tutor assistants vs conversations, migrations 008–012).*

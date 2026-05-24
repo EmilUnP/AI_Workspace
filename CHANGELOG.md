@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.0 - 2026-05-22
+
+### Added
+
+- **pgvector RAG index** — migration `015_pgvector_document_chunks.sql` creates `document_chunks` table with `vector(768)` and **HNSW** cosine index for fast similarity search.
+- **Batch multi-document retrieval** — `DocumentRagService.retrieveMany()` and optimized `getRelevantContentFromDocuments()` use a single SQL query instead of N sequential in-memory searches.
+- **Vector utilities** — `apps/backend/src/utils/vector.ts` (768-dim truncate, L2 normalize, pgvector formatting).
+
+### Changed
+
+- **RAG storage model** — chunk embeddings move from JSONB (`documents.chunk_embeddings`) to indexed **`document_chunks`** rows; new uploads no longer persist large embedding blobs on the document row.
+- **Embedding pipeline** — Gemini `gemini-embedding-001` outputs are normalized to **768 dimensions** before storage (Matryoshka truncation).
+- **Similarity search** — cosine ranking runs in PostgreSQL via pgvector (`<=>` operator) instead of loading all vectors into Node.js.
+- **AI Tutor chat** — multi-document context uses batch `retrieveMany()` (one query embedding + one vector search).
+- **Docs & versioning** — README, technical summary, API docs, OpenAPI, and package versions aligned to **0.3.0**.
+- **`docs/RAG_AND_VECTOR_SEARCH.md`** — dedicated RAG/vector architecture guide (legacy vs current, ops, future roadmap).
+
+### Notes
+
+- Install **pgvector** on the PostgreSQL host before migrating (e.g. `postgresql-16-pgvector` on Debian/Ubuntu).
+- Run `npm run db:migrate` in `apps/backend` so `015_pgvector_document_chunks.sql` is applied.
+- Existing documents with legacy JSONB embeddings are **lazy-backfilled** into `document_chunks` on first RAG access.
+
 ## 0.2.9 - 2026-05-15
 
 ### Added

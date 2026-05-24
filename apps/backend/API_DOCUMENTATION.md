@@ -1,6 +1,6 @@
 # Clean Backend API Documentation
 
-This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.2.9**).
+This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.3.0**).
 
 ## Base
 - Base URL: `http://localhost:<PORT>`
@@ -382,10 +382,12 @@ Get one request by id (owner-scoped).
 
 ---
 
-## 5) AI RAG
+## 5) AI RAG (0.3.0+)
+
+Vector similarity search over indexed document chunks. Requires PostgreSQL **pgvector** and migration **`015_pgvector_document_chunks.sql`**.
 
 ### POST `/v1/ai/rag/retrieve` (Protected)
-Retrieve top relevant chunks from one document.
+Retrieve top relevant chunks from one document using pgvector cosine search.
 
 Request:
 ```json

@@ -1,6 +1,6 @@
 # Eduator AI Workspace
 
-Current baseline version: **0.2.9**.
+Current baseline version: **0.3.0**.
 
 ## Current Scope
 
@@ -63,6 +63,12 @@ Use app-level env files:
    - `code: MISSING_GEMINI_API_KEY`
    - user-facing hint for next action.
 
+## RAG vector search (0.3.0+)
+
+- Document chunk embeddings are stored in PostgreSQL **`document_chunks`** with **pgvector** (`vector(768)`) and an **HNSW** index for fast similarity search.
+- Requires the **pgvector** extension on your PostgreSQL server and migration **`015_pgvector_document_chunks.sql`** (`npm run db:migrate` in `apps/backend`).
+- Legacy JSONB `chunk_embeddings` on `documents` are backfilled into `document_chunks` on first access; new uploads write vectors to the indexed table only.
+
 ## API usage analytics (0.2.6+)
 
 - After `apps/backend` migrations **`006_api_access_log.sql`** and **`007_api_access_log_api_key_id.sql`**, authenticated `/v1` responses are stored for the **Usage** tab (`GET /v1/users/me/api-keys/usage?range=today|30d|all`), with **per HTTP API key** breakdown when callers use `Authorization: Bearer ed_…`.
@@ -71,6 +77,7 @@ Use app-level env files:
 
 ## Core Technical Docs
 
+- `docs/RAG_AND_VECTOR_SEARCH.md` — **RAG & vector search deep dive** (legacy vs 0.3.0, ops, future roadmap)
 - `docs/TECHNICAL_SUMMARY.md`
 - `docs/API_SUMMARY.md`
 - `docs/DECISIONS.md`

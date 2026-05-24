@@ -7,6 +7,7 @@ import pdfParse from '@cedrugs/pdf-parse'
 import { generateEmbedding, generateText } from '../ai/gemini.js'
 import { env } from '../config/env.js'
 import { readDocumentFileBuffer } from '../utils/document-file.js'
+import { prepareEmbedding, toPgVector } from '../utils/vector.js'
 import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 
 const querySchema = z.object({
@@ -32,11 +33,6 @@ type DocRow = {
   avg_chunk_size: number
   quality_status: string | null
   quality_message: string | null
-}
-
-type DocumentChunksData = {
-  chunks: string[]
-  embeddings: number[][] | null
 }
 
 export class DocumentRagService {
@@ -73,18 +69,45 @@ export class DocumentRagService {
       throw err
     }
     const text = await this.ensureExtractedText(doc)
-    const chunks = this.chunkText(text, 4000, 400)
-    const embeddings = await this.ensureEmbeddings(doc.id, chunks, userId)
+    const chunks = await this.getDocumentChunks(doc.id, text, userId)
+    if (chunks.length === 0) {
+      return { documentId: doc.id, chunks: [] as string[] }
+    }
+    await this.ensurePgvectorIndex(doc.id, chunks, userId)
     const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const queryForSearch = await this.translateQueryIfNeeded(data.query, doc.content_language, apiKey)
-    const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
-    let relevant: string[]
     try {
-      relevant = this.pickTopChunks(chunks, embeddings, queryVec, data.topK)
+      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
+      const relevant = await this.vectorSearch(doc.id, queryVec, data.topK)
+      return { documentId: doc.id, chunks: relevant.length ? relevant : chunks.slice(0, data.topK) }
     } catch {
-      relevant = chunks.slice(0, Math.max(1, data.topK))
+      return { documentId: doc.id, chunks: chunks.slice(0, Math.max(1, data.topK)) }
     }
-    return { documentId: doc.id, chunks: relevant }
+  }
+
+  /**
+   * Batch retrieval for multiple documents with one query embedding and one SQL search.
+   */
+  async retrieveMany(
+    userId: string,
+    documentIds: string[],
+    query: string,
+    topKPerDocument = 2
+  ): Promise<Map<string, string[]>> {
+    const uniqueIds = Array.from(new Set(documentIds.filter(Boolean))).slice(0, 10)
+    if (uniqueIds.length === 0) return new Map()
+
+    await this.ensureDocumentsIndexed(uniqueIds, userId)
+
+    const firstDoc = await this.getDoc(userId, uniqueIds[0])
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const queryForSearch = await this.translateQueryIfNeeded(query, firstDoc?.content_language ?? null, apiKey)
+    try {
+      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
+      return await this.vectorSearchGrouped(uniqueIds, userId, queryVec, topKPerDocument)
+    } catch {
+      return new Map()
+    }
   }
 
   /**
@@ -114,16 +137,15 @@ export class DocumentRagService {
     const doc = await this.getDoc(userId, documentId)
     if (!doc) return []
     const text = await this.ensureExtractedText(doc)
-    const { chunks, embeddings } = await this.getDocumentChunks(doc.id, text, userId)
+    const chunks = await this.getDocumentChunks(doc.id, text, userId)
     if (chunks.length === 0) return []
+    await this.ensurePgvectorIndex(doc.id, chunks, userId)
     const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const queryForSearch = await this.translateQueryIfNeeded(query, doc.content_language, apiKey)
     try {
       const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
-      if (embeddings && embeddings.length === chunks.length) {
-        return this.pickTopChunks(chunks, embeddings, queryVec, Math.max(1, topK))
-      }
-      return chunks.slice(0, Math.max(1, topK))
+      const results = await this.vectorSearch(doc.id, queryVec, Math.max(1, topK))
+      return results.length ? results : chunks.slice(0, Math.max(1, topK))
     } catch {
       return chunks.slice(0, Math.max(1, topK))
     }
@@ -145,6 +167,7 @@ export class DocumentRagService {
   /**
    * Backward-compatible core RAG method:
    * concatenates relevant chunks from many documents for one query.
+   * Uses a single pgvector query instead of N sequential searches.
    */
   async getRelevantContentFromDocuments(
     documentIds: string[],
@@ -152,16 +175,44 @@ export class DocumentRagService {
     query: string,
     chunksPerDocument = 5
   ): Promise<string> {
-    const relevant: string[] = []
-    for (const documentId of documentIds) {
-      try {
-        const chunks = await this.getRelevantChunks(documentId, userId, query, chunksPerDocument)
-        relevant.push(...chunks)
-      } catch {
-        // skip failed document and continue with others
-      }
+    const uniqueIds = Array.from(new Set(documentIds.filter(Boolean)))
+    if (uniqueIds.length === 0) return ''
+
+    await this.ensureDocumentsIndexed(uniqueIds, userId)
+
+    const firstDoc = await this.getDoc(userId, uniqueIds[0])
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const queryForSearch = await this.translateQueryIfNeeded(query, firstDoc?.content_language ?? null, apiKey)
+    try {
+      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
+      const chunks = await this.vectorSearchAcrossDocuments(
+        uniqueIds,
+        userId,
+        queryVec,
+        chunksPerDocument
+      )
+      return chunks.join('\n\n---\n\n')
+    } catch {
+      return ''
     }
-    return relevant.join('\n\n---\n\n')
+  }
+
+  private async ensureDocumentsIndexed(documentIds: string[], userId: string) {
+    await Promise.all(
+      documentIds.map(async (documentId) => {
+        try {
+          const doc = await this.getDoc(userId, documentId)
+          if (!doc) return
+          const text = await this.ensureExtractedText(doc)
+          const chunks = await this.getDocumentChunks(doc.id, text, userId)
+          if (chunks.length > 0) {
+            await this.ensurePgvectorIndex(doc.id, chunks, userId)
+          }
+        } catch {
+          // skip failed document and continue with others
+        }
+      })
+    )
   }
 
   private async processSingle(userId: string, documentId: string) {
@@ -173,6 +224,7 @@ export class DocumentRagService {
       const chunks = this.chunkText(text, 4000, 400)
       const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
       const embeddings = await this.generateChunkEmbeddings(chunks, apiKey)
+      await this.persistDocumentChunks(doc.id, chunks, embeddings)
       const quality = this.validateTextQuality(text, chunks)
       const contentLanguage = await this.detectLanguage(text)
 
@@ -183,20 +235,19 @@ export class DocumentRagService {
       await this.app.db.query(
         `UPDATE documents
          SET text_chunks = $2::jsonb,
-             chunk_embeddings = $3::jsonb,
-             content_language = $4,
-             total_tokens = $5,
-             chunk_count = $6,
-             avg_chunk_size = $7,
-             quality_status = $8,
-             quality_message = $9,
+             chunk_embeddings = NULL,
+             content_language = $3,
+             total_tokens = $4,
+             chunk_count = $5,
+             avg_chunk_size = $6,
+             quality_status = $7,
+             quality_message = $8,
              status = 'ready',
              updated_at = now()
          WHERE id = $1`,
         [
           doc.id,
           this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]'),
-          this.safeJsonStringify(embeddings, '[]'),
           contentLanguage,
           totalTokens,
           chunkCount,
@@ -225,6 +276,148 @@ export class DocumentRagService {
       [id, userId]
     )
     return rows[0] ?? null
+  }
+
+  private async hasPgvectorChunks(documentId: string, expectedCount?: number) {
+    const { rows } = await this.app.db.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM document_chunks WHERE document_id = $1`,
+      [documentId]
+    )
+    const count = rows[0]?.count ?? 0
+    if (count === 0) return false
+    if (typeof expectedCount === 'number') return count === expectedCount
+    return true
+  }
+
+  private async persistDocumentChunks(documentId: string, chunks: string[], embeddings: number[][]) {
+    const client = await this.app.db.connect()
+    try {
+      await client.query('BEGIN')
+      await client.query(`DELETE FROM document_chunks WHERE document_id = $1`, [documentId])
+      if (chunks.length === 0) {
+        await client.query('COMMIT')
+        return
+      }
+      const indices = chunks.map((_, index) => index)
+      const vectors = embeddings.map((embedding) => toPgVector(embedding))
+      await client.query(
+        `INSERT INTO document_chunks (document_id, chunk_index, content, embedding)
+         SELECT $1, idx, content, emb::vector
+         FROM unnest($2::int[], $3::text[], $4::text[]) AS t(idx, content, emb)`,
+        [documentId, indices, chunks, vectors]
+      )
+      await client.query('COMMIT')
+    } catch (error) {
+      await client.query('ROLLBACK')
+      throw error
+    } finally {
+      client.release()
+    }
+  }
+
+  private async vectorSearch(documentId: string, queryVec: number[], topK: number): Promise<string[]> {
+    const { rows } = await this.app.db.query<{ content: string }>(
+      `SELECT content
+       FROM document_chunks
+       WHERE document_id = $1
+       ORDER BY embedding <=> $2::vector
+       LIMIT $3`,
+      [documentId, toPgVector(queryVec), Math.max(1, topK)]
+    )
+    return rows.map((row) => row.content)
+  }
+
+  private async vectorSearchAcrossDocuments(
+    documentIds: string[],
+    ownerUserId: string,
+    queryVec: number[],
+    topKPerDocument: number
+  ): Promise<string[]> {
+    const { rows } = await this.app.db.query<{ content: string }>(
+      `WITH ranked AS (
+         SELECT dc.content,
+                ROW_NUMBER() OVER (
+                  PARTITION BY dc.document_id
+                  ORDER BY dc.embedding <=> $1::vector
+                ) AS rn
+         FROM document_chunks dc
+         INNER JOIN documents d ON d.id = dc.document_id
+         WHERE dc.document_id = ANY($2::uuid[])
+           AND d.owner_user_id = $3
+           AND d.status = 'ready'
+       )
+       SELECT content FROM ranked WHERE rn <= $4`,
+      [toPgVector(queryVec), documentIds, ownerUserId, Math.max(1, topKPerDocument)]
+    )
+    return rows.map((row) => row.content)
+  }
+
+  private async vectorSearchGrouped(
+    documentIds: string[],
+    ownerUserId: string,
+    queryVec: number[],
+    topKPerDocument: number
+  ): Promise<Map<string, string[]>> {
+    const { rows } = await this.app.db.query<{ document_id: string; content: string }>(
+      `WITH ranked AS (
+         SELECT dc.document_id,
+                dc.content,
+                ROW_NUMBER() OVER (
+                  PARTITION BY dc.document_id
+                  ORDER BY dc.embedding <=> $1::vector
+                ) AS rn
+         FROM document_chunks dc
+         INNER JOIN documents d ON d.id = dc.document_id
+         WHERE dc.document_id = ANY($2::uuid[])
+           AND d.owner_user_id = $3
+       )
+       SELECT document_id, content FROM ranked WHERE rn <= $4`,
+      [toPgVector(queryVec), documentIds, ownerUserId, Math.max(1, topKPerDocument)]
+    )
+    const grouped = new Map<string, string[]>()
+    for (const row of rows) {
+      const existing = grouped.get(row.document_id) ?? []
+      existing.push(row.content)
+      grouped.set(row.document_id, existing)
+    }
+    return grouped
+  }
+
+  private async ensurePgvectorIndex(documentId: string, chunks: string[], userId: string) {
+    if (await this.hasPgvectorChunks(documentId, chunks.length)) return
+
+    const backfilled = await this.tryBackfillFromLegacy(documentId)
+    if (backfilled && (await this.hasPgvectorChunks(documentId, chunks.length))) return
+
+    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
+    const embeddings = await this.generateChunkEmbeddings(chunks, apiKey)
+    await this.persistDocumentChunks(documentId, chunks, embeddings)
+    await this.app.db.query(
+      `UPDATE documents
+       SET text_chunks = $2::jsonb,
+           chunk_embeddings = NULL,
+           updated_at = now()
+       WHERE id = $1`,
+      [
+        documentId,
+        this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]')
+      ]
+    )
+  }
+
+  private async tryBackfillFromLegacy(documentId: string): Promise<boolean> {
+    const { rows } = await this.app.db.query<Pick<DocRow, 'text_chunks' | 'chunk_embeddings'>>(
+      `SELECT text_chunks, chunk_embeddings FROM documents WHERE id = $1`,
+      [documentId]
+    )
+    const legacyChunks = Array.isArray(rows[0]?.text_chunks) ? rows[0].text_chunks : null
+    const legacyEmbeddings = Array.isArray(rows[0]?.chunk_embeddings) ? rows[0].chunk_embeddings : null
+    if (!legacyChunks?.length || !legacyEmbeddings || legacyEmbeddings.length !== legacyChunks.length) {
+      return false
+    }
+    const prepared = legacyEmbeddings.map((embedding) => prepareEmbedding(embedding))
+    await this.persistDocumentChunks(documentId, legacyChunks, prepared)
+    return true
   }
 
   private async ensureExtractedText(doc: DocRow) {
@@ -370,82 +563,24 @@ export class DocumentRagService {
     return chunks.filter((c) => c.length > 100)
   }
 
-  private async getDocumentChunks(documentId: string, documentText: string, userId: string): Promise<DocumentChunksData> {
-    const { rows } = await this.app.db.query<Pick<DocRow, 'text_chunks' | 'chunk_embeddings' | 'extracted_text'>>(
-      `SELECT text_chunks, chunk_embeddings, extracted_text FROM documents WHERE id = $1 LIMIT 1`,
+  private async getDocumentChunks(documentId: string, documentText: string, userId: string): Promise<string[]> {
+    const { rows } = await this.app.db.query<Pick<DocRow, 'text_chunks' | 'extracted_text'>>(
+      `SELECT text_chunks, extracted_text FROM documents WHERE id = $1 LIMIT 1`,
       [documentId]
     )
     const row = rows[0]
     const cachedChunks = Array.isArray(row?.text_chunks) ? row.text_chunks : null
-    const cachedEmbeddings = Array.isArray(row?.chunk_embeddings) ? row.chunk_embeddings : null
 
     // Reuse previously indexed chunks if source extracted text is unchanged.
-    if (
-      cachedChunks &&
-      cachedChunks.length > 0 &&
-      row?.extracted_text === documentText
-    ) {
-      if (cachedEmbeddings && cachedEmbeddings.length === cachedChunks.length) {
-        return { chunks: cachedChunks, embeddings: cachedEmbeddings }
-      }
-      return { chunks: cachedChunks, embeddings: null }
+    if (cachedChunks && cachedChunks.length > 0 && row?.extracted_text === documentText) {
+      return cachedChunks
     }
 
     const chunks = this.chunkText(documentText, 4000, 400)
-    if (chunks.length === 0) return { chunks: [], embeddings: null }
+    if (chunks.length === 0) return []
 
-    const embeddings = await this.ensureEmbeddings(documentId, chunks, userId)
-    if (Array.isArray(embeddings) && embeddings.length === chunks.length) {
-      return { chunks, embeddings }
-    }
-    return { chunks, embeddings: null }
-  }
-
-  private async ensureEmbeddings(documentId: string, chunks: string[], userId: string) {
-    const { rows } = await this.app.db.query<Pick<DocRow, 'chunk_embeddings'>>(
-      `SELECT chunk_embeddings FROM documents WHERE id = $1`,
-      [documentId]
-    )
-    const existing = rows[0]?.chunk_embeddings
-    if (Array.isArray(existing) && existing.length === chunks.length) return existing
-
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const embeddings = await this.generateChunkEmbeddings(chunks, apiKey)
-    await this.app.db.query(`UPDATE documents SET text_chunks = $2::jsonb, chunk_embeddings = $3::jsonb WHERE id = $1`, [
-      documentId,
-      this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]'),
-      this.safeJsonStringify(embeddings, '[]')
-    ])
-    return embeddings
-  }
-
-  private pickTopChunks(chunks: string[], embeddings: number[][], queryVec: number[], topK: number) {
-    if (embeddings.length !== chunks.length || embeddings.length === 0) {
-      return chunks.slice(0, Math.max(1, topK))
-    }
-    // Embedding model/dim mismatch fallback instead of hard failure.
-    if (embeddings[0] && embeddings[0].length !== queryVec.length) {
-      return chunks.slice(0, Math.max(1, topK))
-    }
-    const scored = embeddings.map((embedding, index) => ({
-      index,
-      score: this.cosineSimilarity(embedding, queryVec)
-    }))
-    scored.sort((a, b) => b.score - a.score)
-    return scored.slice(0, topK).map((x) => chunks[x.index])
-  }
-
-  private cosineSimilarity(a: number[], b: number[]) {
-    const len = Math.min(a.length, b.length)
-    let dot = 0
-    let na = 0
-    let nb = 0
-    for (let i = 0; i < len; i++) {
-      dot += a[i] * b[i]
-      na += a[i] * a[i]
-      nb += b[i] * b[i]
-    }
-    return dot / (Math.sqrt(na) * Math.sqrt(nb) || 1)
+    await this.ensurePgvectorIndex(documentId, chunks, userId)
+    return chunks
   }
 
   private estimateTokens(text: string) {

@@ -2,7 +2,7 @@
 
 **Report:** 2 (sprint focus)  
 **Reporting period:** **11 May 2026 – 15 May 2026** (~4–5 days of active delivery)  
-**Version span:** **0.2.0 → 0.2.9**  
+**Version span:** **0.2.0 → 0.3.0**  
 **Companion doc:** [PROJECT_OVERVIEW_AND_REPORT 1.md](./PROJECT_OVERVIEW_AND_REPORT%201.md) — full platform map
 
 > **Note:** If you created your first **HTTP API key** (`ed_…`) around this time, that marks when third-party testing began. **Never paste full API keys into reports or chat** — only store the prefix shown in the UI.
@@ -22,7 +22,7 @@ From **12 May** through **15 May 2026**, the main engineering focus was making E
 5. **AI Tutor** — assistants vs conversations, third-party sessions via **`conversation.id`**, API-key chat fixes  
 6. **DB migrations** `005`–`012` supporting keys, logging, and chat  
 
-Releases: [CHANGELOG.md](../CHANGELOG.md) **0.2.5** (14 May) through **0.2.9** (15 May).
+Releases: [CHANGELOG.md](../CHANGELOG.md) **0.2.5** (14 May) through **0.2.9** (15 May); follow-up **0.3.0** (22 May) — pgvector RAG.
 
 ---
 
@@ -130,7 +130,7 @@ Optional fallback: server env **`GOOGLE_GEMINI_API_KEY`** when configured.
 - Quick-start blocks with copy-paste `curl` commands.
 - EN + AZ via `teacherApiIntegration` in `apps/web-app/src/lib/i18n.ts`.
 
-### Repository docs (updated for **0.2.9**)
+### Repository docs (updated for **0.3.0**)
 
 | Document | Role |
 |----------|------|
@@ -235,6 +235,24 @@ flowchart TB
 | **0.2.7** | 15 May | Third-party-only docs; removed unused exam/lesson fields |
 | **0.2.8** | 15 May | AI Tutor DB + multi-turn chat + `externalUserId` |
 | **0.2.9** | 15 May | Assistants vs conversations; `external_user_id` on threads |
+| **0.3.0** | 22 May | pgvector RAG (`document_chunks`, HNSW index, migration 015); batch multi-doc retrieval |
+
+---
+
+## 11. Release **0.3.0** — pgvector RAG (22 May 2026)
+
+Follow-up after the integration sprint: RAG was moved from JSONB + in-memory cosine similarity to **PostgreSQL pgvector** for production-scale concurrent usage.
+
+| Before (≤0.2.9) | After (0.3.0) |
+|-----------------|---------------|
+| Embeddings in `documents.chunk_embeddings` JSONB | Indexed rows in **`document_chunks`** (`vector(768)`) |
+| All vectors loaded into Node.js per query | **HNSW** approximate search in SQL |
+| Multi-doc RAG = N sequential loops | **One SQL query** across documents |
+| AI Tutor = 3× separate retrieve pipelines | **Batch `retrieveMany()`** |
+
+**Ops:** install pgvector on PostgreSQL, run `npm run db:migrate` (includes `015_pgvector_document_chunks.sql`). Legacy JSONB embeddings backfill on first access.
+
+Details: [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md) — RAG / Vector Search; [CHANGELOG.md](../CHANGELOG.md) **0.3.0**.
 
 ---
 
@@ -245,7 +263,7 @@ flowchart TB
 3. **Gemini:** Without user key, AI route returns `MISSING_GEMINI_API_KEY`; after save, generation works.  
 4. **AI Tutor (web):** Create assistant → New chat → send message (toggle short answer).  
 5. **AI Tutor (API):** Create assistant → conversation → message with API key.  
-6. **DB:** `npm run db:migrate` through `012` on target environment.  
+6. **DB:** `npm run db:migrate` through `015` on target environment (pgvector required for RAG).  
 
 Details: [API_SUMMARY.md](./API_SUMMARY.md) — Quick Verification Checklist.
 

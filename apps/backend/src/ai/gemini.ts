@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { env } from '../config/env.js'
+import { prepareEmbedding } from '../utils/vector.js'
 
 type GeminiCallOptions = {
   apiKey?: string
@@ -35,12 +36,13 @@ export async function generateEmbedding(text: string, model = 'gemini-embedding-
   }
 
   try {
-    return await tryEmbed(model)
+    const values = await tryEmbed(model)
+    return prepareEmbedding(values)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     // Compatibility fallback for model/version changes on Google's side.
     if (model !== 'gemini-embedding-001' && message.includes('404')) {
-      return tryEmbed('gemini-embedding-001')
+      return prepareEmbedding(await tryEmbed('gemini-embedding-001'))
     }
     throw error
   }

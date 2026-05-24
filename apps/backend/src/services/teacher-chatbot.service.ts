@@ -307,22 +307,12 @@ export class TeacherChatbotService {
 
     const storedDocIds = parseDocumentIds(row.document_ids)
     const docIds = Array.from(new Set([...data.documentIds, ...storedDocIds])).slice(0, 3)
-    const retrievedDocs = await Promise.all(
-      docIds.map(async (id) => {
-        try {
-          const retrieved = await this.rag.retrieve(scope.ownerUserId, {
-            documentId: id,
-            query: data.message,
-            topK: 2,
-          })
-          const chunks = (retrieved.chunks || []).slice(0, 2).map((chunk) => String(chunk).slice(0, 700))
-          if (!chunks.length) return ''
-          return `\n\n[Doc:${id}]\n${chunks.join('\n')}`
-        } catch {
-          return ''
-        }
-      })
-    )
+    const retrievedByDoc = await this.rag.retrieveMany(scope.ownerUserId, docIds, data.message, 2)
+    const retrievedDocs = docIds.map((id) => {
+      const chunks = (retrievedByDoc.get(id) || []).slice(0, 2).map((chunk) => String(chunk).slice(0, 700))
+      if (!chunks.length) return ''
+      return `\n\n[Doc:${id}]\n${chunks.join('\n')}`
+    })
     const ragContext = retrievedDocs.join('').slice(0, 3000)
 
     const transcript = [...historyBefore, { role: 'user', content: data.message }]
