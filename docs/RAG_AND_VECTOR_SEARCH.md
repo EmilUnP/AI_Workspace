@@ -5,6 +5,7 @@
 **Scope:** How Eduator stores document embeddings, runs similarity search, and what changed from earlier releases.
 
 Related docs:
+- [PROJECT_OVERVIEW_AND_REPORT 3.md](./PROJECT_OVERVIEW_AND_REPORT%203.md) — delivery report (manual deploy, 0.3.0)
 - [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md) — platform overview
 - [DECISIONS.md](./DECISIONS.md) — ADR #10 (pgvector choice)
 - [CHANGELOG.md](../CHANGELOG.md) — release **0.3.0**

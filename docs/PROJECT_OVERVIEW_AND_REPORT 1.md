@@ -3,7 +3,12 @@
 **Version:** 0.3.0  
 **Audience:** Engineering, product, and stakeholders who need one place to understand **what the system is**, **how it works**, and **where APIs live**.
 
-This is the **platform map** (architecture, roles, flows). For a **last-week delivery report** focused on third-party API, database work, Gemini keys, and AI Tutor — see **[PROJECT_OVERVIEW_AND_REPORT 2.md](./PROJECT_OVERVIEW_AND_REPORT%202.md)**.
+This is the **platform map** (architecture, roles, flows).
+
+| Report | File | Focus |
+|--------|------|--------|
+| **Part 2** | [PROJECT_OVERVIEW_AND_REPORT 2.md](./PROJECT_OVERVIEW_AND_REPORT%202.md) | Third-party API, HTTP keys, Usage, AI Tutor (0.2.5–0.2.9) |
+| **Part 3** | [PROJECT_OVERVIEW_AND_REPORT 3.md](./PROJECT_OVERVIEW_AND_REPORT%203.md) | **pgvector RAG upgrade**, split-server manual deploy (0.3.0) |
 
 For deeper dives, use the linked docs at the end — this file is not a duplicate of every endpoint.
 
@@ -189,6 +194,11 @@ This section captures the **product and engineering themes** completed in the re
 - **Third-party:** store `conversation.id` per end-user; `POST .../messages` uses that UUID only.
 - **Migrations:** `008`–`012` in `apps/backend` (`npm run db:migrate`).
 
+### 7.7 RAG & pgvector (0.3.0)
+
+- Document embeddings moved from JSONB to **`document_chunks`** with **pgvector** + HNSW index (migration **015**).
+- Manual rollout on split servers (app + DB). Full delivery report: **[PROJECT_OVERVIEW_AND_REPORT 3.md](./PROJECT_OVERVIEW_AND_REPORT%203.md)**.
+
 ---
 
 ## 8. Suggested “report” outputs for stakeholders
@@ -206,6 +216,8 @@ This section captures the **product and engineering themes** completed in the re
 
 | File | Topic |
 |------|--------|
+| [PROJECT_OVERVIEW_AND_REPORT 2.md](./PROJECT_OVERVIEW_AND_REPORT%202.md) | API integration delivery report (Part 2) |
+| [PROJECT_OVERVIEW_AND_REPORT 3.md](./PROJECT_OVERVIEW_AND_REPORT%203.md) | pgvector RAG + manual deploy (Part 3) |
 | [RAG_AND_VECTOR_SEARCH.md](./RAG_AND_VECTOR_SEARCH.md) | RAG pipeline, pgvector, legacy vs current, future roadmap |
 | [TECHNICAL_SUMMARY.md](./TECHNICAL_SUMMARY.md) | Architecture, document/RAG flow, error contract |
 | [DECISIONS.md](./DECISIONS.md) | ADR-style decisions |

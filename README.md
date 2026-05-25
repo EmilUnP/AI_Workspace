@@ -77,7 +77,10 @@ Use app-level env files:
 
 ## Core Technical Docs
 
-- `docs/RAG_AND_VECTOR_SEARCH.md` — **RAG & vector search deep dive** (legacy vs 0.3.0, ops, future roadmap)
+- `docs/PROJECT_OVERVIEW_AND_REPORT 1.md` — platform map (Part 1)
+- `docs/PROJECT_OVERVIEW_AND_REPORT 2.md` — API integration report (Part 2)
+- `docs/PROJECT_OVERVIEW_AND_REPORT 3.md` — **pgvector RAG + manual deploy** (Part 3)
+- `docs/RAG_AND_VECTOR_SEARCH.md` — RAG & vector search deep dive
 - `docs/TECHNICAL_SUMMARY.md`
 - `docs/API_SUMMARY.md`
 - `docs/DECISIONS.md`

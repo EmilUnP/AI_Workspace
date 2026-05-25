@@ -3,6 +3,15 @@ import type { FastifyInstance } from 'fastify'
 import { ZodError } from 'zod'
 
 async function errorHandlerPlugin(app: FastifyInstance) {
+  app.setNotFoundHandler((request, reply) => {
+    reply.code(404).send({
+      ok: false,
+      error: 'Endpoint not found',
+      message: `No route matches ${request.method} ${request.url}. See /v1/docs for the full API reference.`,
+      statusCode: 404
+    })
+  })
+
   app.setErrorHandler((error, _request, reply) => {
     app.log.error(error)
 

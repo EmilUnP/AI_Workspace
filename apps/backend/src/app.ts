@@ -51,6 +51,15 @@ export async function buildApp() {
 
   app.get('/health', async () => ({ ok: true }))
 
+  app.get('/v1', async () => ({
+    ok: true,
+    name: 'Eduator API',
+    version: '0.3.0',
+    message: 'API is running. Browse /v1/docs for available endpoints.',
+    documentation: '/v1/docs',
+    health: '/health'
+  }))
+
   await app.register(authRoutes, { prefix: '/v1' })
   await app.register(usersRoutes, { prefix: '/v1' })
   await app.register(documentsRoutes, { prefix: '/v1' })
