@@ -51,6 +51,16 @@ export async function buildApp() {
 
   app.get('/health', async () => ({ ok: true }))
 
+  app.get('/', async () => ({
+    ok: true,
+    name: 'Eduator API',
+    version: '0.3.0',
+    message: 'API is running. Use /v1 for the API base or /health for a health check.',
+    api: '/v1',
+    documentation: '/v1/docs',
+    health: '/health'
+  }))
+
   app.get('/v1', async () => ({
     ok: true,
     name: 'Eduator API',

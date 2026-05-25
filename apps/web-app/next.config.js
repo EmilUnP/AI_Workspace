@@ -3,7 +3,7 @@ const path = require('path')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   compress: true,
-  // NOTE: Keep default output file tracing settings for local/server deployments.
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   transpilePackages: [],
   images: {
     remotePatterns: [
