@@ -16,7 +16,7 @@ const ExamCreator = dynamic(
 
 /** Client-only wrapper: resolves teacherExamCreator translations and passes them to ExamCreator. */
 export function ExamCreatorWithIntl(props: Omit<ExamCreatorProps, 'translations' | 'translationsContext'>) {
-  const t = useTranslations('teacherExamCreator')
+  const t = useTranslations('teacherExamCreate')
   const creatorTranslations = Object.fromEntries(
     (Object.keys(DEFAULT_EXAM_CREATOR_TRANSLATIONS) as (keyof ExamCreatorTranslations)[]).map((k) => [k, t(k)])
   ) as unknown as ExamCreatorTranslations

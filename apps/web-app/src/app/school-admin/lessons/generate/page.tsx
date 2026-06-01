@@ -162,6 +162,10 @@ export default function GenerateLessonPage() {
       setError(t('missingTopicError'))
       return
     }
+    if (selectedDocumentIds.length === 0) {
+      setError(t('selectAtLeastOneDocument'))
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -271,13 +275,64 @@ export default function GenerateLessonPage() {
         
         {/* Main Content */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {/* Document Selection (multi-select for RAG from multiple sources) */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 xl:col-span-2">
+          {/* Topic Input */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <FileText className="w-4 h-4 inline mr-2" />
-              {t('sourceDocuments')} (optional)
+              <BookOpen className="w-4 h-4 inline mr-2" />
+              {t('lessonTopic')}
             </label>
-            <details className="group rounded-lg border border-gray-200 bg-gray-50">
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder={t('topicPlaceholder')}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all"
+              disabled={loading}
+            />
+          </div>
+
+          {/* Learning Objectives (optional) */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Target className="w-4 h-4 inline mr-2" />
+              {t('learningObjectives')}
+              <span className="text-gray-400 font-normal ml-1">{t('optional')}</span>
+            </label>
+            <textarea
+              value={objectives}
+              onChange={(e) => setObjectives(e.target.value)}
+              placeholder={t('objectivesPlaceholder')}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all resize-none"
+              disabled={loading}
+            />
+          </div>
+
+          {/* Grade Level */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <GraduationCap className="w-4 h-4 inline mr-2" />
+              {t('gradeLevel')}
+            </label>
+            <input
+              type="text"
+              value={gradeLevel}
+              onChange={(e) => setGradeLevel(e.target.value)}
+              placeholder={t('gradeLevelPlaceholder')}
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
+            />
+          </div>
+
+          {/* Source documents (required) */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 xl:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              <FileText className="w-4 h-4 inline mr-2" />
+              {t('sourceDocuments')}
+              <span className="text-red-600 font-normal ml-1">*</span>
+            </label>
+            <p className="text-sm text-gray-500 mb-2">{t('sourceDocumentsRequiredHint')}</p>
+            <details className="group rounded-lg border border-gray-200 bg-gray-50" open={selectedDocumentIds.length === 0}>
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-sm text-gray-700">
                 <span className="truncate">
                   {selectedDocumentIds.length > 0
@@ -326,60 +381,17 @@ export default function GenerateLessonPage() {
                 {t('documentsSelected', { count: selectedDocumentIds.length })}
               </p>
             )}
+            {selectedDocumentIds.length === 0 && documents.length > 0 && (
+              <p className="mt-2 text-sm text-amber-700">{t('selectAtLeastOneDocument')}</p>
+            )}
             {documents.length === 0 && (
               <p className="mt-2 text-sm text-gray-500">
-                {t('noDocumentsText')} <Link href="/school-admin/documents" className="text-gray-700 hover:underline">{t('uploadDocument')}</Link>
+                {t('noDocumentsText')}{' '}
+                <Link href="/school-admin/documents" className="text-gray-700 hover:underline">
+                  {t('uploadDocument')}
+                </Link>
               </p>
             )}
-          </div>
-          
-          {/* Topic Input */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <BookOpen className="w-4 h-4 inline mr-2" />
-              {t('lessonTopic')}
-            </label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder={t('topicPlaceholder')}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all"
-              disabled={loading}
-            />
-          </div>
-
-          {/* Learning Objectives (optional) */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Target className="w-4 h-4 inline mr-2" />
-              {t('learningObjectives')}
-              <span className="text-gray-400 font-normal ml-1">{t('optional')}</span>
-            </label>
-            <textarea
-              value={objectives}
-              onChange={(e) => setObjectives(e.target.value)}
-              placeholder={t('objectivesPlaceholder')}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all resize-none"
-              disabled={loading}
-            />
-          </div>
-
-          {/* Grade Level */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <GraduationCap className="w-4 h-4 inline mr-2" />
-              {t('gradeLevel')}
-            </label>
-            <input
-              type="text"
-              value={gradeLevel}
-              onChange={(e) => setGradeLevel(e.target.value)}
-              placeholder={t('gradeLevelPlaceholder')}
-              disabled={loading}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
-            />
           </div>
 
           {/* Language Selection */}
@@ -648,7 +660,7 @@ export default function GenerateLessonPage() {
           {currentStep !== 'complete' && (
             <button
               onClick={handleGenerate}
-              disabled={loading || !topic.trim()}
+              disabled={loading || !topic.trim() || selectedDocumentIds.length === 0}
               className="w-full py-4 px-6 bg-gray-900 text-white rounded-xl font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 xl:col-span-2"
             >
               {loading ? (

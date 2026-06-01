@@ -43,6 +43,12 @@ export class ExamAiService {
     const docsFromSingle = data.documentId ? [data.documentId] : []
     const mergedDocumentIds = Array.from(new Set([...docsFromSingle, ...(data.documentIds || [])]))
 
+    if (mergedDocumentIds.length === 0 && !data.documentText?.trim()) {
+      const err = new Error('At least one source document is required') as Error & { statusCode?: number }
+      err.statusCode = 400
+      throw err
+    }
+
     let contextText = data.documentText?.trim() || ''
     if (!contextText && mergedDocumentIds.length > 0) {
       const query = this.buildRetrievalQuery(data)
@@ -55,7 +61,9 @@ export class ExamAiService {
     }
 
     if (contextText.length < 50) {
-      const err = new Error('Provide usable exam source content (documentText or ready documentIds).') as Error & { statusCode?: number }
+      const err = new Error(
+        'Provide usable exam source content. Select ready documents or ensure documents are chunked.'
+      ) as Error & { statusCode?: number }
       err.statusCode = 400
       throw err
     }

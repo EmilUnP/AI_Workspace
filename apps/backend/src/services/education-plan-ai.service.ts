@@ -26,6 +26,7 @@ const planSchema = z.object({
   documentId: z.string().uuid().optional(),
   documentIds: z.array(z.string().uuid()).optional(),
   name: z.string().min(1),
+  description: z.string().optional(),
   /** Output language (ISO-style code, e.g. en, az). */
   language: z.string().optional(),
   /** Same as language; accepted for clients that use this name from the web UI. */
@@ -224,14 +225,24 @@ export class EducationPlanAiService {
     const allDocumentIds = Array.from(new Set([...(data.documentIds || []), ...(data.documentId ? [data.documentId] : [])]))
     const primaryDocumentId = allDocumentIds[0]
     if (!primaryDocumentId) {
-      throw new Error('At least one source document is required')
+      const err = new Error('At least one source document is required') as Error & { statusCode?: number }
+      err.statusCode = 400
+      throw err
     }
 
     const retrieved = await this.rag.retrieve(userId, {
       documentId: primaryDocumentId,
       query: `Create education plan named ${data.name}`,
-      topK: 8
+      topK: 8,
     })
+    const planContext = retrieved.chunks.join('\n\n').trim()
+    if (planContext.length < 50) {
+      const err = new Error(
+        'Selected document has no usable content. Upload a document and wait until chunking is ready.'
+      ) as Error & { statusCode?: number }
+      err.statusCode = 400
+      throw err
+    }
 
     const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const rawContent = await generateJson<unknown>(
@@ -245,7 +256,7 @@ Period months: ${data.periodMonths}
 Sessions/week: ${data.sessionsPerWeek}
 Hours/session: ${data.hoursPerSession}
 Target total weeks: ${targetWeeks}
-Context:\n${retrieved.chunks.join('\n\n')}
+Context:\n${planContext}
 
 Return ONLY JSON in this exact shape:
 {

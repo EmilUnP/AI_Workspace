@@ -51,6 +51,7 @@ export default function CreateEducationPlanPage() {
         outputLanguageHint: t('outputLanguageHint'),
         baseOnDocuments: t('baseOnDocuments'),
         selectOneDocument: t('selectOneDocument'),
+        selectOneDocumentRequired: t('selectOneDocumentRequired'),
         chooseDocument: t('chooseDocument'),
         availableDocumentsSuffix: t('availableDocumentsSuffix'),
         baseOnDocumentsHint: t('baseOnDocumentsHint'),

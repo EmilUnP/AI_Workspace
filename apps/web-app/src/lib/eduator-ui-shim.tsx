@@ -156,12 +156,12 @@ export function EducationPlanCreateForm(props: AnyProps) {
 
   const handleGenerate = async () => {
     if (!props?.generateUrl) return
-    if (!selectedDocumentId) {
-      setError('Please select a source document first.')
-      return
-    }
     if (!name.trim()) {
       setError(t('planNameRequired', 'Plan name is required'))
+      return
+    }
+    if (!selectedDocumentId) {
+      setError(t('selectOneDocumentRequired', 'Please select a source document.'))
       return
     }
 
@@ -174,6 +174,7 @@ export function EducationPlanCreateForm(props: AnyProps) {
         body: JSON.stringify({
           documentId: selectedDocumentId,
           name: name.trim(),
+          description: description.trim() || undefined,
           language,
           periodMonths,
           sessionsPerWeek,
@@ -203,7 +204,7 @@ export function EducationPlanCreateForm(props: AnyProps) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
       <h2 className="text-xl font-semibold text-gray-900">{t('createTitle', 'Create education plan')}</h2>
-      <p className="mt-1 text-sm text-gray-500">{t('createSubtitle', 'Generate a weekly plan from one selected source document')}</p>
+      <p className="mt-1 text-sm text-gray-500">{t('createSubtitle', 'Generate a weekly plan from a selected source document')}</p>
 
       <div className="mt-5 space-y-5">
         <section className="space-y-3">
@@ -247,7 +248,11 @@ export function EducationPlanCreateForm(props: AnyProps) {
 
         <section className="space-y-1">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">{t('baseOnDocuments', 'Source document')}</h3>
-          <label className="text-sm font-medium text-gray-700">{t('selectOneDocument', 'Select one document *')}</label>
+          <label className="text-sm font-medium text-gray-700">
+            {t('selectOneDocument', 'Select one document')}
+            <span className="text-red-600 font-normal ml-1">*</span>
+          </label>
+          <p className="text-xs text-gray-500">{t('baseOnDocumentsHint', 'A source document is required.')}</p>
           <select value={selectedDocumentId} onChange={(e) => setSelectedDocumentId(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
             <option value="">{t('chooseDocument', 'Choose document')}</option>
             {documents.map((doc) => (
@@ -349,6 +354,7 @@ export function ExamCreator(props: AnyProps) {
       setError(tr('generateActionUnavailable', 'Generate action is unavailable.'))
       return
     }
+    const topics = topicEntries.map((x) => x.name.trim()).filter(Boolean)
     if (selectedDocumentIds.length === 0) {
       setError(tr('selectAtLeastOneDocument', 'Please select at least one document.'))
       return
@@ -365,7 +371,7 @@ export function ExamCreator(props: AnyProps) {
         durationMinutes,
         difficulty: 'mixed',
         language: generateLanguage,
-        topics: topicEntries.map((x) => x.name.trim()).filter(Boolean),
+        topics,
         topicQuestionCounts: topicEntries.map((x) => x.count),
         questionTypes: questionTypeDistribution,
         difficultyLevels: difficultyDistribution,
@@ -389,7 +395,7 @@ export function ExamCreator(props: AnyProps) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-gray-900">{tr('aiGenerateTitle', 'AI Generate')}</h2>
-      <p className="mt-1 text-sm text-gray-500">{tr('aiGenerateSubtitle', 'Create questions from documents')}</p>
+      <p className="mt-1 text-sm text-gray-500">{tr('aiGenerateSubtitle', 'Create questions from selected documents')}</p>
 
       <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">{tr('examTitle', 'Exam title')}</label>
@@ -402,7 +408,11 @@ export function ExamCreator(props: AnyProps) {
         <p className="mt-1 text-xs text-gray-500">{tr('examTitleHint', 'Leave empty to auto-generate from selected documents.')}</p>
 
         <div className="mt-4">
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">{tr('selectDocuments', 'Select documents')}</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+            {tr('selectDocuments', 'Select documents')}
+            <span className="text-red-600 font-normal normal-case ml-1">*</span>
+          </label>
+          <p className="mb-2 text-xs text-gray-500">{tr('selectDocumentsRequiredHint', 'At least one document is required.')}</p>
           <div className="max-h-36 overflow-auto rounded-lg border border-gray-200 bg-white">
             <div className="divide-y divide-gray-100">
               {documents.length === 0 ? (
@@ -620,6 +630,7 @@ export type ExamCreatorProps = AnyProps
 export const DEFAULT_EXAM_CREATOR_TRANSLATIONS: ExamCreatorTranslations = {
   generateActionUnavailable: 'Generate action is unavailable.',
   selectAtLeastOneDocument: 'Please select at least one document.',
+  selectDocumentsRequiredHint: 'At least one document is required.',
   questionsGenerated: 'Questions generated. You can now save exam.',
   generateExamFailed: 'Failed to generate exam.',
   aiGenerateTitle: 'AI Generate',

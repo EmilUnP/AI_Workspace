@@ -600,7 +600,7 @@ const LESSON_SYSTEM_INSTRUCTION = `You are an expert educational content creator
 - Well-organized with proper sections
 - Include a mini test to reinforce learning
 - Professional and educational in tone
-- Based on the provided PDF content
+- Ground content in provided source material when supplied; otherwise use accurate general knowledge
 
 Never add disclaimers or meta-commentary in the lesson content (e.g. "impossible to create", "based ONLY on the provided material", "content below will summarize"). Output only the lesson itself. Use consistent markdown: ## and ### for headings, **bold** for emphasis, simple bullet or numbered lists. Your task is to create comprehensive, engaging lessons that help students learn effectively.
 For mini-test explanations, write directly and professionally. Do NOT use source-referencing filler like "According to the text...", "The text states...", "Mətndə ... qeyd olunur ki", or similar intros in any language.
@@ -659,25 +659,29 @@ export async function generateLesson(
     topicString = String(topic || 'General topic')
   }
 
-  let context: string
+  let context = ''
+  let usingDocumentContext = false
   const idsForRag = documentIds && documentIds.length > 0
     ? documentIds
     : documentId
       ? [documentId]
       : []
 
+  if (idsForRag.length === 0) {
+    throw new Error('At least one source document is required')
+  }
+
   if (idsForRag.length > 1) {
-    // Multi-document: use RAG across all documents
-    context = await getRelevantContentFromDocuments(idsForRag, userId, topicString, 7)
-    if (!context || context.trim().length === 0) {
+    const retrieved = await getRelevantContentFromDocuments(idsForRag, userId, topicString, 7)
+    if (!retrieved || retrieved.trim().length === 0) {
       throw new Error('No relevant content found from the selected documents for this topic')
     }
-    context = context
+    usingDocumentContext = true
+    context = retrieved
       .split(/\n\n---\n\n/)
       .map((chunk: string, idx: number) => `[Section ${idx + 1}]\n${chunk}`)
       .join('\n\n---\n\n')
   } else if (idsForRag.length === 1) {
-    // Single document: existing behavior
     const primaryId = idsForRag[0]
     let documentText: string | null
     try {
@@ -691,22 +695,21 @@ export async function generateLesson(
       throw new Error("Document not found or you don't have access to it")
     }
     const relevantChunks = await getRelevantChunks(primaryId, documentText, topicString, 7)
+    if (relevantChunks.length === 0) {
+      throw new Error('No relevant content found in the selected document for this topic')
+    }
+    usingDocumentContext = true
     context = relevantChunks
       .map((chunk: string, idx: number) => `[Section ${idx + 1}]\n${chunk}`)
       .join('\n\n---\n\n')
-  } else {
-    // AI-only mode (no uploaded document selected): generate from model knowledge + user guidance.
-    const objectiveHint = objectives?.trim()
-      ? `Prioritize these teacher objectives: ${objectives.trim()}`
-      : 'Use strong pedagogical structure with practical examples and checks for understanding.'
-    const gradeHint = gradeLevel ? `Target grade level: ${gradeValueToLabel(gradeLevel) ?? gradeLevel}.` : ''
-    const coreHint = corePrompt?.trim() ? `Core teacher prompt: ${corePrompt.trim()}` : ''
-    context = `No source document context was provided. Build an original, high-quality educational lesson on "${topicString}" using general educational best practices. ${objectiveHint} ${gradeHint} ${coreHint}`.trim()
   }
 
   // Determine target language (same as exam: use 2-letter code -> full name for prompts)
   const normalizedLanguageCode = normalizeLanguageCode(language)
   const targetLanguage = languageCodeToName(normalizedLanguageCode)
+  const sourceGroundingRule = usingDocumentContext
+    ? 'Ground the lesson in the provided source document excerpts.'
+    : 'Use accurate general knowledge; no uploaded source document was provided.'
 
   // Create language-specific system instruction
   const languageSystemInstruction =
@@ -729,7 +732,7 @@ Your lessons should be:
 - Include practical examples
 - Include a mini test to reinforce learning
 - Professional and educational in tone
-- Based on the provided PDF content
+- ${sourceGroundingRule}
 
 Never add disclaimers or meta-commentary in the lesson content. Output only the lesson itself. Use consistent markdown (## and ### for headings, **bold** for emphasis, simple lists).`
       : LESSON_SYSTEM_INSTRUCTION
@@ -785,11 +788,16 @@ Never add disclaimers or meta-commentary in the lesson content. Output only the 
     ? `\n\n🧭 CORE TEACHER PROMPT (high priority):\n${corePrompt.trim()}\nUse this as a strict guidance layer for scope, tone, depth, style, and constraints.`
     : ''
 
-  const prompt = `${languageInstruction}Create a comprehensive lesson about "${topicString}" based on the following PDF content.${lengthInstruction}${gradeInstruction}${objectivesInstruction}${corePromptInstruction}
+  const lessonIntro = usingDocumentContext
+    ? `Create a comprehensive lesson about "${topicString}" based on the source material below.`
+    : `Create a comprehensive lesson about "${topicString}" using sound educational knowledge (no uploaded source document).`
+  const sourceSectionLabel = usingDocumentContext ? 'Source material' : 'Guidance'
+
+  const prompt = `${languageInstruction}${lessonIntro}${lengthInstruction}${gradeInstruction}${objectivesInstruction}${corePromptInstruction}
 
 FORMATTING RULES (universal style – must follow):
 - Output ONLY the lesson. Do NOT add disclaimers, meta-commentary, or phrases like "impossible to create", "based ONLY on the provided material", "content below will summarize the PDF", or "(from provided PDF)" in headings or text.
-- If the document does not fully cover the topic, still produce a clear, self-contained lesson using the available material; do not explain limitations to the user in the content.
+- If source material does not fully cover the topic, still produce a clear, self-contained lesson; do not explain limitations to the user in the content.
 - Mini-test explanations must be direct and student-facing. Do NOT start with source-referencing filler like "According to the text...", "The text states...", "Mətndə ... qeyd olunur ki", "В тексте сказано...", etc.
 - Use clean, consistent markdown in the "content" field:
   - Use ## for main section headings and ### for subsections. No extra labels like "(from provided PDF)" in headings.
@@ -826,7 +834,7 @@ CRITICAL for valid JSON: In the "content" field use \\n for line breaks (do not 
   ]
 }
 
-PDF Content:
+${sourceSectionLabel}:
 ${context}
 
 Topic: ${topicString}
@@ -1072,6 +1080,11 @@ export class LessonAiService {
       new Set([...(documentIds || []), ...(body.documentId ? [body.documentId] : [])])
     )
     const primaryDocumentId = mergedDocumentIds[0] ?? null
+    if (mergedDocumentIds.length === 0) {
+      const err = new Error('At least one source document is required') as Error & { statusCode?: number }
+      err.statusCode = 400
+      throw err
+    }
 
     const opts = body.options || {}
     const includeImages = opts.includeImages !== false
