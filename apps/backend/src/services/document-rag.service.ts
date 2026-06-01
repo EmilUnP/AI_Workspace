@@ -23,7 +23,9 @@ type DocRow = {
   local_path: string | null
   status: 'uploaded' | 'processing' | 'ready' | 'failed'
   extracted_text: string | null
+  /** Legacy ≤0.2.9 — read only for one-time backfill into document_chunks */
   text_chunks: string[] | null
+  /** Legacy ≤0.2.9 — read only for one-time backfill into document_chunks */
   chunk_embeddings: number[][] | null
   text_extracted_at: string | null
   file_hash: string | null
@@ -234,20 +236,19 @@ export class DocumentRagService {
 
       await this.app.db.query(
         `UPDATE documents
-         SET text_chunks = $2::jsonb,
+         SET text_chunks = NULL,
              chunk_embeddings = NULL,
-             content_language = $3,
-             total_tokens = $4,
-             chunk_count = $5,
-             avg_chunk_size = $6,
-             quality_status = $7,
-             quality_message = $8,
+             content_language = $2,
+             total_tokens = $3,
+             chunk_count = $4,
+             avg_chunk_size = $5,
+             quality_status = $6,
+             quality_message = $7,
              status = 'ready',
              updated_at = now()
          WHERE id = $1`,
         [
           doc.id,
-          this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]'),
           contentLanguage,
           totalTokens,
           chunkCount,
@@ -271,7 +272,7 @@ export class DocumentRagService {
 
   private async getDoc(userId: string, id: string) {
     const { rows } = await this.app.db.query<DocRow>(
-      `SELECT id, owner_user_id, file_type, local_path, status, extracted_text, text_chunks, chunk_embeddings, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message
+      `SELECT id, owner_user_id, file_type, local_path, status, extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message
        FROM documents WHERE id = $1 AND owner_user_id = $2 LIMIT 1`,
       [id, userId]
     )
@@ -394,14 +395,11 @@ export class DocumentRagService {
     await this.persistDocumentChunks(documentId, chunks, embeddings)
     await this.app.db.query(
       `UPDATE documents
-       SET text_chunks = $2::jsonb,
+       SET text_chunks = NULL,
            chunk_embeddings = NULL,
            updated_at = now()
        WHERE id = $1`,
-      [
-        documentId,
-        this.safeJsonStringify(chunks.map((chunk) => this.sanitizeForPostgresText(chunk)), '[]')
-      ]
+      [documentId]
     )
   }
 
@@ -417,6 +415,10 @@ export class DocumentRagService {
     }
     const prepared = legacyEmbeddings.map((embedding) => prepareEmbedding(embedding))
     await this.persistDocumentChunks(documentId, legacyChunks, prepared)
+    await this.app.db.query(
+      `UPDATE documents SET text_chunks = NULL, chunk_embeddings = NULL, updated_at = now() WHERE id = $1`,
+      [documentId]
+    )
     return true
   }
 
@@ -501,15 +503,6 @@ export class DocumentRagService {
     return kept.join('\n').replace(/\n{3,}/g, '\n\n')
   }
 
-  private safeJsonStringify(value: unknown, fallback: string): string {
-    try {
-      const serialized = JSON.stringify(value)
-      return typeof serialized === 'string' ? serialized : fallback
-    } catch {
-      return fallback
-    }
-  }
-
   private chunkText(text: string, chunkSize: number, overlap: number) {
     const chunks: string[] = []
     const cleanText = text.replace(/\s+/g, ' ').trim()
@@ -563,24 +556,34 @@ export class DocumentRagService {
     return chunks.filter((c) => c.length > 100)
   }
 
-  private async getDocumentChunks(documentId: string, documentText: string, userId: string): Promise<string[]> {
-    const { rows } = await this.app.db.query<Pick<DocRow, 'text_chunks' | 'extracted_text'>>(
-      `SELECT text_chunks, extracted_text FROM documents WHERE id = $1 LIMIT 1`,
+  private async loadChunksFromPgvector(documentId: string): Promise<string[]> {
+    const { rows } = await this.app.db.query<{ content: string }>(
+      `SELECT content
+       FROM document_chunks
+       WHERE document_id = $1
+       ORDER BY chunk_index ASC`,
       [documentId]
     )
-    const row = rows[0]
-    const cachedChunks = Array.isArray(row?.text_chunks) ? row.text_chunks : null
+    return rows.map((row) => row.content)
+  }
 
-    // Reuse previously indexed chunks if source extracted text is unchanged.
-    if (cachedChunks && cachedChunks.length > 0 && row?.extracted_text === documentText) {
-      return cachedChunks
+  private async getDocumentChunks(documentId: string, documentText: string, userId: string): Promise<string[]> {
+    const indexed = await this.loadChunksFromPgvector(documentId)
+    if (indexed.length > 0) return indexed
+
+    const backfilled = await this.tryBackfillFromLegacy(documentId)
+    if (backfilled) {
+      const afterBackfill = await this.loadChunksFromPgvector(documentId)
+      if (afterBackfill.length > 0) return afterBackfill
     }
 
     const chunks = this.chunkText(documentText, 4000, 400)
     if (chunks.length === 0) return []
 
     await this.ensurePgvectorIndex(documentId, chunks, userId)
-    return chunks
+    return this.loadChunksFromPgvector(documentId).then((loaded) =>
+      loaded.length > 0 ? loaded : chunks
+    )
   }
 
   private estimateTokens(text: string) {

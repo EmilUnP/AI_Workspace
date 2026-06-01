@@ -10,8 +10,10 @@ export type DocumentRecord = {
   status: 'uploaded' | 'processing' | 'ready' | 'failed'
   local_path: string | null
   extracted_text: string | null
-  text_chunks: string[] | null
-  chunk_embeddings: number[][] | null
+  /** Legacy ≤0.2.9 — not returned by API; may exist in DB until backfill */
+  text_chunks?: string[] | null
+  /** Legacy ≤0.2.9 — not returned by API */
+  chunk_embeddings?: number[][] | null
   text_extracted_at: string | null
   file_hash: string | null
   content_language: string | null
@@ -43,7 +45,7 @@ export class DocumentsRepository {
       `
         INSERT INTO documents (owner_user_id, title, file_name, file_type, file_size, status, local_path, file_data, metadata)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
-        RETURNING id, owner_user_id, title, file_name, file_type, file_size, status, local_path, extracted_text, text_chunks, chunk_embeddings, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata, created_at, updated_at
+        RETURNING id, owner_user_id, title, file_name, file_type, file_size, status, local_path, extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata, created_at, updated_at
       `,
       [
         input.ownerUserId,
@@ -77,7 +79,7 @@ export class DocumentsRepository {
     const { rows } = await this.app.db.query<DocumentRecord>(
       `
         SELECT id, owner_user_id, title, file_name, file_type, file_size, status, local_path, metadata, created_at, updated_at
-               , extracted_text, text_chunks, chunk_embeddings, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message
+               , text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message
         FROM documents
         WHERE owner_user_id = $1
         ORDER BY created_at DESC
@@ -91,7 +93,7 @@ export class DocumentsRepository {
     const { rows } = await this.app.db.query<DocumentRecord>(
       `
         SELECT id, owner_user_id, title, file_name, file_type, file_size, status, local_path, metadata, created_at, updated_at
-               , extracted_text, text_chunks, chunk_embeddings, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message
+               , extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message
         FROM documents
         WHERE id = $1 AND owner_user_id = $2
         LIMIT 1
@@ -111,7 +113,7 @@ export class DocumentsRepository {
         UPDATE documents
         SET title = $3, metadata = $4::jsonb, updated_at = now()
         WHERE id = $1 AND owner_user_id = $2
-        RETURNING id, owner_user_id, title, file_name, file_type, file_size, status, local_path, extracted_text, text_chunks, chunk_embeddings, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata, created_at, updated_at
+        RETURNING id, owner_user_id, title, file_name, file_type, file_size, status, local_path, extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata, created_at, updated_at
       `,
       [id, ownerUserId, patch.title, JSON.stringify(patch.metadata ?? {})]
     )

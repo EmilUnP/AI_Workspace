@@ -157,11 +157,13 @@ CREATE INDEX idx_document_chunks_embedding_hnsw
 
 **`documents` row (current):**
 
-| Column | Status in 0.3.0 |
-|--------|-----------------|
-| `text_chunks` | Still written — cached chunk text for stats / reuse |
-| `chunk_embeddings` | **No longer written** (set to `NULL` on re-index); legacy data kept until backfill |
-| `chunk_count`, `total_tokens`, etc. | Unchanged |
+| Column | Status in 0.3.0+ |
+|--------|------------------|
+| `extracted_text` | Full PDF/DOC text (one copy for extraction / full-text use) |
+| `text_chunks` | **Legacy** — not written on new uploads; cleared after backfill to `document_chunks` |
+| `chunk_embeddings` | **Legacy** — not written; used only for one-time backfill from ≤0.2.9 rows |
+| `chunk_count`, `total_tokens`, etc. | Stats on the parent row |
+| **Chunk text + vectors** | **`document_chunks`** only (`content` + `embedding`) |
 
 **Migration file:** `apps/backend/db/migrations/015_pgvector_document_chunks.sql`
 
@@ -175,7 +177,7 @@ flowchart TD
   D --> E[Gemini gemini-embedding-001]
   E --> N[prepareEmbedding: truncate to 768 + L2 normalize]
   N --> P[persistDocumentChunks → document_chunks]
-  P --> M[UPDATE documents: text_chunks, chunk_embeddings=NULL]
+  P --> M[UPDATE documents: stats + text_chunks=NULL]
   M --> R[status = ready]
 ```
 
