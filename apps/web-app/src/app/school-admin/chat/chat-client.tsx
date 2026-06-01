@@ -74,6 +74,15 @@ export function ChatClient() {
     [conversations, activeConversationId]
   )
 
+  const activeDocumentId = useMemo(() => {
+    if (coreDocId) return coreDocId
+    const fromAssistant = activeAssistant?.document_ids
+    if (Array.isArray(fromAssistant) && fromAssistant.length > 0) {
+      return String(fromAssistant[0] || '')
+    }
+    return ''
+  }, [coreDocId, activeAssistant])
+
   const loadAssistants = async () => {
     setLoadingAssistants(true)
     setError('')
@@ -164,8 +173,12 @@ export function ChatClient() {
 
   const handleCreateAssistant = async () => {
     setError('')
+    if (!newAssistantDocId) {
+      setError(t('selectSourceDocumentRequired'))
+      return
+    }
     const title = newAssistantName.trim() || t('newAssistantDefault')
-    const docIds = newAssistantDocId ? [newAssistantDocId] : []
+    const docIds = [newAssistantDocId]
     const result = await createAssistant({ title, document_ids: docIds })
     if (result.error || !result.data) {
       setError(result.error || t('createAssistantFailed'))
@@ -226,8 +239,12 @@ export function ChatClient() {
 
   const handleSaveCoreFile = async () => {
     if (!activeAssistantId) return
+    if (!coreDocId) {
+      setError(t('selectSourceDocumentRequired'))
+      return
+    }
     const result = await updateAssistant(activeAssistantId, {
-      document_ids: coreDocId ? [coreDocId] : [],
+      document_ids: [coreDocId],
     })
     if (result.error) {
       setError(result.error)
@@ -240,6 +257,10 @@ export function ChatClient() {
   const handleSend = async () => {
     const body = text.trim()
     if (!body || !activeConversationId || sending) return
+    if (!activeDocumentId) {
+      setError(t('selectSourceDocumentRequired'))
+      return
+    }
     setSending(true)
     setError('')
 
@@ -255,7 +276,7 @@ export function ChatClient() {
       conversation_id: activeConversationId,
       message: body,
       short_answer: shortAnswer,
-      document_ids: coreDocId ? [coreDocId] : [],
+      document_ids: [activeDocumentId],
     })
 
     if (result.error) {
@@ -283,12 +304,16 @@ export function ChatClient() {
             placeholder={t('botNamePlaceholder')}
             className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-gray-400"
           />
+          <label className="text-xs font-medium text-gray-600">
+            {t('sourceDocument')}
+            <span className="text-red-600 ml-0.5">*</span>
+          </label>
           <select
             value={newAssistantDocId}
             onChange={(e) => setNewAssistantDocId(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-gray-400"
           >
-            <option value="">{t('coreFileOptional')}</option>
+            <option value="">{t('chooseSourceDocument')}</option>
             {documents.map((doc) => (
               <option key={doc.id} value={doc.id}>
                 {doc.title || doc.file_name || t('untitled')}
@@ -298,7 +323,8 @@ export function ChatClient() {
           <button
             type="button"
             onClick={handleCreateAssistant}
-            className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-black"
+            disabled={!newAssistantDocId}
+            className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
           >
             {t('createBot')}
           </button>
@@ -401,8 +427,9 @@ export function ChatClient() {
                   value={coreDocId}
                   onChange={(e) => setCoreDocId(e.target.value)}
                   className="min-w-[200px] rounded-md border border-gray-300 px-2 py-1 text-xs outline-none focus:border-gray-400"
+                  aria-label={t('sourceDocument')}
                 >
-                  <option value="">{t('noCoreFile')}</option>
+                  <option value="">{t('chooseSourceDocument')}</option>
                   {documents.map((doc) => (
                     <option key={doc.id} value={doc.id}>
                       {doc.title || doc.file_name || t('untitled')}
@@ -426,6 +453,8 @@ export function ChatClient() {
             <p className="text-sm text-gray-500">
               {activeAssistantId ? t('startNewChatHint') : t('createOrSelectAssistant')}
             </p>
+          ) : !activeDocumentId ? (
+            <p className="text-sm text-amber-700">{t('selectSourceDocumentRequired')}</p>
           ) : messages.length === 0 ? (
             <p className="text-sm text-gray-500">{t('sendMessageToStart')}</p>
           ) : (
@@ -463,13 +492,13 @@ export function ChatClient() {
               placeholder={
                 activeConversationId ? t('typeMessage') : t('createConversationFirst')
               }
-              disabled={!activeConversationId || sending}
+              disabled={!activeConversationId || sending || !activeDocumentId}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100"
             />
             <button
               type="button"
               onClick={handleSend}
-              disabled={!activeConversationId || sending || !text.trim()}
+              disabled={!activeConversationId || sending || !text.trim() || !activeDocumentId}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
             >
               {sending ? t('sending') : t('send')}

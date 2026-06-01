@@ -663,7 +663,10 @@ const translations: I18nTable = {
     teacherChat: {
       title: 'AI Tutor',
       botNamePlaceholder: 'Bot name',
-      coreFileOptional: 'Core file (optional)',
+      sourceDocument: 'Source document',
+      chooseSourceDocument: 'Choose document',
+      selectSourceDocumentRequired: 'Please select a source document.',
+      coreFileOptional: 'Source document (required)',
       createBot: 'Create bot',
       loading: 'Loading...',
       noConversationsYet: 'No conversations yet.',
@@ -1329,7 +1332,10 @@ const translations: I18nTable = {
     teacherChat: {
       title: 'AI müəllim',
       botNamePlaceholder: 'Bot adı',
-      coreFileOptional: 'Əsas fayl (opsional)',
+      sourceDocument: 'Mənbə sənəd',
+      chooseSourceDocument: 'Sənəd seçin',
+      selectSourceDocumentRequired: 'Zəhmət olmasa mənbə sənədi seçin.',
+      coreFileOptional: 'Mənbə sənəd (mütləq)',
       createBot: 'Bot yarat',
       loading: 'Yüklənir...',
       noConversationsYet: 'Hələ söhbət yoxdur.',

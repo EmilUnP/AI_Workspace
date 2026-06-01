@@ -59,6 +59,12 @@ const parseDocumentIds = (value: unknown): string[] => {
     .filter((id) => /^[0-9a-f-]{36}$/i.test(id))
 }
 
+const documentRequiredError = () => {
+  const err = new Error('At least one source document is required') as Error & { statusCode?: number }
+  err.statusCode = 400
+  return err
+}
+
 export class TeacherChatbotService {
   private readonly rag: DocumentRagService
   constructor(private readonly app: FastifyInstance) {
@@ -95,11 +101,15 @@ export class TeacherChatbotService {
   }
 
   async createAssistant(scope: OwnerScope, title?: string, documentIds?: string[]) {
+    const ids = parseDocumentIds(documentIds)
+    if (ids.length === 0) {
+      throw documentRequiredError()
+    }
     const { rows } = await this.app.db.query<AssistantRow>(
       `INSERT INTO teacher_chat_assistants (user_id, title, document_ids)
        VALUES ($1, $2, $3::jsonb)
        RETURNING ${ASSISTANT_COLUMNS}`,
-      [scope.ownerUserId, title || 'New Assistant', JSON.stringify(documentIds || [])]
+      [scope.ownerUserId, title || 'New Assistant', JSON.stringify(ids)]
     )
     return rows[0]
   }
@@ -129,6 +139,9 @@ export class TeacherChatbotService {
       sets.push(`title = $${values.length}`)
     }
     if (data.documentIds !== undefined) {
+      if (data.documentIds.length === 0) {
+        throw documentRequiredError()
+      }
       values.push(JSON.stringify(data.documentIds))
       sets.push(`document_ids = $${values.length}::jsonb`)
     }
@@ -307,6 +320,9 @@ export class TeacherChatbotService {
 
     const storedDocIds = parseDocumentIds(row.document_ids)
     const docIds = Array.from(new Set([...data.documentIds, ...storedDocIds])).slice(0, 3)
+    if (docIds.length === 0) {
+      throw documentRequiredError()
+    }
     const retrievedByDoc = await this.rag.retrieveMany(scope.ownerUserId, docIds, data.message, 2)
     const retrievedDocs = docIds.map((id) => {
       const chunks = (retrievedByDoc.get(id) || []).slice(0, 2).map((chunk) => String(chunk).slice(0, 700))
