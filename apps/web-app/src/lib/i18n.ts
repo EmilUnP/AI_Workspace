@@ -529,7 +529,9 @@ const translations: I18nTable = {
       untitledDocument: 'Untitled document',
       missingTopicError: 'Please enter a lesson topic.',
       generateFailedWithStatus: 'Failed to generate lesson ({status})',
-      generateFailedGeneric: 'Failed to generate lesson'
+      generateFailedGeneric: 'Failed to generate lesson',
+      generateTimeoutHint:
+        'The server stopped waiting after 60 seconds, but generation may still be running. Refresh the lessons list in a minute — if the lesson appears, open it (images and audio may finish shortly).'
     },
     teacherLessonDetail: {
       topicLabel: 'Topic:',
@@ -1191,7 +1193,9 @@ const translations: I18nTable = {
       untitledDocument: 'Adsız sənəd',
       missingTopicError: 'Zəhmət olmasa dərs mövzusu daxil edin.',
       generateFailedWithStatus: 'Dərs yaratmaq mümkün olmadı ({status})',
-      generateFailedGeneric: 'Dərs yaratmaq mümkün olmadı'
+      generateFailedGeneric: 'Dərs yaratmaq mümkün olmadı',
+      generateTimeoutHint:
+        'Server 60 saniyədən sonra gözləməni dayandırdı, amma yaratma davam edə bilər. Bir dəqiqədən sonra dərs siyahısını yeniləyin — dərs görünsə, açın (şəkil və audio bir az sonra hazır ola bilər).'
     },
     teacherLessonDetail: {
       topicLabel: 'Mövzu:',

@@ -202,6 +202,9 @@ export default function GenerateLessonPage() {
       clearTimeout(stepTimer3)
       
       if (!response.ok) {
+        if (response.status === 504) {
+          throw new Error(t('generateTimeoutHint'))
+        }
         const errorData = await response.json().catch(() => ({})) as {
           error?: string
           message?: string

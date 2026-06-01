@@ -3,6 +3,10 @@ import { getApiUrl } from '@/lib/portal-urls'
 import { cookies } from 'next/headers'
 import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 
+/** Lesson + RAG can exceed default 60s gateway limits; allow long upstream wait on the Next server. */
+export const maxDuration = 300
+export const dynamic = 'force-dynamic'
+
 const getBackendBase = () => getApiUrl()
 
 export async function POST(request: NextRequest) {

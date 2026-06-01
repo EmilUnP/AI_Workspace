@@ -1080,12 +1080,13 @@ export class LessonAiService {
     const lessonId = randomUUID()
     let generated: GeneratedLesson
     try {
+      // Images are generated after DB insert (same as audio) so the HTTP response returns before image API calls.
       generated = await generateLesson(
         primaryDocumentId,
         topic,
         userId,
         body.language,
-        includeImages,
+        false,
         lessonId,
         {
           includeTables: opts.includeTables !== false,
@@ -1146,6 +1147,38 @@ export class LessonAiService {
       const wrapped = new Error(`Lesson save failed: ${message}`) as Error & { statusCode?: number }
       wrapped.statusCode = 500
       throw wrapped
+    }
+
+    if (includeImages) {
+      void (async () => {
+        try {
+          const imageResult = await generateLessonImagesWithUsage(
+            topic,
+            generated.content,
+            3,
+            body.language,
+            lessonId,
+            geminiApiKeyForRequest
+          )
+          await this.app.db.query(
+            `UPDATE lessons
+             SET images = $2::jsonb,
+                 metadata = COALESCE(metadata, '{}'::jsonb) || $3::jsonb,
+                 updated_at = now()
+             WHERE id = $1`,
+            [
+              lessonId,
+              JSON.stringify(imageResult.images),
+              JSON.stringify({
+                image_usage: imageResult.usage,
+                images_pending: false,
+              }),
+            ]
+          )
+        } catch (error) {
+          this.app.log.warn({ error, lessonId }, 'Lesson image generation failed')
+        }
+      })()
     }
 
     if (includeAudio) {
