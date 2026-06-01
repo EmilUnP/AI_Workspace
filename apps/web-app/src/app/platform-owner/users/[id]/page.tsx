@@ -76,8 +76,9 @@ export default async function UserDetailPage({
       redirect(buildRedirectUrl(id, 'error', 'Session expired. Please login again.'))
     }
 
+    let response: Response
     try {
-      const response = await fetch(`${getApiUrl()}/v1/users/${id}/password`, {
+      response = await fetch(`${getApiUrl()}/v1/users/${id}/password`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -86,22 +87,22 @@ export default async function UserDetailPage({
         body: JSON.stringify({ password }),
         cache: 'no-store',
       })
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to update password.'
-        try {
-          const payload = (await response.json()) as { error?: string; message?: string }
-          errorMessage = payload.error || payload.message || errorMessage
-        } catch {
-          // keep fallback
-        }
-        redirect(buildRedirectUrl(id, 'error', errorMessage))
-      }
-
-      redirect(buildRedirectUrl(id, 'success', 'Password updated successfully.'))
     } catch {
-      redirect(buildRedirectUrl(id, 'error', 'Backend unavailable. Start backend and try again.'))
+      redirect(buildRedirectUrl(id, 'error', 'Could not reach the API. Check that the backend is running and reachable.'))
     }
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to update password.'
+      try {
+        const payload = (await response.json()) as { error?: string; message?: string }
+        errorMessage = payload.error || payload.message || errorMessage
+      } catch {
+        // keep fallback
+      }
+      redirect(buildRedirectUrl(id, 'error', errorMessage))
+    }
+
+    redirect(buildRedirectUrl(id, 'success', 'Password updated successfully.'))
   }
 
   const role = roleConfig[user.role] || roleConfig.user
