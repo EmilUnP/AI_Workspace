@@ -96,7 +96,6 @@ export class TeacherChatbotService {
     )
     const row = rows[0]
     if (!row) return null
-    if (!scope.isApiKey && row.external_user_id != null) return null
     return row
   }
 
@@ -216,7 +215,7 @@ export class TeacherChatbotService {
     const { rows } = await this.app.db.query<ConversationRow>(
       `SELECT ${CONVERSATION_COLUMNS}
        FROM teacher_chat_conversations
-       WHERE assistant_id = $1 AND external_user_id IS NULL
+       WHERE assistant_id = $1
        ORDER BY updated_at DESC`,
       [assistantId]
     )
