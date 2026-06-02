@@ -1,5 +1,28 @@
 type AnyQuestion = Record<string, unknown>
 
+type DifficultyLevel = 'easy' | 'medium' | 'hard'
+
+function normalizeDifficulty(value: unknown): DifficultyLevel | undefined {
+  if (typeof value === 'string') {
+    const raw = value.trim().toLowerCase()
+    if (!raw) return undefined
+    if (raw === 'easy' || raw.includes('easy')) return 'easy'
+    if (raw === 'medium' || raw.includes('medium')) return 'medium'
+    if (raw === 'hard' || raw.includes('hard')) return 'hard'
+    if (raw === '1') return 'easy'
+    if (raw === '2') return 'medium'
+    if (raw === '3') return 'hard'
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value === 1) return 'easy'
+    if (value === 2) return 'medium'
+    if (value === 3) return 'hard'
+  }
+
+  return undefined
+}
+
 function normalizeQuestionType(value: unknown, options: string[]): 'multiple_choice' | 'true_false' | 'multiple_select' | 'fill_blank' {
   const raw = String(value || '').trim().toLowerCase()
   if (raw === 'multiple_choice' || raw === 'multiple-choice' || raw === 'mcq') return 'multiple_choice'
@@ -64,7 +87,14 @@ export function normalizeExamQuestion<T extends AnyQuestion>(question: T): T {
           : typeof question.reasoning === 'string'
             ? question.reasoning
             : undefined,
-    difficulty: typeof question.difficulty === 'string' ? question.difficulty : undefined,
+    difficulty: normalizeDifficulty(
+      (question as AnyQuestion).difficulty ??
+        // common alternates
+        (question as AnyQuestion).difficultyLevel ??
+        (question as AnyQuestion).difficulty_level ??
+        (question as AnyQuestion).diff ??
+        (question as AnyQuestion).level
+    ),
     topics,
   }
   return normalized as T

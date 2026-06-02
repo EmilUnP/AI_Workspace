@@ -6,6 +6,31 @@ import type { FastifyInstance } from 'fastify'
 
 const questionTypeEnum = z.enum(['multiple_choice', 'true_false', 'multiple_select', 'fill_blank'])
 
+export type DifficultyLevel = 'easy' | 'medium' | 'hard'
+
+function normalizeDifficulty(value: unknown): DifficultyLevel | undefined {
+  if (typeof value === 'string') {
+    const raw = value.trim().toLowerCase()
+    if (!raw) return undefined
+    // Be tolerant to model formats like "Easy", "medium", "Hard", etc.
+    if (raw === 'easy' || raw.includes('easy')) return 'easy'
+    if (raw === 'medium' || raw.includes('medium')) return 'medium'
+    if (raw === 'hard' || raw.includes('hard')) return 'hard'
+    // Sometimes models return "1/2/3" style values.
+    if (raw === '1') return 'easy'
+    if (raw === '2') return 'medium'
+    if (raw === '3') return 'hard'
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value === 1) return 'easy'
+    if (value === 2) return 'medium'
+    if (value === 3) return 'hard'
+  }
+
+  return undefined
+}
+
 const examSchema = z.object({
   documentId: z.uuid().optional(),
   documentIds: z.array(z.uuid()).default([]),
@@ -77,7 +102,7 @@ export class ExamAiService {
       questions: Array<Record<string, unknown>>
     }>(prompt, 'gemini-2.5-flash', { apiKey })
 
-    const normalizedQuestions = this.normalizeGeneratedQuestions(exam.questions || [])
+    const normalizedQuestions = normalizeGeneratedQuestions(exam.questions || [])
 
     const { rows } = await this.app.db.query<{ id: string }>(
       `INSERT INTO exams (user_id, title, description, grade_level, questions, language, duration_minutes)
@@ -103,6 +128,7 @@ export class ExamAiService {
       [
         `Translate all exam questions to language: ${data.targetLanguage}.`,
         'Preserve structure and question ids if present.',
+        'Preserve difficulty fields (easy|medium|hard) exactly if present.',
         'Output JSON object: {"questions":[...]}',
         `Questions JSON:\n${JSON.stringify(data.questions)}`
       ].join('\n\n'),
@@ -136,44 +162,55 @@ export class ExamAiService {
       topics,
       custom,
       'Return JSON object with shape:',
-      '{"title":"...","description":"...","questions":[{"id":"q1","type":"multiple_choice|true_false|multiple_select|fill_blank","question":"...","options":["..."],"correct_answer":"...","explanation":"..."}]}',
+      '{"title":"...","description":"...","questions":[{"id":"q1","type":"multiple_choice|true_false|multiple_select|fill_blank","difficulty":"easy|medium|hard","question":"...","options":["..."],"correct_answer":"...","explanation":"..."}]}',
       `Context:\n${contextText}`
     ]
       .filter(Boolean)
       .join('\n\n')
   }
+}
 
-  private normalizeGeneratedQuestions(questions: Array<Record<string, unknown>>) {
-    return questions.map((rawQuestion, index) => {
-      const question = { ...rawQuestion }
-      const type = String(question.type || '').trim().toLowerCase()
-      const rawOptions = Array.isArray(question.options) ? question.options : []
-      const options = rawOptions.map((item) => String(item ?? '')).filter(Boolean)
+export function normalizeGeneratedQuestions(questions: Array<Record<string, unknown>>) {
+  return questions.map((rawQuestion, index) => {
+    const question = { ...rawQuestion }
+    const type = String(question.type || '').trim().toLowerCase()
+    const rawOptions = Array.isArray(question.options) ? question.options : []
+    const options = rawOptions.map((item) => String(item ?? '')).filter(Boolean)
 
-      if (type === 'multiple_select' || type === 'multiple_choice') {
-        const limitedOptions = options.slice(0, 4)
-        question.options = limitedOptions
+    if (type === 'multiple_select' || type === 'multiple_choice') {
+      const limitedOptions = options.slice(0, 4)
+      question.options = limitedOptions
 
-        const rawCorrect = question.correct_answer
-        if (type === 'multiple_select') {
-          const asArray = Array.isArray(rawCorrect) ? rawCorrect : [rawCorrect]
-          const normalizedCorrect = asArray
-            .map((item) => String(item ?? '').trim())
-            .filter((item) => limitedOptions.includes(item))
-          question.correct_answer = normalizedCorrect
-        } else if (type === 'multiple_choice') {
-          const correct = String(rawCorrect ?? '').trim()
-          question.correct_answer = limitedOptions.includes(correct)
-            ? correct
-            : (limitedOptions[0] || '')
-        }
+      const rawCorrect = question.correct_answer
+      if (type === 'multiple_select') {
+        const asArray = Array.isArray(rawCorrect) ? rawCorrect : [rawCorrect]
+        const normalizedCorrect = asArray
+          .map((item) => String(item ?? '').trim())
+          .filter((item) => limitedOptions.includes(item))
+        question.correct_answer = normalizedCorrect
+      } else if (type === 'multiple_choice') {
+        const correct = String(rawCorrect ?? '').trim()
+        question.correct_answer = limitedOptions.includes(correct)
+          ? correct
+          : (limitedOptions[0] || '')
       }
+    }
 
-      if (!question.id) {
-        question.id = `q${index + 1}`
-      }
+    // Models may return difficulty under various keys and casing. Normalize into the exact values
+    // the UI expects (`easy|medium|hard`).
+    const difficultyRaw =
+      question.difficulty ??
+      // common alternates
+      question.difficultyLevel ??
+      question.difficulty_level ??
+      question.diff ??
+      question.level
+    question.difficulty = normalizeDifficulty(difficultyRaw)
 
-      return question
-    })
-  }
+    if (!question.id) {
+      question.id = `q${index + 1}`
+    }
+
+    return question
+  })
 }
