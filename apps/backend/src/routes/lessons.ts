@@ -37,13 +37,15 @@ type LessonDetailsRow = {
 
 const toAbsoluteMediaUrl = (
   request: { protocol: string; headers: Record<string, string | string[] | undefined> },
-  value: unknown
+  value: unknown,
+  options?: { forceAbsoluteInternalApiPath?: boolean }
 ): string | null => {
   const raw = typeof value === 'string' ? value.trim() : ''
   if (!raw) return null
   if (/^https?:\/\//i.test(raw)) return raw
-  // Keep internal API media paths relative so web-app can rewrite them to its authenticated proxy route.
-  if (raw.startsWith('/v1/lessons/')) return raw
+  // Web-app flow keeps internal media paths relative so it can rewrite to its proxy route.
+  // API-key (third-party) clients need direct absolute URLs.
+  if (raw.startsWith('/v1/lessons/') && !options?.forceAbsoluteInternalApiPath) return raw
   if (!raw.startsWith('/')) return raw
   const host = String(request.headers.host || '').trim()
   if (!host) return raw
@@ -52,7 +54,8 @@ const toAbsoluteMediaUrl = (
 
 const normalizeLessonImages = (
   request: { protocol: string; headers: Record<string, string | string[] | undefined> },
-  value: unknown
+  value: unknown,
+  options?: { forceAbsoluteInternalApiPath?: boolean }
 ): unknown => {
   if (!Array.isArray(value)) return value
   return value.map((item) => {
@@ -60,7 +63,7 @@ const normalizeLessonImages = (
     const image = item as Record<string, unknown>
     return {
       ...image,
-      url: toAbsoluteMediaUrl(request, image.url) ?? image.url,
+      url: toAbsoluteMediaUrl(request, image.url, options) ?? image.url,
     }
   })
 }
@@ -215,8 +218,10 @@ export async function lessonsRoutes(app: FastifyInstance) {
       }
     }
 
-    const images = normalizeLessonImages(request, lesson.images)
-    const audioUrl = toAbsoluteMediaUrl(request, resolvedAudioUrl)
+    const thirdPartyApiKeyAccess = Boolean(request.authApiKeyId)
+    const mediaUrlOptions = { forceAbsoluteInternalApiPath: thirdPartyApiKeyAccess }
+    const images = normalizeLessonImages(request, lesson.images, mediaUrlOptions)
+    const audioUrl = toAbsoluteMediaUrl(request, resolvedAudioUrl, mediaUrlOptions)
 
     return reply.send({
       lesson: {
