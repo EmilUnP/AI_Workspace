@@ -135,8 +135,12 @@ export async function saveGeminiKey(apiKey: string): Promise<SaveGeminiKeyResult
     cache: 'no-store'
   })
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as { error?: string }
-    return { error: payload.error || 'Failed to save Gemini key' }
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string
+      issues?: Array<{ message?: string }>
+    }
+    const validationDetail = payload.issues?.find((issue) => issue.message)?.message
+    return { error: validationDetail || payload.error || 'Failed to save Gemini key' }
   }
   const payload = (await response.json()) as { hasKey?: boolean; keyHint?: string | null }
   revalidatePath('/school-admin/api-integration')

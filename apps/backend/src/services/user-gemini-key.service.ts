@@ -5,13 +5,27 @@ import { env } from '../config/env.js'
 
 const GEMINI_PROVIDER = 'gemini'
 
+/** Legacy standard keys (AIza…) and new auth keys from AI Studio (AQ.…). */
+export function isValidGeminiApiKeyFormat(value: string): boolean {
+  if (value.startsWith('AIza')) {
+    return /^AIza[A-Za-z0-9_-]+$/.test(value)
+  }
+  if (value.startsWith('AQ.')) {
+    return /^AQ\.[A-Za-z0-9_.-]+$/.test(value)
+  }
+  return false
+}
+
 const saveGeminiKeySchema = z.object({
   apiKey: z
     .string()
     .trim()
     .min(20, 'Gemini API key is too short')
-    .max(256, 'Gemini API key is too long')
-    .refine((value) => value.startsWith('AIza'), 'Gemini API key must start with AIza')
+    .max(4096, 'Gemini API key is too long')
+    .refine(
+      isValidGeminiApiKeyFormat,
+      'Gemini API key must start with AIza (standard) or AQ. (auth key from AI Studio)'
+    )
 })
 
 function buildCryptoKey() {

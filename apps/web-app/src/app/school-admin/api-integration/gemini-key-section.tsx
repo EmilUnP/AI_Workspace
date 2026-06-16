@@ -107,7 +107,7 @@ export function GeminiKeySection({ initialHasKey, initialKeyHint }: GeminiKeySec
           type="password"
           value={apiKey}
           onChange={(event) => setApiKey(event.target.value)}
-          placeholder="AIza..."
+          placeholder="AIza... or AQ...."
           className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-400 focus:ring-1 focus:ring-gray-300"
           autoComplete="off"
         />
