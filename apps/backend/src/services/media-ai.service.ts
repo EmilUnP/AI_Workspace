@@ -32,7 +32,6 @@ export class MediaAiService {
     const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
     const rewrittenPrompt = await generateText(
       `Rewrite this image prompt to be clear and production-ready:\n${data.prompt}`,
-      'gemini-2.5-flash',
       { apiKey }
     )
     return {

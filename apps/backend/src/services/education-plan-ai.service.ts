@@ -284,7 +284,6 @@ Rules:
 - Keep field names exactly as shown.
 - Include exactly ${data.sessionsPerWeek} sessions in every week.
 - duration_hours in each session must be ${data.hoursPerSession}.`,
-      'gemini-2.5-flash',
       { apiKey }
     )
     const content = normalizePlanContent(rawContent, targetWeeks, data.sessionsPerWeek, data.hoursPerSession)

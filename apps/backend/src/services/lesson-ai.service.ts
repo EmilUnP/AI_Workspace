@@ -3,7 +3,6 @@
  * Uses RAG (Retrieval Augmented Generation) for generating lesson content from documents
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { randomUUID } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
@@ -11,11 +10,8 @@ import { sanitizeBrokenMarkdownTableLines } from './lesson-content-sanitize.js'
 import { generateLessonImagesWithUsage, type LessonImage } from './lesson-media.service.js'
 import { DocumentRagService } from './document-rag.service.js'
 import { generateLessonAudioWithUsage } from './lesson-media.service.js'
+import { generateContentWithFallback } from '../ai/gemini.js'
 import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
-
-const AI_MODELS = {
-  LESSON: 'gemini-2.5-flash',
-} as const
 
 // Compatibility fallbacks for this standalone generator API.
 // In current backend flow, RAG is handled by LessonAiService + DocumentRagService.
@@ -201,25 +197,19 @@ function getApiKey(): string {
   return apiKey
 }
 
-// Get Gemini model with custom system instruction
-function getGeminiModelWithSystemInstruction(systemInstruction: string, modelName: string = AI_MODELS.LESSON) {
-  const apiKey = getApiKey()
-  const client = new GoogleGenerativeAI(apiKey)
-  return client.getGenerativeModel({
-    model: modelName,
-    systemInstruction: {
-      role: 'system',
-      parts: [{ text: systemInstruction }],
-    },
-    generationConfig: {
-      temperature: 0.7,
-      topP: 0.8,
-      topK: 40,
-      maxOutputTokens: 65536,
-    },
-  })
+function lessonSystemInstruction(systemInstruction: string) {
+  return {
+    role: 'system' as const,
+    parts: [{ text: systemInstruction }],
+  }
 }
 
+const lessonGenerationConfig = {
+  temperature: 0.7,
+  topP: 0.8,
+  topK: 40,
+  maxOutputTokens: 65536,
+}
 
 /**
  * Normalize lesson content: strip disclaimers, fix markdown, remove meta-commentary,
@@ -512,11 +502,6 @@ async function regenerateMiniTestFromContent(
   targetLanguage: string,
   count: number
 ): Promise<GeneratedLesson['mini_test']> {
-  const model = getGeminiModelWithSystemInstruction(
-    `You are an expert assessment designer. Create classroom-quality multiple-choice questions.
-All output must be in ${targetLanguage}. Questions must be grounded in the provided lesson content.`
-  )
-
   const prompt = `Create exactly ${count} high-quality multiple-choice questions for this lesson.
 Rules:
 - Output ONLY valid JSON.
@@ -538,8 +523,15 @@ Topic: ${topic}
 Lesson content:
 ${lessonContent.substring(0, 12000)}`
 
-  const response = await model.generateContent(prompt)
-  const text = response.response?.text() || '{}'
+  const response = await generateContentWithFallback(prompt, {
+    apiKey: getApiKey(),
+    systemInstruction: lessonSystemInstruction(
+      `You are an expert assessment designer. Create classroom-quality multiple-choice questions.
+All output must be in ${targetLanguage}. Questions must be grounded in the provided lesson content.`
+    ),
+    generationConfig: lessonGenerationConfig,
+  })
+  const text = response.text || '{}'
   const extracted = extractFirstJsonObject(text) || text
   let candidate: unknown = []
   try {
@@ -561,14 +553,6 @@ async function enforceLessonLanguage(
   const code = normalizeLanguageCode(languageCode)
   if (code === 'en') return lesson
 
-  const model = getGeminiModelWithSystemInstruction(
-    `You are a strict localization assistant.
-Translate all human-readable lesson JSON fields to ${targetLanguage}.
-Keep JSON keys and structure unchanged.
-Do not change correct_answer indexes.
-Return ONLY valid JSON.`
-  )
-
   const source = {
     title: lesson.title,
     content: lesson.content,
@@ -578,7 +562,7 @@ Return ONLY valid JSON.`
     images: lesson.images,
   }
 
-  const response = await model.generateContent(
+  const response = await generateContentWithFallback(
     `Translate this lesson JSON to ${targetLanguage}.
 Rules:
 - Translate title, content, objectives, and mini_test fields.
@@ -586,9 +570,20 @@ Rules:
 - Keep images URLs unchanged; translate only alt/description if present.
 - Return ONLY valid JSON.
 JSON:
-${JSON.stringify(source)}`
+${JSON.stringify(source)}`,
+    {
+      apiKey: getApiKey(),
+      systemInstruction: lessonSystemInstruction(
+        `You are a strict localization assistant.
+Translate all human-readable lesson JSON fields to ${targetLanguage}.
+Keep JSON keys and structure unchanged.
+Do not change correct_answer indexes.
+Return ONLY valid JSON.`
+      ),
+      generationConfig: lessonGenerationConfig,
+    }
   )
-  const text = response.response?.text() || '{}'
+  const text = response.text || '{}'
   const localized = safeJsonParse<GeneratedLesson>(text, lesson)
   localized.content = normalizeLessonContent(localized.content)
   return localized
@@ -737,9 +732,7 @@ Your lessons should be:
 Never add disclaimers or meta-commentary in the lesson content. Output only the lesson itself. Use consistent markdown (## and ### for headings, **bold** for emphasis, simple lists).`
       : LESSON_SYSTEM_INSTRUCTION
 
-  // Generate the lesson using Gemini
-  const model = getGeminiModelWithSystemInstruction(languageSystemInstruction, AI_MODELS.LESSON)
-
+  // Generate the lesson using Gemini with model fallback on overload/quota errors.
   const languageInstruction =
     targetLanguage !== 'English'
       ? `\n\n⚠️ CRITICAL LANGUAGE REQUIREMENT ⚠️\nYou MUST generate ALL content EXCLUSIVELY in ${targetLanguage} language:\n- Title must be in ${targetLanguage}\n- All content must be in ${targetLanguage}\n- All questions, options, and explanations must be in ${targetLanguage}\n- Use proper ${targetLanguage} grammar and spelling\n- The topic or title below may be in a DIFFERENT language (e.g. user input). You MUST translate or rephrase it into ${targetLanguage} for the lesson title and all outputs. Do NOT copy the topic string literally if it is not in ${targetLanguage}.\n\n`
@@ -843,8 +836,12 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
 
   const fallback = getFallbackPhrases(normalizedLanguageCode)
   try {
-    const response = await model.generateContent(prompt)
-    const text = response.response?.text() || '{}'
+    const response = await generateContentWithFallback(prompt, {
+      apiKey: getApiKey(),
+      systemInstruction: lessonSystemInstruction(languageSystemInstruction),
+      generationConfig: lessonGenerationConfig,
+    })
+    const text = response.text || '{}'
     const usage = (response.response as unknown as {
       usageMetadata?: {
         promptTokenCount?: number
@@ -860,7 +857,7 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
       total_tokens:
         usage?.totalTokenCount ??
         (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0),
-      model_used: AI_MODELS.LESSON,
+      model_used: response.modelUsed,
     }
 
     const lesson = safeJsonParse<GeneratedLesson>(text, {

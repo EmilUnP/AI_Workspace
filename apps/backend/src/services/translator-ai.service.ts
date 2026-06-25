@@ -14,7 +14,7 @@ export class TranslatorAiService {
   async translate(userId: string, input: unknown) {
     const data = translateSchema.parse(input)
     const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const text = await generateText(`Translate this text to ${data.toLanguage}:\n\n${data.text}`, 'gemini-2.5-flash', { apiKey })
+    const text = await generateText(`Translate this text to ${data.toLanguage}:\n\n${data.text}`, { apiKey })
     return { translatedText: text }
   }
 }

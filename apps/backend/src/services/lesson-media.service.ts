@@ -4,24 +4,18 @@
  * Images are saved to Supabase Storage for reliable delivery
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import {
+  generateContentWithFallback,
+  IMAGE_MODEL_FALLBACK_CHAIN,
+  postGeminiGenerateContentWithFallback,
+  TTS_MODEL_FALLBACK_CHAIN,
+} from '../ai/gemini.js'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { env } from '../config/env.js'
 import { useDatabaseFileStorage } from '../utils/document-file.js'
 import { saveLessonMediaFile } from '../utils/lesson-media-storage.js'
 import { buildImagePromptContentExcerpt } from './lesson-content-sanitize.js'
-
-const AI_MODELS = {
-  TEXT: 'gemini-2.5-flash',
-  IMAGE_GENERATION: [
-    'gemini-3-pro-image-preview',
-    'gemini-2.5-flash-image-preview',
-  ],
-  TTS_MODELS: [
-    'gemini-2.5-flash-preview-tts'
-  ],
-} as const
 
 export interface LessonImage {
   url: string
@@ -59,10 +53,6 @@ function getApiKey(apiKeyOverride?: string): string {
  */
 async function detectLanguage(content: string, apiKeyOverride?: string): Promise<string> {
   try {
-    const apiKey = getApiKey(apiKeyOverride)
-    const client = new GoogleGenerativeAI(apiKey)
-    const model = client.getGenerativeModel({ model: AI_MODELS.TEXT })
-    
     const prompt = `Detect the primary language of the following text. Return ONLY the language name in English (e.g., "English", "Russian", "Azerbaijani", "Turkish", etc.).
 
 Text:
@@ -70,8 +60,10 @@ ${content.substring(0, 1000)}
 
 Language:`
     
-    const response = await model.generateContent(prompt)
-    const text = response.response?.text()?.trim() || "English"
+    const response = await generateContentWithFallback(prompt, {
+      apiKey: getApiKey(apiKeyOverride),
+    })
+    const text = response.text || "English"
     
     // Normalize common language names
     const normalized = text.toLowerCase()
@@ -99,7 +91,6 @@ async function generateImagePrompts(
 ): Promise<string[]> {
   try {
     const apiKey = getApiKey(apiKeyOverride)
-    const client = new GoogleGenerativeAI(apiKey)
     
     // Detect language if not provided
     const detectedLanguage = language || await detectLanguage(content, apiKeyOverride)
@@ -115,14 +106,6 @@ ALL text, labels, annotations, and written content in the generated images MUST 
       : ""
     
     // Use model for generating detailed prompts
-    const model = client.getGenerativeModel({
-      model: AI_MODELS.TEXT,
-      systemInstruction: {
-        role: "system",
-        parts: [{ text: "You are an expert at creating detailed, specific prompts for AI image generation. Create prompts that will generate accurate educational diagrams, illustrations, and visual representations." }],
-      },
-    })
-
     const contentForPrompt = buildImagePromptContentExcerpt(content, 3600)
 
     const prompt = `You are creating detailed prompts for AI image generation to illustrate an educational lesson.
@@ -159,8 +142,16 @@ Format: ["detailed prompt 1", "detailed prompt 2", "detailed prompt 3"]
 
 Generate ${count} highly detailed, specific prompts:`
 
-    const response = await model.generateContent(prompt)
-    const text = response.response?.text() || "[]"
+    const response = await generateContentWithFallback(prompt, {
+      apiKey,
+      systemInstruction: {
+        role: 'system',
+        parts: [{
+          text: 'You are an expert at creating detailed, specific prompts for AI image generation. Create prompts that will generate accurate educational diagrams, illustrations, and visual representations.',
+        }],
+      },
+    })
+    const text = response.text || "[]"
     const cleanText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
 
     try {
@@ -202,70 +193,52 @@ async function generateImageFromPrompt(prompt: string, language?: string, apiKey
       enhancedPrompt += ` All text and labels should be in ${language}.`
     }
     
-    // Try Gemini image generation models
-    const modelsToTry = AI_MODELS.IMAGE_GENERATION
-    
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`Trying Gemini model ${modelName} for image generation...`)
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`
-        
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: `Generate an educational image: ${enhancedPrompt}` }]
-            }],
-            generationConfig: {
-              responseModalities: ["IMAGE", "TEXT"],
-            }
-          }),
-        })
+    // Try Gemini image generation models with shared fallback chain.
+    const restResult = await postGeminiGenerateContentWithFallback({
+      apiKey,
+      models: IMAGE_MODEL_FALLBACK_CHAIN,
+      body: {
+        contents: [{
+          parts: [{ text: `Generate an educational image: ${enhancedPrompt}` }]
+        }],
+        generationConfig: {
+          responseModalities: ['IMAGE', 'TEXT'],
+        },
+      },
+      maxRetriesPerModel: 1,
+    })
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.warn(`Image API error for ${modelName}:`, response.status, errorText.substring(0, 300))
-          continue
-        }
-
-        const data = await response.json()
-        
-        // Check for image in response parts
-        const parts = data.candidates?.[0]?.content?.parts || []
-        for (const part of parts) {
-          if (part.inlineData?.data && part.inlineData?.mimeType?.startsWith("image/")) {
-            console.log(`Successfully generated image with ${modelName}`)
-            return {
-              url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
-              alt: prompt.substring(0, 100),
-              base64Data: part.inlineData.data,
-              mimeType: part.inlineData.mimeType,
-              usage: {
-                prompt_tokens: data?.usageMetadata?.promptTokenCount ?? 0,
-                completion_tokens: data?.usageMetadata?.candidatesTokenCount ?? 0,
-                total_tokens:
-                  data?.usageMetadata?.totalTokenCount ??
-                  (data?.usageMetadata?.promptTokenCount ?? 0) +
-                    (data?.usageMetadata?.candidatesTokenCount ?? 0),
-                model_used: modelName,
-              },
-            }
+    if (restResult) {
+      const data = restResult.data as {
+        candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string; mimeType?: string } }> } }>
+        usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number }
+      }
+      const modelName = restResult.modelUsed
+      const parts = data.candidates?.[0]?.content?.parts || []
+      for (const part of parts) {
+        if (part.inlineData?.data && part.inlineData?.mimeType?.startsWith('image/')) {
+          console.log(`Successfully generated image with ${modelName}`)
+          return {
+            url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+            alt: prompt.substring(0, 100),
+            base64Data: part.inlineData.data,
+            mimeType: part.inlineData.mimeType,
+            usage: {
+              prompt_tokens: data?.usageMetadata?.promptTokenCount ?? 0,
+              completion_tokens: data?.usageMetadata?.candidatesTokenCount ?? 0,
+              total_tokens:
+                data?.usageMetadata?.totalTokenCount ??
+                (data?.usageMetadata?.promptTokenCount ?? 0) +
+                  (data?.usageMetadata?.candidatesTokenCount ?? 0),
+              model_used: modelName,
+            },
           }
         }
-        
-        // No image in response, try next model
-        console.warn(`No image in response from ${modelName}`)
-      } catch (modelError: unknown) {
-        console.warn(`Error with model ${modelName}:`, (modelError as Error).message)
-        continue
       }
+      console.warn(`No image in response from ${modelName}`)
     }
-    
-    // If all models failed, return null
-    console.warn("All Gemini image generation models failed")
+
+    console.warn('All Gemini image generation models failed')
     return null
   } catch (error) {
     console.warn("Image generation failed:", error)
@@ -547,39 +520,18 @@ export async function generateLessonAudioWithUsage(
       console.log(`TTS: Using language ${language} for audio generation`)
     }
 
-    const maxRetries = 2
-    const retryDelayMs = 2000
-    let data: { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }> } | null = null
-    for (const ttsModel of AI_MODELS.TTS_MODELS) {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${ttsModel}:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody)
-          }
-        )
+    const restResult = await postGeminiGenerateContentWithFallback({
+      apiKey,
+      models: TTS_MODEL_FALLBACK_CHAIN,
+      body: requestBody,
+      maxRetriesPerModel: 2,
+      retryDelayMs: 600,
+    })
 
-        if (response.ok) {
-          data = await response.json()
-          break
-        }
-
-        const errorText = await response.text()
-        console.error(
-          `TTS API error (lesson ${lessonId}) model=${ttsModel} attempt ${attempt + 1}/${maxRetries + 1}:`,
-          response.status,
-          errorText
-        )
-
-        if (response.status >= 500 && attempt < maxRetries) {
-          await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)))
-          continue
-        }
-      }
-      if (data) break
-    }
+    const data = restResult?.data as {
+      candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>
+      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number }
+    } | null
 
     if (!data) {
       return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }

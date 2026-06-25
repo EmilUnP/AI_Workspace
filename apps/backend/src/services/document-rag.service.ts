@@ -667,8 +667,9 @@ export class DocumentRagService {
         `Detect dominant language of the following text.
 Return ONLY a 2-letter ISO 639-1 code (like en, ru, az, tr, ar, es, fr, de).
 Text:
-${sample}`
-      , 'gemini-2.5-flash', fallbackApiKey ? { apiKey: fallbackApiKey } : undefined)
+${sample}`,
+        fallbackApiKey ? { apiKey: fallbackApiKey } : undefined
+      )
       const normalized = this.normalizeLanguageCode(answer)
       if (normalized) return normalized
     } catch {
@@ -685,8 +686,9 @@ ${sample}`
     if (target.startsWith('en')) return query
     try {
       const translated = await generateText(
-        `Translate this search query into ${target}. Return only the translated text:\n${query}`
-      , 'gemini-2.5-flash', apiKey ? { apiKey } : undefined)
+        `Translate this search query into ${target}. Return only the translated text:\n${query}`,
+        apiKey ? { apiKey } : undefined
+      )
       return translated || query
     } catch {
       return query

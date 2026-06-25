@@ -100,7 +100,7 @@ export class ExamAiService {
       title: string
       description: string
       questions: Array<Record<string, unknown>>
-    }>(prompt, 'gemini-2.5-flash', { apiKey })
+    }>(prompt, { apiKey })
 
     const normalizedQuestions = normalizeGeneratedQuestions(exam.questions || [])
 
@@ -132,7 +132,6 @@ export class ExamAiService {
         'Output JSON object: {"questions":[...]}',
         `Questions JSON:\n${JSON.stringify(data.questions)}`
       ].join('\n\n'),
-      'gemini-2.5-flash',
       { apiKey }
     )
     return translated

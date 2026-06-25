@@ -352,7 +352,6 @@ export class TeacherChatbotService {
       ]
         .filter(Boolean)
         .join('\n\n'),
-      'gemini-2.5-flash',
       { apiKey }
     )
     const reply = String(replyRaw || '').trim().slice(0, 1600)
