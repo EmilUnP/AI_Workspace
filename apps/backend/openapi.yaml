@@ -1,10 +1,11 @@
 openapi: 3.0.3
 info:
   title: Eduator Clean Backend API
-  version: 0.3.0
+  version: 0.4.0
   description: >-
-    Clean backend API contract for local PostgreSQL + JWT + HTTP API keys (baseline **0.3.0**).
-    Includes pgvector-backed RAG (migration `015_pgvector_document_chunks.sql`), user HTTP API keys,
+    Clean backend API contract for local PostgreSQL + JWT + HTTP API keys (baseline **0.4.0**).
+    Includes OpenRouter multi-model AI (migration `018_ai_provider_openrouter.sql`),
+    pgvector-backed RAG (migration `015_pgvector_document_chunks.sql`), user HTTP API keys,
     usage analytics (`api_access_log` after migration `006_api_access_log.sql`),
     and first-party traffic exclusion via `X-Eduator-Client` (see docs).
 servers:
@@ -133,38 +134,55 @@ paths:
           description: Forbidden
         '404':
           description: User not found
-  /v1/users/me/ai-keys/gemini:
+  /v1/admin/ai-providers:
     get:
-      tags: [Users]
-      summary: Get Gemini key status for current user
+      tags: [Admin]
+      summary: Get OpenRouter credential status, workload policies, and model catalog
       security: [{ bearerAuth: [] }]
       responses:
         '200':
-          description: Gemini key status
+          description: AI provider admin overview
+        '403':
+          description: Admin JWT required
+  /v1/admin/ai-providers/credential:
     put:
-      tags: [Users]
-      summary: Save or update Gemini key for current user
+      tags: [Admin]
+      summary: Save encrypted platform OpenRouter API key
       security: [{ bearerAuth: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [apiKey]
-              properties:
-                apiKey:
-                  type: string
       responses:
         '200':
-          description: Gemini key saved
+          description: Credential saved
     delete:
-      tags: [Users]
-      summary: Delete Gemini key for current user
+      tags: [Admin]
+      summary: Delete platform OpenRouter API key
       security: [{ bearerAuth: [] }]
       responses:
         '200':
-          description: Gemini key deleted
+          description: Credential deleted
+  /v1/admin/ai-providers/credential/test:
+    post:
+      tags: [Admin]
+      summary: Test the configured OpenRouter credential
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Test result
+  /v1/admin/ai-providers/catalog/sync:
+    post:
+      tags: [Admin]
+      summary: Sync OpenRouter model catalog into the database
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Catalog synced
+  /v1/admin/users:
+    post:
+      tags: [Admin]
+      summary: Create an operator or user account
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: User created
   /v1/documents:
     post:
       tags: [Documents]

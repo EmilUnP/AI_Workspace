@@ -1,12 +1,12 @@
 # Eduator AI Workspace
 
-Current baseline version: **0.3.0**.
+Current baseline version: **0.4.0**.
 
 ## Current Scope
 
 - `apps/web-app` (Next.js 15) for auth, school-admin, and platform-owner flows
 - `apps/backend` (Fastify + PostgreSQL) for auth, users, documents, and AI endpoints
-- Per-user Gemini API key management in API Integration
+- **OpenRouter multi-model AI** with platform-admin key/catalog/policy controls (`/platform-owner/ai-providers`)
 - **HTTP API keys** (create/list/revoke) and **Usage** analytics backed by `api_access_log` (external `/v1` calls); first-party server traffic sends `X-Eduator-Client: web-app` and is excluded from Usage rows
 - Token-based product surfaces removed from active web app routes
 

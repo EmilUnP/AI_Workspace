@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { generateText } from '../ai/gemini.js'
 import type { FastifyInstance } from 'fastify'
-import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
+import { AiGateway } from '../ai/gateway.js'
 
 const textSchema = z.object({ text: z.string().min(1) })
 const imageSchema = z.object({ prompt: z.string().min(1) })
@@ -9,13 +8,19 @@ const imageSchema = z.object({ prompt: z.string().min(1) })
 export class MediaAiService {
   constructor(private readonly app: FastifyInstance) {}
 
-  async tts(input: unknown) {
+  async tts(userId: string, input: unknown) {
     const data = textSchema.parse(input)
-    // Phase-1 local clean backend: returns script output placeholder metadata.
+    const gateway = new AiGateway(this.app)
+    const result = await gateway.generateSpeech({
+      text: data.text,
+      userId,
+      responseFormat: 'mp3',
+    })
     return {
-      mode: 'phase1_placeholder',
-      message: 'TTS endpoint is migrated and ready; binary synthesis provider wiring is next.',
-      text: data.text
+      mode: 'openrouter',
+      mimeType: result.mimeType,
+      modelUsed: result.modelUsed,
+      audioBase64: result.audio.toString('base64'),
     }
   }
 
@@ -29,14 +34,16 @@ export class MediaAiService {
 
   async image(userId: string, input: unknown) {
     const data = imageSchema.parse(input)
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const rewrittenPrompt = await generateText(
-      `Rewrite this image prompt to be clear and production-ready:\n${data.prompt}`,
-      { apiKey }
-    )
+    const gateway = new AiGateway(this.app)
+    const rewritten = await gateway.generateText({
+      workload: 'lightweight_text',
+      userId,
+      prompt: `Rewrite this image prompt to be clear and production-ready:\n${data.prompt}`,
+    })
     return {
-      mode: 'phase1_placeholder',
-      rewrittenPrompt
+      mode: 'openrouter',
+      rewrittenPrompt: rewritten.text,
+      modelUsed: rewritten.modelUsed,
     }
   }
 }

@@ -18,8 +18,6 @@ export type ApiKeysResult = {
     last_used_at: string | null
   }>
 }
-export type GeminiKeyStatusResult = { error?: string; hasKey?: boolean; keyHint?: string | null }
-export type SaveGeminiKeyResult = { error?: string; hasKey?: boolean; keyHint?: string | null }
 
 export type UsageDateRange = 'today' | '30d' | 'all'
 
@@ -40,8 +38,6 @@ export type UsageStatsResult = {
   }>
   range?: UsageDateRange
 }
-
-const getBackendBase = () => getApiUrl()
 
 export async function createApiKey(_prev: unknown, formData: FormData): Promise<CreateKeyResult> {
   const name = (formData.get('name') as string)?.trim()
@@ -109,44 +105,6 @@ export async function getApiKeys(): Promise<ApiKeysResult> {
   return { items: payload.items ?? [] }
 }
 
-export async function getGeminiKeyStatus(): Promise<GeminiKeyStatusResult> {
-  const token = await getAccessToken()
-  if (!token) return { error: 'Not authenticated' }
-
-  const response = await fetch(`${getApiUrl()}/v1/users/me/ai-keys/gemini`, {
-    headers: webAppBackendAuthHeaders(token),
-    cache: 'no-store'
-  })
-  if (!response.ok) return { error: 'Failed to load Gemini key status' }
-  const payload = (await response.json()) as { hasKey?: boolean; keyHint?: string | null }
-  return { hasKey: Boolean(payload.hasKey), keyHint: payload.keyHint ?? null }
-}
-
-export async function saveGeminiKey(apiKey: string): Promise<SaveGeminiKeyResult> {
-  const token = await getAccessToken()
-  if (!token) return { error: 'Not authenticated' }
-  const response = await fetch(`${getApiUrl()}/v1/users/me/ai-keys/gemini`, {
-    method: 'PUT',
-    headers: {
-      ...webAppBackendAuthHeaders(token),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ apiKey }),
-    cache: 'no-store'
-  })
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: string
-      issues?: Array<{ message?: string }>
-    }
-    const validationDetail = payload.issues?.find((issue) => issue.message)?.message
-    return { error: validationDetail || payload.error || 'Failed to save Gemini key' }
-  }
-  const payload = (await response.json()) as { hasKey?: boolean; keyHint?: string | null }
-  revalidatePath('/school-admin/api-integration')
-  return { hasKey: Boolean(payload.hasKey), keyHint: payload.keyHint ?? null }
-}
-
 export async function getUsageStats(range: UsageDateRange = 'all'): Promise<UsageStatsResult> {
   const token = await getAccessToken()
   if (!token) return { error: 'Not authenticated' }
@@ -171,18 +129,3 @@ export async function getUsageStats(range: UsageDateRange = 'all'): Promise<Usag
     range: payload.range ?? range,
   }
 }
-
-export async function deleteGeminiKey(): Promise<SaveGeminiKeyResult> {
-  const token = await getAccessToken()
-  if (!token) return { error: 'Not authenticated' }
-  const response = await fetch(`${getApiUrl()}/v1/users/me/ai-keys/gemini`, {
-    method: 'DELETE',
-    headers: webAppBackendAuthHeaders(token),
-    cache: 'no-store'
-  })
-  if (!response.ok) return { error: 'Failed to delete Gemini key' }
-  const payload = (await response.json()) as { hasKey?: boolean; keyHint?: string | null }
-  revalidatePath('/school-admin/api-integration')
-  return { hasKey: Boolean(payload.hasKey), keyHint: payload.keyHint ?? null }
-}
-

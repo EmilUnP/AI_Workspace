@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { generateJson } from '../ai/gemini.js'
+import { AiGateway } from '../ai/gateway.js'
 import { DocumentRagService } from './document-rag.service.js'
-import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { FastifyInstance } from 'fastify'
 
 /** Human-readable labels so the model follows output language (ISO codes alone are often ignored). */
@@ -244,9 +243,11 @@ export class EducationPlanAiService {
       throw err
     }
 
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const rawContent = await generateJson<unknown>(
-      `You are an expert curriculum designer.
+    const gateway = new AiGateway(this.app)
+    const rawContent = await gateway.generateJson<unknown>({
+      workload: 'education_plan_generation',
+      userId,
+      prompt: `You are an expert curriculum designer.
 
 CRITICAL OUTPUT LANGUAGE: Every human-readable string in the JSON (week titles, notes, session topics, session descriptions, and every item in learning_objectives) MUST be written in ${languageLabel} (language code: ${languageCode}).
 If the source context below is in a different language, translate or rewrite all pedagogical content into ${languageLabel}. Do not leave titles or objectives in English unless ${languageCode} is "en".
@@ -284,8 +285,7 @@ Rules:
 - Keep field names exactly as shown.
 - Include exactly ${data.sessionsPerWeek} sessions in every week.
 - duration_hours in each session must be ${data.hoursPerSession}.`,
-      { apiKey }
-    )
+    })
     const content = normalizePlanContent(rawContent, targetWeeks, data.sessionsPerWeek, data.hoursPerSession)
 
     const { rows } = await this.app.db.query<{ id: string }>(

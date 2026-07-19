@@ -1,11 +1,10 @@
-import { listUsers } from '@/lib/backend-auth'
+import { getAccessToken, listUsers } from '@/lib/backend-auth'
 import { getApiUrl } from '@/lib/portal-urls'
+import { webAppBackendAuthHeaders } from '@/lib/web-app-backend-headers'
 import { Users, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-
-const getBackendBase = () => getApiUrl()
 
 const buildRedirectUrl = (status: 'success' | 'error', message: string) => {
   const query = new URLSearchParams({ status, message })
@@ -27,11 +26,19 @@ const createOperatorAction = async (formData: FormData) => {
     redirect(buildRedirectUrl('error', 'Password must be at least 8 characters.'))
   }
 
+  const token = await getAccessToken()
+  if (!token) {
+    redirect(buildRedirectUrl('error', 'Not authenticated.'))
+  }
+
   let response: Response
   try {
-    response = await fetch(`${getApiUrl()}/v1/auth/register`, {
+    response = await fetch(`${getApiUrl()}/v1/admin/users`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        ...webAppBackendAuthHeaders(token),
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         email,
         password,

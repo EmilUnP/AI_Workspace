@@ -4,11 +4,9 @@ import type { FastifyInstance } from 'fastify'
 import mammoth from 'mammoth'
 import WordExtractor from 'word-extractor'
 import pdfParse from '@cedrugs/pdf-parse'
-import { generateEmbedding, generateText } from '../ai/gemini.js'
-import { env } from '../config/env.js'
+import { AiGateway } from '../ai/gateway.js'
 import { readDocumentFileBuffer } from '../utils/document-file.js'
 import { prepareEmbedding, toPgVector } from '../utils/vector.js'
-import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 
 const querySchema = z.object({
   documentId: z.uuid(),
@@ -76,10 +74,9 @@ export class DocumentRagService {
       return { documentId: doc.id, chunks: [] as string[] }
     }
     await this.ensurePgvectorIndex(doc.id, chunks, userId)
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const queryForSearch = await this.translateQueryIfNeeded(data.query, doc.content_language, apiKey)
+    const queryForSearch = await this.translateQueryIfNeeded(data.query, doc.content_language, userId)
     try {
-      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
+      const queryVec = await this.embedText(queryForSearch, userId)
       const relevant = await this.vectorSearch(doc.id, queryVec, data.topK)
       return { documentId: doc.id, chunks: relevant.length ? relevant : chunks.slice(0, data.topK) }
     } catch {
@@ -102,10 +99,9 @@ export class DocumentRagService {
     await this.ensureDocumentsIndexed(uniqueIds, userId)
 
     const firstDoc = await this.getDoc(userId, uniqueIds[0])
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const queryForSearch = await this.translateQueryIfNeeded(query, firstDoc?.content_language ?? null, apiKey)
+    const queryForSearch = await this.translateQueryIfNeeded(query, firstDoc?.content_language ?? null, userId)
     try {
-      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
+      const queryVec = await this.embedText(queryForSearch, userId)
       return await this.vectorSearchGrouped(uniqueIds, userId, queryVec, topKPerDocument)
     } catch {
       return new Map()
@@ -142,10 +138,9 @@ export class DocumentRagService {
     const chunks = await this.getDocumentChunks(doc.id, text, userId)
     if (chunks.length === 0) return []
     await this.ensurePgvectorIndex(doc.id, chunks, userId)
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const queryForSearch = await this.translateQueryIfNeeded(query, doc.content_language, apiKey)
+    const queryForSearch = await this.translateQueryIfNeeded(query, doc.content_language, userId)
     try {
-      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
+      const queryVec = await this.embedText(queryForSearch, userId)
       const results = await this.vectorSearch(doc.id, queryVec, Math.max(1, topK))
       return results.length ? results : chunks.slice(0, Math.max(1, topK))
     } catch {
@@ -183,10 +178,9 @@ export class DocumentRagService {
     await this.ensureDocumentsIndexed(uniqueIds, userId)
 
     const firstDoc = await this.getDoc(userId, uniqueIds[0])
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const queryForSearch = await this.translateQueryIfNeeded(query, firstDoc?.content_language ?? null, apiKey)
+    const queryForSearch = await this.translateQueryIfNeeded(query, firstDoc?.content_language ?? null, userId)
     try {
-      const queryVec = await generateEmbedding(queryForSearch, 'gemini-embedding-001', { apiKey })
+      const queryVec = await this.embedText(queryForSearch, userId)
       const chunks = await this.vectorSearchAcrossDocuments(
         uniqueIds,
         userId,
@@ -224,8 +218,7 @@ export class DocumentRagService {
     try {
       const text = await this.ensureExtractedText(doc)
       const chunks = this.chunkText(text, 4000, 400)
-      const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-      const embeddings = await this.generateChunkEmbeddings(chunks, apiKey)
+      const embeddings = await this.generateChunkEmbeddings(chunks, userId)
       await this.persistDocumentChunks(doc.id, chunks, embeddings)
       const quality = this.validateTextQuality(text, chunks)
       const contentLanguage = await this.detectLanguage(text)
@@ -390,8 +383,7 @@ export class DocumentRagService {
     const backfilled = await this.tryBackfillFromLegacy(documentId)
     if (backfilled && (await this.hasPgvectorChunks(documentId, chunks.length))) return
 
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const embeddings = await this.generateChunkEmbeddings(chunks, apiKey)
+    const embeddings = await this.generateChunkEmbeddings(chunks, userId)
     await this.persistDocumentChunks(documentId, chunks, embeddings)
     await this.app.db.query(
       `UPDATE documents
@@ -662,15 +654,15 @@ export class DocumentRagService {
     if (heuristic && heuristic !== 'en') return heuristic
 
     try {
-      const fallbackApiKey = env.GOOGLE_GEMINI_API_KEY
-      const answer = await generateText(
-        `Detect dominant language of the following text.
+      const gateway = new AiGateway(this.app)
+      const answer = await gateway.generateText({
+        workload: 'rag_query',
+        prompt: `Detect dominant language of the following text.
 Return ONLY a 2-letter ISO 639-1 code (like en, ru, az, tr, ar, es, fr, de).
 Text:
 ${sample}`,
-        fallbackApiKey ? { apiKey: fallbackApiKey } : undefined
-      )
-      const normalized = this.normalizeLanguageCode(answer)
+      })
+      const normalized = this.normalizeLanguageCode(answer.text)
       if (normalized) return normalized
     } catch {
       // fallback below
@@ -680,30 +672,37 @@ ${sample}`,
     return heuristic || this.detectLanguageByScript(sample) || 'en'
   }
 
-  private async translateQueryIfNeeded(query: string, contentLanguage: string | null, apiKey?: string) {
+  private async translateQueryIfNeeded(query: string, contentLanguage: string | null, userId?: string) {
     if (!contentLanguage) return query
     const target = contentLanguage.toLowerCase()
     if (target.startsWith('en')) return query
     try {
-      const translated = await generateText(
-        `Translate this search query into ${target}. Return only the translated text:\n${query}`,
-        apiKey ? { apiKey } : undefined
-      )
-      return translated || query
+      const gateway = new AiGateway(this.app)
+      const translated = await gateway.generateText({
+        workload: 'rag_query',
+        userId,
+        prompt: `Translate this search query into ${target}. Return only the translated text:\n${query}`,
+      })
+      return translated.text || query
     } catch {
       return query
     }
   }
 
-  private async generateChunkEmbeddings(chunks: string[], apiKey?: string) {
+  private async embedText(text: string, userId?: string) {
+    const gateway = new AiGateway(this.app)
+    const result = await gateway.generateEmbedding({ input: text, userId })
+    return result.embeddings[0]
+  }
+
+  private async generateChunkEmbeddings(chunks: string[], userId?: string) {
     const embeddings: number[][] = []
     const batchSize = 8
+    const gateway = new AiGateway(this.app)
     for (let i = 0; i < chunks.length; i += batchSize) {
       const batch = chunks.slice(i, i + batchSize)
-      const batchEmbeddings = await Promise.all(
-        batch.map((chunk) => generateEmbedding(chunk, 'gemini-embedding-001', apiKey ? { apiKey } : undefined))
-      )
-      embeddings.push(...batchEmbeddings)
+      const result = await gateway.generateEmbedding({ input: batch, userId })
+      embeddings.push(...result.embeddings)
     }
     return embeddings
   }

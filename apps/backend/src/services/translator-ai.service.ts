@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { generateText } from '../ai/gemini.js'
 import type { FastifyInstance } from 'fastify'
-import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
+import { AiGateway } from '../ai/gateway.js'
 
 const translateSchema = z.object({
   text: z.string().min(1),
@@ -13,8 +12,12 @@ export class TranslatorAiService {
 
   async translate(userId: string, input: unknown) {
     const data = translateSchema.parse(input)
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const text = await generateText(`Translate this text to ${data.toLanguage}:\n\n${data.text}`, { apiKey })
-    return { translatedText: text }
+    const gateway = new AiGateway(this.app)
+    const result = await gateway.generateText({
+      workload: 'translation',
+      prompt: `Translate this text to ${data.toLanguage}:\n\n${data.text}`,
+      userId,
+    })
+    return { translatedText: result.text }
   }
 }

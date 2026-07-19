@@ -1,6 +1,6 @@
 # Clean Backend API Documentation
 
-This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.3.0**).
+This is the full API contract for the clean backend running in `apps/backend` (**documentation baseline 0.4.0**).
 
 ## Base
 - Base URL: `http://localhost:<PORT>`

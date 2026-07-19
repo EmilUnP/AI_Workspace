@@ -4,14 +4,10 @@
  * Images are saved to Supabase Storage for reliable delivery
  */
 
-import {
-  generateContentWithFallback,
-  IMAGE_MODEL_FALLBACK_CHAIN,
-  postGeminiGenerateContentWithFallback,
-  TTS_MODEL_FALLBACK_CHAIN,
-} from '../ai/gemini.js'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { AiGateway } from '../ai/gateway.js'
+import { getAiContext } from '../ai/request-context.js'
 import { env } from '../config/env.js'
 import { useDatabaseFileStorage } from '../utils/document-file.js'
 import { saveLessonMediaFile } from '../utils/lesson-media-storage.js'
@@ -37,45 +33,40 @@ interface GeneratedImage {
   }
 }
 
-/**
- * Get API key from environment
- */
-function getApiKey(apiKeyOverride?: string): string {
-  const apiKey = apiKeyOverride || process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) {
-    throw new Error('Missing GOOGLE_GENERATIVE_AI_KEY or GOOGLE_GEMINI_API_KEY environment variable')
-  }
-  return apiKey
+function getGateway() {
+  const { app, userId } = getAiContext()
+  return { gateway: new AiGateway(app), userId }
 }
 
 /**
  * Detect the primary language of content
  */
-async function detectLanguage(content: string, apiKeyOverride?: string): Promise<string> {
+async function detectLanguage(content: string): Promise<string> {
   try {
+    const { gateway, userId } = getGateway()
     const prompt = `Detect the primary language of the following text. Return ONLY the language name in English (e.g., "English", "Russian", "Azerbaijani", "Turkish", etc.).
 
 Text:
 ${content.substring(0, 1000)}
 
 Language:`
-    
-    const response = await generateContentWithFallback(prompt, {
-      apiKey: getApiKey(apiKeyOverride),
+    const response = await gateway.generateText({
+      workload: 'lightweight_text',
+      prompt,
+      userId,
     })
-    const text = response.text || "English"
-    
-    // Normalize common language names
+    const text = response.text || 'English'
+
     const normalized = text.toLowerCase()
-    if (normalized.includes("russian") || normalized.includes("русский")) return "Russian"
-    if (normalized.includes("azerbaijani") || normalized.includes("azərbaycan")) return "Azerbaijani"
-    if (normalized.includes("turkish") || normalized.includes("türkçe")) return "Turkish"
-    if (normalized.includes("english")) return "English"
-    
-    return text || "English"
+    if (normalized.includes('russian') || normalized.includes('русский')) return 'Russian'
+    if (normalized.includes('azerbaijani') || normalized.includes('azərbaycan')) return 'Azerbaijani'
+    if (normalized.includes('turkish') || normalized.includes('türkçe')) return 'Turkish'
+    if (normalized.includes('english')) return 'English'
+
+    return text || 'English'
   } catch (error) {
-    console.error("Error detecting language:", error)
-    return "English"
+    console.error('Error detecting language:', error)
+    return 'English'
   }
 }
 
@@ -86,14 +77,13 @@ async function generateImagePrompts(
   topic: string,
   content: string,
   count: number = 3,
-  language?: string,
-  apiKeyOverride?: string
+  language?: string
 ): Promise<string[]> {
   try {
-    const apiKey = getApiKey(apiKeyOverride)
-    
+    const { gateway, userId } = getGateway()
+
     // Detect language if not provided
-    const detectedLanguage = language || await detectLanguage(content, apiKeyOverride)
+    const detectedLanguage = language || await detectLanguage(content)
     
     // Create language instruction for image prompts
     const languageInstruction = detectedLanguage !== "English"
@@ -142,16 +132,14 @@ Format: ["detailed prompt 1", "detailed prompt 2", "detailed prompt 3"]
 
 Generate ${count} highly detailed, specific prompts:`
 
-    const response = await generateContentWithFallback(prompt, {
-      apiKey,
-      systemInstruction: {
-        role: 'system',
-        parts: [{
-          text: 'You are an expert at creating detailed, specific prompts for AI image generation. Create prompts that will generate accurate educational diagrams, illustrations, and visual representations.',
-        }],
-      },
+    const response = await gateway.generateText({
+      workload: 'lightweight_text',
+      userId,
+      systemInstruction:
+        'You are an expert at creating detailed, specific prompts for AI image generation. Create prompts that will generate accurate educational diagrams, illustrations, and visual representations.',
+      prompt,
     })
-    const text = response.text || "[]"
+    const text = response.text || '[]'
     const cleanText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
 
     try {
@@ -183,65 +171,40 @@ Generate ${count} highly detailed, specific prompts:`
 /**
  * Generate an image from a prompt using Gemini native image generation
  */
-async function generateImageFromPrompt(prompt: string, language?: string, apiKeyOverride?: string): Promise<GeneratedImage | null> {
+async function generateImageFromPrompt(prompt: string, language?: string): Promise<GeneratedImage | null> {
   try {
-    const apiKey = getApiKey(apiKeyOverride)
-    
-    // Enhance prompt for image generation
+    const { gateway, userId } = getGateway()
+
     let enhancedPrompt = `Educational illustration: ${prompt}. High quality, professional educational diagram, clean design, clear labels.`
-    if (language && language !== "English") {
+    if (language && language !== 'English') {
       enhancedPrompt += ` All text and labels should be in ${language}.`
     }
-    
-    // Try Gemini image generation models with shared fallback chain.
-    const restResult = await postGeminiGenerateContentWithFallback({
-      apiKey,
-      models: IMAGE_MODEL_FALLBACK_CHAIN,
-      body: {
-        contents: [{
-          parts: [{ text: `Generate an educational image: ${enhancedPrompt}` }]
-        }],
-        generationConfig: {
-          responseModalities: ['IMAGE', 'TEXT'],
-        },
-      },
-      maxRetriesPerModel: 1,
-    })
 
-    if (restResult) {
-      const data = restResult.data as {
-        candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string; mimeType?: string } }> } }>
-        usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number }
-      }
-      const modelName = restResult.modelUsed
-      const parts = data.candidates?.[0]?.content?.parts || []
-      for (const part of parts) {
-        if (part.inlineData?.data && part.inlineData?.mimeType?.startsWith('image/')) {
-          console.log(`Successfully generated image with ${modelName}`)
-          return {
-            url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
-            alt: prompt.substring(0, 100),
-            base64Data: part.inlineData.data,
-            mimeType: part.inlineData.mimeType,
-            usage: {
-              prompt_tokens: data?.usageMetadata?.promptTokenCount ?? 0,
-              completion_tokens: data?.usageMetadata?.candidatesTokenCount ?? 0,
-              total_tokens:
-                data?.usageMetadata?.totalTokenCount ??
-                (data?.usageMetadata?.promptTokenCount ?? 0) +
-                  (data?.usageMetadata?.candidatesTokenCount ?? 0),
-              model_used: modelName,
-            },
-          }
-        }
-      }
-      console.warn(`No image in response from ${modelName}`)
+    const result = await gateway.generateImage({
+      prompt: `Generate an educational image: ${enhancedPrompt}`,
+      userId,
+    })
+    const image = result.images[0]
+    if (!image) {
+      console.warn('No image in OpenRouter response')
+      return null
     }
 
-    console.warn('All Gemini image generation models failed')
-    return null
+    console.log(`Successfully generated image with ${result.modelUsed}`)
+    return {
+      url: `data:${image.mimeType};base64,${image.base64}`,
+      alt: prompt.substring(0, 100),
+      base64Data: image.base64,
+      mimeType: image.mimeType,
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+        model_used: result.modelUsed,
+      },
+    }
   } catch (error) {
-    console.warn("Image generation failed:", error)
+    console.warn('Image generation failed:', error)
     return null
   }
 }
@@ -318,18 +281,17 @@ export async function generateLessonImagesWithUsage(
   content: string,
   count: number = 3,
   language?: string,
-  lessonId?: string,
-  apiKeyOverride?: string
+  lessonId?: string
 ): Promise<{
   images: LessonImage[]
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string }
 }> {
   try {
     // Detect language if not provided
-    const detectedLanguage = language || await detectLanguage(content, apiKeyOverride)
+    const detectedLanguage = language || await detectLanguage(content)
     
     // Generate detailed image prompts using Gemini
-    const prompts = await generateImagePrompts(topic, content, count, detectedLanguage, apiKeyOverride)
+    const prompts = await generateImagePrompts(topic, content, count, detectedLanguage)
 
     // Generate images for each prompt with retry logic
     const generateImageWithRetry = async (
@@ -338,7 +300,7 @@ export async function generateLessonImagesWithUsage(
       retries: number = 2
     ): Promise<{ image: LessonImage | null; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string } }> => {
       for (let attempt = 0; attempt <= retries; attempt++) {
-        const image = await generateImageFromPrompt(prompt, detectedLanguage, apiKeyOverride)
+        const image = await generateImageFromPrompt(prompt, detectedLanguage)
         if (image) {
           // Determine position based on index
           let position: "top" | "middle" | "bottom" = "middle"
@@ -387,7 +349,7 @@ export async function generateLessonImagesWithUsage(
       const currentPrompts =
         attempts === 0
           ? prompts
-          : await generateImagePrompts(topic, content, count - validImages.length, detectedLanguage, apiKeyOverride)
+          : await generateImagePrompts(topic, content, count - validImages.length, detectedLanguage)
       
       const imagePromises = currentPrompts.map((prompt, idx) => 
         generateImageWithRetry(prompt, validImages.length + idx)
@@ -439,26 +401,16 @@ export { detectLanguage, generateImagePrompts }
 
 
 /**
- * TTS Audio Generator for Lessons
- * Uses Gemini TTS for generating lesson audio narration
+ * TTS Audio Generator for Lessons via OpenRouter speech API
  */
 
-/**
- * Generate TTS audio for a lesson
- * @param lessonId - The lesson ID (used for storage path)
- * @param title - The lesson title
- * @param content - The lesson content (markdown will be stripped)
- * @param language - Optional language hint for pronunciation
- * @returns The public URL of the generated audio, or null if generation failed
- */
 export async function generateLessonAudio(
   lessonId: string,
   title: string,
   content: string,
-  language?: string,
-  apiKeyOverride?: string
+  language?: string
 ): Promise<string | null> {
-  const result = await generateLessonAudioWithUsage(lessonId, title, content, language, apiKeyOverride)
+  const result = await generateLessonAudioWithUsage(lessonId, title, content, language)
   return result.audioUrl
 }
 
@@ -466,120 +418,76 @@ export async function generateLessonAudioWithUsage(
   lessonId: string,
   title: string,
   content: string,
-  language?: string,
-  apiKeyOverride?: string
+  language?: string
 ): Promise<{
   audioUrl: string | null
-  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string }
 }> {
-  const apiKey = apiKeyOverride || process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) {
-    console.warn("TTS: No API key configured, skipping audio generation")
-    return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
-  }
-
   try {
-    // Prepare text: title + content (strip markdown)
+    const { gateway, userId } = getGateway()
     const plainText = `${title}. ${content}`
-      .replace(/#{1,6}\s/g, "") // Remove headers
-      .replace(/\*\*([^*]+)\*\*/g, "$1") // Remove bold
-      .replace(/\*([^*]+)\*/g, "$1") // Remove italic
-      .replace(/`([^`]+)`/g, "$1") // Remove code
-      .replace(/```[\s\S]*?```/g, "") // Remove code blocks
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Remove links
-      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "") // Remove images
-      .replace(/<[^>]*>/g, "") // Remove HTML tags
-      .replace(/\n{3,}/g, "\n\n") // Normalize line breaks
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\n{3,}/g, '\n\n')
       .trim()
-      .substring(0, 8000) // Limit length for API
+      .substring(0, 8000)
 
     if (plainText.length < 50) {
-      console.log("TTS: Content too short, skipping audio generation")
+      console.log('TTS: Content too short, skipping audio generation')
       return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
     }
 
-    console.log(`TTS: Generating audio for lesson ${lessonId}, text length: ${plainText.length}, language: ${language || "auto-detect"}`)
+    console.log(
+      `TTS: Generating audio for lesson ${lessonId}, text length: ${plainText.length}, language: ${language || 'auto-detect'}`
+    )
 
-    // The TTS API automatically detects language from text, but we can add language hints if needed
-    const requestBody = {
-      contents: [{ parts: [{ text: plainText }] }],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: "Kore" }
-          }
-        }
-      }
-    }
-
-    // Add language hint if provided (helps with pronunciation for non-English languages)
-    if (language && language !== "English") {
-      // Note: Gemini TTS automatically detects language from text content
-      // The text is already in the target language, so TTS will use appropriate pronunciation
-      console.log(`TTS: Using language ${language} for audio generation`)
-    }
-
-    const restResult = await postGeminiGenerateContentWithFallback({
-      apiKey,
-      models: TTS_MODEL_FALLBACK_CHAIN,
-      body: requestBody,
-      maxRetriesPerModel: 2,
-      retryDelayMs: 600,
+    const speech = await gateway.generateSpeech({
+      text: plainText,
+      userId,
+      voice: 'nova',
+      responseFormat: 'mp3',
     })
 
-    const data = restResult?.data as {
-      candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>
-      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number }
-    } | null
+    const isMp3 = speech.mimeType.includes('mpeg') || speech.mimeType.includes('mp3')
+    const fileName = isMp3 ? 'audio.mp3' : 'audio.wav'
+    const mimeType = isMp3 ? 'audio/mpeg' : 'audio/wav'
+    const audioBuffer =
+      isMp3 || speech.mimeType.includes('wav')
+        ? speech.audio
+        : createWavBuffer(speech.audio)
 
-    if (!data) {
-      return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
-    }
-
-    const audioBase64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
-
-    if (!audioBase64) {
-      console.error("TTS: No audio data in response")
-      return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
-    }
-
-    // Convert base64 PCM to WAV
-    const pcmBuffer = Buffer.from(audioBase64, "base64")
-    const wavBuffer = createWavBuffer(pcmBuffer)
-
-    const fileName = 'audio.wav'
     if (useDatabaseFileStorage()) {
-      await saveLessonMediaFile(lessonId, fileName, 'audio/wav', wavBuffer)
+      await saveLessonMediaFile(lessonId, fileName, mimeType, audioBuffer)
     } else {
       const lessonDir = path.join(env.AI_STORAGE_DIR, 'lessons', lessonId)
       await mkdir(lessonDir, { recursive: true })
-      await writeFile(path.join(lessonDir, fileName), wavBuffer)
+      await writeFile(path.join(lessonDir, fileName), audioBuffer)
     }
-    const mediaUrl = `/v1/lessons/${lessonId}/media/audio.wav`
+
+    const mediaUrl = `/v1/lessons/${lessonId}/media/${fileName}`
     console.log(`TTS: Audio saved for lesson ${lessonId}:`, mediaUrl)
     return {
       audioUrl: mediaUrl,
       usage: {
-        prompt_tokens: (data as { usageMetadata?: { promptTokenCount?: number } })?.usageMetadata?.promptTokenCount ?? 0,
-        completion_tokens:
-          (data as { usageMetadata?: { candidatesTokenCount?: number } })?.usageMetadata?.candidatesTokenCount ?? 0,
-        total_tokens:
-          (data as { usageMetadata?: { totalTokenCount?: number } })?.usageMetadata?.totalTokenCount ??
-          (((data as { usageMetadata?: { promptTokenCount?: number } })?.usageMetadata?.promptTokenCount ?? 0) +
-            ((data as { usageMetadata?: { candidatesTokenCount?: number } })?.usageMetadata?.candidatesTokenCount ?? 0)),
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+        model_used: speech.modelUsed,
       },
     }
   } catch (error) {
-    console.error("TTS generation error:", error)
+    console.error('TTS generation error:', error)
     return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
   }
 }
 
-/**
- * Create a WAV buffer from PCM data
- * Gemini TTS returns PCM audio, we need to add WAV headers
- */
+/** Wrap raw PCM as WAV when a provider returns uncompressed audio. */
 function createWavBuffer(pcmData: Buffer): Buffer {
   const sampleRate = 24000
   const numChannels = 1
@@ -590,26 +498,19 @@ function createWavBuffer(pcmData: Buffer): Buffer {
   const fileSize = 36 + dataSize
 
   const header = Buffer.alloc(44)
-  
-  // RIFF header
-  header.write("RIFF", 0)
+  header.write('RIFF', 0)
   header.writeUInt32LE(fileSize, 4)
-  header.write("WAVE", 8)
-  
-  // fmt subchunk
-  header.write("fmt ", 12)
-  header.writeUInt32LE(16, 16) // Subchunk1Size for PCM
-  header.writeUInt16LE(1, 20) // AudioFormat (1 = PCM)
+  header.write('WAVE', 8)
+  header.write('fmt ', 12)
+  header.writeUInt32LE(16, 16)
+  header.writeUInt16LE(1, 20)
   header.writeUInt16LE(numChannels, 22)
   header.writeUInt32LE(sampleRate, 24)
   header.writeUInt32LE(byteRate, 28)
   header.writeUInt16LE(blockAlign, 32)
   header.writeUInt16LE(bitsPerSample, 34)
-  
-  // data subchunk
-  header.write("data", 36)
+  header.write('data', 36)
   header.writeUInt32LE(dataSize, 40)
-
   return Buffer.concat([header, pcmData])
 }
 

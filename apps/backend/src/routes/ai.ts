@@ -270,7 +270,9 @@ export async function aiRoutes(app: FastifyInstance) {
   })
 
   app.post('/ai/tts', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const result = await mediaService.tts(request.body)
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+    const result = await mediaService.tts(userId, request.body)
     reply.send(result)
   })
 

@@ -10,8 +10,8 @@ import { sanitizeBrokenMarkdownTableLines } from './lesson-content-sanitize.js'
 import { generateLessonImagesWithUsage, type LessonImage } from './lesson-media.service.js'
 import { DocumentRagService } from './document-rag.service.js'
 import { generateLessonAudioWithUsage } from './lesson-media.service.js'
-import { generateContentWithFallback } from '../ai/gemini.js'
-import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
+import { AiGateway } from '../ai/gateway.js'
+import { runWithAiContext, getAiContext } from '../ai/request-context.js'
 
 // Compatibility fallbacks for this standalone generator API.
 // In current backend flow, RAG is handled by LessonAiService + DocumentRagService.
@@ -53,7 +53,6 @@ const getRelevantContentFromDocuments = async (
 }
 
 let currentRagUserId = ''
-let currentGeminiApiKey = ''
 
 // Types for generated lesson content
 export interface GeneratedLesson {
@@ -187,28 +186,16 @@ function sanitizeExplanation(explanation: unknown): string {
   return cleaned || raw
 }
 
-// Utility to get API key
-function getApiKey(): string {
-  if (currentGeminiApiKey) return currentGeminiApiKey
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_KEY || process.env.GOOGLE_GEMINI_API_KEY
-  if (!apiKey) {
-    throw new Error('Missing GOOGLE_GENERATIVE_AI_KEY or GOOGLE_GEMINI_API_KEY environment variable')
-  }
-  return apiKey
-}
-
-function lessonSystemInstruction(systemInstruction: string) {
-  return {
-    role: 'system' as const,
-    parts: [{ text: systemInstruction }],
-  }
-}
-
-const lessonGenerationConfig = {
-  temperature: 0.7,
-  topP: 0.8,
-  topK: 40,
-  maxOutputTokens: 65536,
+async function generateLessonModelText(prompt: string, systemInstruction: string) {
+  const { app, userId } = getAiContext()
+  const gateway = new AiGateway(app)
+  return gateway.generateText({
+    workload: 'lesson_generation',
+    prompt,
+    systemInstruction,
+    userId,
+    temperature: 0.7,
+  })
 }
 
 /**
@@ -523,14 +510,11 @@ Topic: ${topic}
 Lesson content:
 ${lessonContent.substring(0, 12000)}`
 
-  const response = await generateContentWithFallback(prompt, {
-    apiKey: getApiKey(),
-    systemInstruction: lessonSystemInstruction(
-      `You are an expert assessment designer. Create classroom-quality multiple-choice questions.
+  const response = await generateLessonModelText(
+    prompt,
+    `You are an expert assessment designer. Create classroom-quality multiple-choice questions.
 All output must be in ${targetLanguage}. Questions must be grounded in the provided lesson content.`
-    ),
-    generationConfig: lessonGenerationConfig,
-  })
+  )
   const text = response.text || '{}'
   const extracted = extractFirstJsonObject(text) || text
   let candidate: unknown = []
@@ -562,7 +546,7 @@ async function enforceLessonLanguage(
     images: lesson.images,
   }
 
-  const response = await generateContentWithFallback(
+  const response = await generateLessonModelText(
     `Translate this lesson JSON to ${targetLanguage}.
 Rules:
 - Translate title, content, objectives, and mini_test fields.
@@ -571,17 +555,11 @@ Rules:
 - Return ONLY valid JSON.
 JSON:
 ${JSON.stringify(source)}`,
-    {
-      apiKey: getApiKey(),
-      systemInstruction: lessonSystemInstruction(
-        `You are a strict localization assistant.
+    `You are a strict localization assistant.
 Translate all human-readable lesson JSON fields to ${targetLanguage}.
 Keep JSON keys and structure unchanged.
 Do not change correct_answer indexes.
 Return ONLY valid JSON.`
-      ),
-      generationConfig: lessonGenerationConfig,
-    }
   )
   const text = response.text || '{}'
   const localized = safeJsonParse<GeneratedLesson>(text, lesson)
@@ -836,27 +814,14 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
 
   const fallback = getFallbackPhrases(normalizedLanguageCode)
   try {
-    const response = await generateContentWithFallback(prompt, {
-      apiKey: getApiKey(),
-      systemInstruction: lessonSystemInstruction(languageSystemInstruction),
-      generationConfig: lessonGenerationConfig,
-    })
+    const response = await generateLessonModelText(prompt, languageSystemInstruction)
     const text = response.text || '{}'
-    const usage = (response.response as unknown as {
-      usageMetadata?: {
-        promptTokenCount?: number
-        candidatesTokenCount?: number
-        totalTokenCount?: number
-      }
-    }).usageMetadata
     const usageTelemetry: NonNullable<GeneratedLesson['usage']> = {
-      input_tokens: usage?.promptTokenCount ?? 0,
-      output_tokens: usage?.candidatesTokenCount ?? 0,
-      prompt_tokens: usage?.promptTokenCount ?? 0,
-      completion_tokens: usage?.candidatesTokenCount ?? 0,
-      total_tokens:
-        usage?.totalTokenCount ??
-        (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0),
+      input_tokens: response.usage?.promptTokens ?? 0,
+      output_tokens: response.usage?.completionTokens ?? 0,
+      prompt_tokens: response.usage?.promptTokens ?? 0,
+      completion_tokens: response.usage?.completionTokens ?? 0,
+      total_tokens: response.usage?.totalTokens ?? 0,
       model_used: response.modelUsed,
     }
 
@@ -1008,8 +973,7 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
           lesson.content,
           3,
           normalizedLanguageCode,
-          effectiveLessonId,
-          currentGeminiApiKey
+          effectiveLessonId
         )
         lesson.images = imageResult.images
         usageTelemetry.image_prompt_tokens = imageResult.usage.prompt_tokens
@@ -1044,9 +1008,8 @@ export class LessonAiService {
   }
 
   async generate(userId: string, input: unknown) {
+    return runWithAiContext({ app: this.app, userId }, async () => {
     currentRagUserId = userId
-    currentGeminiApiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const geminiApiKeyForRequest = currentGeminiApiKey
     const body = (input ?? {}) as {
       documentId?: string
       documentIds?: string[]
@@ -1114,8 +1077,6 @@ export class LessonAiService {
       const wrapped = new Error(`Lesson generation failed: ${message}`) as Error & { statusCode?: number }
       wrapped.statusCode = 500
       throw wrapped
-    } finally {
-      currentGeminiApiKey = ''
     }
 
     try {
@@ -1162,13 +1123,8 @@ export class LessonAiService {
     if (includeImages) {
       void (async () => {
         try {
-          const imageResult = await generateLessonImagesWithUsage(
-            topic,
-            generated.content,
-            3,
-            body.language,
-            lessonId,
-            geminiApiKeyForRequest
+          const imageResult = await runWithAiContext({ app: this.app, userId }, () =>
+            generateLessonImagesWithUsage(topic, generated.content, 3, body.language, lessonId)
           )
           await this.app.db.query(
             `UPDATE lessons
@@ -1194,12 +1150,8 @@ export class LessonAiService {
     if (includeAudio) {
       void (async () => {
         try {
-          const tts = await generateLessonAudioWithUsage(
-            lessonId,
-            generated.title,
-            generated.content,
-            body.language,
-            geminiApiKeyForRequest
+          const tts = await runWithAiContext({ app: this.app, userId }, () =>
+            generateLessonAudioWithUsage(lessonId, generated.title, generated.content, body.language)
           )
           if (!tts.audioUrl) return
           await this.app.db.query(
@@ -1225,6 +1177,7 @@ export class LessonAiService {
       ...generated,
       audio_url: null as string | null,
     }
+    })
   }
 }
 

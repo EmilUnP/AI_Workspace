@@ -481,7 +481,7 @@ curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
   -H "Content-Type: application/json" \\
   -d '{ "message": "Hello", "documentIds": [], "shortAnswer": true }'`}
               </pre>
-              <p className="text-xs text-violet-800">{t('apiDocsAiChatGeminiNote')}</p>
+              <p className="text-xs text-violet-800">AI chat uses the platform OpenRouter multi-model gateway configured by platform admins.</p>
             </div>
             <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-2">
               <p className="font-medium text-amber-950">{t('apiDocsAiChatExternalUserTitle')}</p>
@@ -556,7 +556,7 @@ curl -X POST "${chatConversationsUrl}/CONVERSATION_UUID/messages" \\
             <p>
               {t('fieldNamingCamelCaseAiRoutesPrefix')} <strong>camelCase</strong> {t('fieldNamingCamelCaseAiRoutesSuffix')}
             </p>
-            <p>{t('geminiKeyEndpointsUnder')} <code className="bg-gray-100 px-1">/v1/users/me/ai-keys/gemini</code>.</p>
+            <p>AI model provider keys are managed by platform admins under <code className="bg-gray-100 px-1">/platform-owner/ai-providers</code>.</p>
           </div>
         </article>
       </div>

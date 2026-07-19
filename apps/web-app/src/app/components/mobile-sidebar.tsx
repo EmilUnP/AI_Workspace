@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { 
   Menu, 
   X, 
-  LayoutDashboard, 
+  LayoutDashboard,
+  Cpu,
   Building2, 
   Users, 
   User,
@@ -31,6 +32,7 @@ import {
 // Icon mapping for navigation items
 const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
+  Cpu,
   Building2,
   Users,
   User,

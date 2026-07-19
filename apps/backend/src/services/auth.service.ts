@@ -16,7 +16,8 @@ import { env } from '../config/env.js'
 const registerSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
-  role: z.enum(['admin', 'operator', 'user']).default('user'),
+  // Public registration cannot escalate privileges.
+  role: z.literal('user').default('user'),
   manual_note: z.string().max(1000).optional()
 })
 

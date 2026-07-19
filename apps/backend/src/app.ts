@@ -5,6 +5,7 @@ import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { env } from './config/env.js'
 import dbPlugin from './plugins/db.js'
 import authPlugin from './plugins/auth.js'
 import errorHandlerPlugin from './plugins/error-handler.js'
@@ -16,8 +17,8 @@ import { aiRoutes } from './routes/ai.js'
 import { lessonsRoutes } from './routes/lessons.js'
 import { examsRoutes } from './routes/exams.js'
 import { educationPlansRoutes } from './routes/education-plans.js'
-import { userAiKeysRoutes } from './routes/user-ai-keys.js'
 import { userApiKeysRoutes } from './routes/user-api-keys.js'
+import { adminAiProvidersRoutes } from './routes/admin-ai-providers.js'
 
 export async function buildApp() {
   const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url))
@@ -27,7 +28,14 @@ export async function buildApp() {
     }
   })
 
-  await app.register(cors, { origin: true })
+  const corsOrigins = env.CORS_ORIGINS
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+  await app.register(cors, {
+    origin: corsOrigins.length > 0 ? corsOrigins : env.NODE_ENV === 'development',
+    credentials: true,
+  })
   await app.register(helmet)
   await app.register(swagger, {
     mode: 'static',
@@ -54,7 +62,7 @@ export async function buildApp() {
   app.get('/', async () => ({
     ok: true,
     name: 'Eduator API',
-    version: '0.3.0',
+    version: '0.4.0',
     message: 'API is running. Use /v1 for the API base or /health for a health check.',
     api: '/v1',
     documentation: '/v1/docs',
@@ -64,7 +72,7 @@ export async function buildApp() {
   app.get('/v1', async () => ({
     ok: true,
     name: 'Eduator API',
-    version: '0.3.0',
+    version: '0.4.0',
     message: 'API is running. Browse /v1/docs for available endpoints.',
     documentation: '/v1/docs',
     health: '/health'
@@ -77,8 +85,8 @@ export async function buildApp() {
   await app.register(lessonsRoutes, { prefix: '/v1' })
   await app.register(examsRoutes, { prefix: '/v1' })
   await app.register(educationPlansRoutes, { prefix: '/v1' })
-  await app.register(userAiKeysRoutes, { prefix: '/v1' })
   await app.register(userApiKeysRoutes, { prefix: '/v1' })
+  await app.register(adminAiProvidersRoutes, { prefix: '/v1' })
 
   return app
 }

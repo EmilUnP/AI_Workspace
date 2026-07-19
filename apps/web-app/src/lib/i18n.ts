@@ -55,6 +55,7 @@ const translations: I18nTable = {
     platformOwner: {
       navDashboard: 'Dashboard',
       navUsers: 'Users',
+      navAiProviders: 'AI Providers',
       rolePlatformOwner: 'Platform Owner',
       roleAdmin: 'Admin',
       roleOperator: 'Operator',
@@ -724,6 +725,7 @@ const translations: I18nTable = {
     platformOwner: {
       navDashboard: 'İdarə paneli',
       navUsers: 'İstifadəçilər',
+      navAiProviders: 'AI provayderlər',
       rolePlatformOwner: 'Platform sahibi',
       roleAdmin: 'Admin',
       roleOperator: 'Operator',

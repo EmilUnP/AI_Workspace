@@ -13,7 +13,12 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 chars'),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
-  GOOGLE_GEMINI_API_KEY: z.string().default(''),
+  OPENROUTER_API_KEY: z.string().default(''),
+  AI_CREDENTIALS_ENCRYPTION_KEY: z.string().default(''),
+  OPENROUTER_HTTP_REFERER: z.string().default('https://eduator.local'),
+  OPENROUTER_APP_TITLE: z.string().default('Eduator AI'),
+  OPENROUTER_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(300_000).default(120_000),
+  CORS_ORIGINS: z.string().default(''),
   FILE_STORAGE: z.enum(['local', 'database']).default('database'),
   AI_STORAGE_DIR: z
     .string()

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.4.0 - 2026-07-19
+
+### Added
+
+- **OpenRouter multi-model gateway** — all AI workloads (text/JSON, embeddings, images, TTS) route through a provider-neutral OpenRouter adapter with ordered fallbacks.
+- **Platform AI provider admin** — encrypted platform OpenRouter key, synced model catalog, per-workload policies, and audit log (`018_ai_provider_openrouter.sql`); UI at `/platform-owner/ai-providers`.
+- **Admin user creation** — `POST /v1/admin/users` for creating operators without public role escalation.
+- **`docs/OPENROUTER_MIGRATION.md`** — rollout, defaults, security, and rollback notes.
+
+### Changed
+
+- **Removed direct Gemini SDK / per-user Gemini keys** — school-admin Gemini key UI and `/v1/users/me/ai-keys/gemini` removed; platform key only.
+- **Auth hardening** — public register always creates `user`; user enumeration and AI provider settings require admin JWT (not API keys); CORS uses `CORS_ORIGINS`.
+- **Docs & versioning** — packages, OpenAPI, README, and API baseline aligned to **0.4.0**.
+
+### Fixed
+
+- **Migration `017_api_access_log_request_meta.sql`** — replaced invalid content with proper `request_meta` JSONB column.
+
+### Notes
+
+- Set `OPENROUTER_API_KEY` and preferably `AI_CREDENTIALS_ENCRYPTION_KEY`, run migrations through `018`, then configure models in Platform Owner → AI Providers.
+- Default embeddings prefer `google/gemini-embedding-001` via OpenRouter to keep existing `vector(768)` indexes compatible.
+
 ## 0.3.0 - 2026-05-22
 
 ### Added

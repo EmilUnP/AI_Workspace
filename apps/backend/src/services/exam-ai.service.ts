@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { generateJson } from '../ai/gemini.js'
+import { AiGateway } from '../ai/gateway.js'
 import { DocumentRagService } from './document-rag.service.js'
-import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { FastifyInstance } from 'fastify'
 
 const questionTypeEnum = z.enum(['multiple_choice', 'true_false', 'multiple_select', 'fill_blank'])
@@ -95,12 +94,16 @@ export class ExamAiService {
 
     const prompt = this.buildGenerationPrompt(data, contextText)
 
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const exam = await generateJson<{
+    const gateway = new AiGateway(this.app)
+    const exam = await gateway.generateJson<{
       title: string
       description: string
       questions: Array<Record<string, unknown>>
-    }>(prompt, { apiKey })
+    }>({
+      workload: 'exam_generation',
+      prompt,
+      userId,
+    })
 
     const normalizedQuestions = normalizeGeneratedQuestions(exam.questions || [])
 
@@ -123,17 +126,18 @@ export class ExamAiService {
 
   async translate(userId: string, input: unknown) {
     const data = translateSchema.parse(input)
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, userId)
-    const translated = await generateJson<{ questions: Array<Record<string, unknown>> }>(
-      [
+    const gateway = new AiGateway(this.app)
+    const translated = await gateway.generateJson<{ questions: Array<Record<string, unknown>> }>({
+      workload: 'exam_generation',
+      userId,
+      prompt: [
         `Translate all exam questions to language: ${data.targetLanguage}.`,
         'Preserve structure and question ids if present.',
         'Preserve difficulty fields (easy|medium|hard) exactly if present.',
         'Output JSON object: {"questions":[...]}',
         `Questions JSON:\n${JSON.stringify(data.questions)}`
       ].join('\n\n'),
-      { apiKey }
-    )
+    })
     return translated
   }
 

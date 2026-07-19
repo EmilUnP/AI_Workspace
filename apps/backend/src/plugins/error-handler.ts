@@ -1,6 +1,7 @@
 import fp from 'fastify-plugin'
 import type { FastifyInstance } from 'fastify'
 import { ZodError } from 'zod'
+import { AiProviderError } from '../ai/types.js'
 
 async function errorHandlerPlugin(app: FastifyInstance) {
   app.setNotFoundHandler((request, reply) => {
@@ -19,6 +20,14 @@ async function errorHandlerPlugin(app: FastifyInstance) {
       reply.code(400).send({
         error: 'Validation failed',
         issues: error.issues
+      })
+      return
+    }
+
+    if (error instanceof AiProviderError) {
+      reply.code(error.statusCode).send({
+        error: error.message,
+        code: error.code,
       })
       return
     }

@@ -30,18 +30,13 @@ export default async function ApiIntegrationPage() {
     byEndpoint: [] as Array<{ method: string; endpoint: string; total: number; success: number; error: number }>,
     recent: [] as Array<{ method: string; endpoint: string; status: string; statusCode: number | null; createdAt: string }>,
   }
-  let geminiKeyStatus = { hasKey: false, keyHint: null as string | null }
   if (token) {
-    const [keysResponse, usageResponse, geminiResponse] = await Promise.all([
+    const [keysResponse, usageResponse] = await Promise.all([
       fetch(`${API_BASE_V1}/users/me/api-keys`, {
         headers: webAppBackendAuthHeaders(token),
         cache: 'no-store',
       }),
       fetch(`${API_BASE_V1}/users/me/api-keys/usage`, {
-        headers: webAppBackendAuthHeaders(token),
-        cache: 'no-store',
-      }),
-      fetch(`${API_BASE_V1}/users/me/ai-keys/gemini`, {
         headers: webAppBackendAuthHeaders(token),
         cache: 'no-store',
       }),
@@ -53,10 +48,6 @@ export default async function ApiIntegrationPage() {
     }
     if (usageResponse.ok) {
       usageStats = (await usageResponse.json()) as typeof usageStats
-    }
-    if (geminiResponse.ok) {
-      const payload = (await geminiResponse.json()) as { hasKey?: boolean; keyHint?: string | null }
-      geminiKeyStatus = { hasKey: Boolean(payload.hasKey), keyHint: payload.keyHint ?? null }
     }
   }
 
@@ -73,9 +64,7 @@ export default async function ApiIntegrationPage() {
         keys={keys}
         usageStats={usageStats}
         apiBaseUrl={API_BASE_V1}
-        geminiKeyStatus={geminiKeyStatus}
       />
     </div>
   )
 }
-

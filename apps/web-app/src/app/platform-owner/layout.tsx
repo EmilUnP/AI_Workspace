@@ -17,6 +17,7 @@ export default async function PlatformOwnerLayout({
   const navigation = [
     { name: t('navDashboard'), href: '/platform-owner', icon: 'LayoutDashboard' },
     { name: t('navUsers'), href: '/platform-owner/users', icon: 'Users' },
+    { name: t('navAiProviders'), href: '/platform-owner/ai-providers', icon: 'Cpu' },
   ]
 
   const displayProfile = {

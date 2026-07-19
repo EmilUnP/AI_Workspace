@@ -1,4 +1,4 @@
-# API Summary (0.3.0)
+# API Summary (0.4.0)
 
 Base URL (local): `http://localhost:4000/v1`
 
@@ -24,19 +24,20 @@ Do **not** use `POST /auth/login` JWTs for production integrations — create an
   - AI tutor: assistants, conversations (threads), messages
   - lessons/exams/education plans generation
   - translation/media helper endpoints
-- **User AI Key**: Gemini key status/save/delete
+- **Admin AI Providers** (platform admin JWT): OpenRouter key, catalog, workload policies
 
 ## Auth
 
-- `POST /auth/register`
+- `POST /auth/register` — always creates `user`
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `GET /auth/me`
 
 ## Users
 
-- `GET /users`
-- `PATCH /users/:id/password`
+- `GET /users` — admin JWT only
+- `POST /admin/users` — admin JWT; create `operator` or `user`
+- `PATCH /users/:id/password` — admin JWT only
 
 ## Documents
 
@@ -62,11 +63,11 @@ Do **not** use `POST /auth/login` JWTs for production integrations — create an
 - `POST /exams` — create (camelCase body, e.g. `durationMinutes`, `questions`)
 - `DELETE /exams/:id` — delete
 
-## AI / RAG (0.3.0+)
+## AI / RAG (0.3.0+, OpenRouter in 0.4.0+)
 
 - `POST /ai/rag/retrieve` — retrieve relevant chunks for a query (pgvector similarity search on `document_chunks`)
 - Requires PostgreSQL **pgvector** + migration **`015_pgvector_document_chunks.sql`**
-- AI generation routes (lesson/exam/plan/tutor) use the same indexed RAG pipeline internally.
+- AI generation routes (lesson/exam/plan/tutor) use the same indexed RAG pipeline internally via the OpenRouter gateway.
 
 ### AI Tutor (assistants + conversations) — 0.2.9+
 
@@ -105,11 +106,18 @@ Do **not** use `POST /auth/login` JWTs for production integrations — create an
 - `POST /ai/stt`
 - `POST /ai/image/generate`
 
-## User AI Key
+## Admin AI Providers (0.4.0+)
 
-- `GET /users/me/ai-keys/gemini` - Gemini key status for authenticated user
-- `PUT /users/me/ai-keys/gemini` - save/update authenticated user key
-- `DELETE /users/me/ai-keys/gemini` - remove authenticated user key
+Platform admin JWT only (not HTTP API keys):
+
+- `GET /admin/ai-providers` — credential status, policies, catalog
+- `PUT|DELETE /admin/ai-providers/credential`
+- `POST /admin/ai-providers/credential/test`
+- `PUT /admin/ai-providers/policies/:workload`
+- `POST /admin/ai-providers/catalog/sync`
+- `PATCH /admin/ai-providers/catalog/enabled`
+
+See `docs/OPENROUTER_MIGRATION.md`.
 
 ## User HTTP API keys & usage (0.2.6+)
 
@@ -121,17 +129,18 @@ Requires migration `006_api_access_log.sql` on the backend database.
 - `GET /users/me/api-keys/usage` — totals, **per API key** (`byKey`), per-endpoint aggregates, and recent rows from **`api_access_log`** (`api_key_id` when the call used `Authorization: Bearer ed_…`). Optional query `range=today|30d|all`. Excludes `X-Eduator-Client: web-app` traffic.
 - **HTTP API keys** — use `Authorization: Bearer ed_<secret>` on `/v1/*` routes (same as JWT). Requires migration `007_api_access_log_api_key_id.sql`.
 
-### Missing Key Error (AI Routes)
+### Missing OpenRouter Key Error (AI Routes)
 
-When user key is missing, AI routes should return:
+When the platform OpenRouter key is missing, AI routes may return:
 
 ```json
 {
-  "error": "Gemini API key is missing for this user.",
-  "code": "MISSING_GEMINI_API_KEY",
-  "hint": "Open /school-admin/api-integration and save your Gemini API key."
+  "error": "OpenRouter API key is not configured",
+  "code": "MISSING_OPENROUTER_API_KEY"
 }
 ```
+
+Configure the key under **Platform Owner → AI Providers** (or set `OPENROUTER_API_KEY`).
 
 ## Web Proxy Endpoints (web-app)
 
@@ -144,7 +153,7 @@ When user key is missing, AI routes should return:
 1. `GET /health` returns `{ ok: true }`
 2. Login succeeds and returns access token
 3. `GET /auth/me` works with token
-4. `GET /users/me/ai-keys/gemini` returns status
+4. Admin: `GET /admin/ai-providers` returns credential/policy overview
 5. `GET /users/me/api-keys` returns `items` (may be empty)
 6. AI route returns either generated result or structured missing-key error
 7. **Usage (optional):** after `db:migrate`, call `GET /documents` with Bearer **only** (no `X-Eduator-Client`); `GET /users/me/api-keys/usage` should reflect the request

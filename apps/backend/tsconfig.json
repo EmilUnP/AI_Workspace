@@ -2,8 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {},
     "types": ["node"]
   },
   "include": ["src", "tests", "scripts"]

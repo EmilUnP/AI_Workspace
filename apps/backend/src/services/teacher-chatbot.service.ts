@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { generateText } from '../ai/gemini.js'
+import { AiGateway } from '../ai/gateway.js'
 import { DocumentRagService } from './document-rag.service.js'
-import { resolveGeminiApiKeyForUser } from './gemini-key-resolver.service.js'
 import type { OwnerScope } from '../lib/chat-scope.js'
 import type { FastifyInstance } from 'fastify'
 
@@ -338,9 +337,12 @@ export class TeacherChatbotService {
     const style = data.shortAnswer
       ? 'Respond briefly in 1-4 bullet points. Keep it short and practical.'
       : 'Respond with detailed guidance.'
-    const apiKey = await resolveGeminiApiKeyForUser(this.app, scope.ownerUserId)
-    const replyRaw = await generateText(
-      [
+    const gateway = new AiGateway(this.app)
+    const replyResult = await gateway.generateText({
+      workload: 'teacher_chat',
+      userId: scope.ownerUserId,
+      sessionId: conversationId,
+      prompt: [
         `You are Eduator teacher assistant${row.assistant_title ? ` "${row.assistant_title}"` : ''}. ${style}`,
         'Use the conversation history for follow-up questions. Stay consistent with prior answers.',
         'If the user asks a direct definition, answer in max 3 short bullets when a short answer is requested.',
@@ -352,9 +354,8 @@ export class TeacherChatbotService {
       ]
         .filter(Boolean)
         .join('\n\n'),
-      { apiKey }
-    )
-    const reply = String(replyRaw || '').trim().slice(0, 1600)
+    })
+    const reply = String(replyResult.text || '').trim().slice(0, 1600)
 
     const { rows: msgRows } = await this.app.db.query<{ id: string; content: string }>(
       `INSERT INTO teacher_chat_messages (conversation_id, role, content, metadata)

@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, BarChart3, Sparkles } from 'lucide-react'
+import { BookOpen, BarChart3 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { ApiKeysSection } from './api-keys-section'
 import { ApiDocsContent } from './api-docs-content'
 import { UsageSection } from './usage-section'
-import { GeminiKeySection } from './gemini-key-section'
 
 export type TeacherApiKeyRow = {
   id: string
@@ -37,25 +36,19 @@ export interface ApiIntegrationClientProps {
   keys: TeacherApiKeyRow[]
   usageStats: UsageStats
   apiBaseUrl: string
-  geminiKeyStatus: {
-    hasKey: boolean
-    keyHint: string | null
-  }
 }
 
-export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl, geminiKeyStatus }: ApiIntegrationClientProps) {
+export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl }: ApiIntegrationClientProps) {
   const t = useTranslations('teacherApiIntegration')
-  const [activeTab, setActiveTab] = useState<'keys-docs' | 'gemini-key' | 'usage'>('keys-docs')
+  const [activeTab, setActiveTab] = useState<'keys-docs' | 'usage'>('keys-docs')
 
   const TABS = [
     { id: 'keys-docs' as const, label: t('keysTab'), icon: BookOpen },
-    { id: 'gemini-key' as const, label: t('geminiTab'), icon: Sparkles },
     { id: 'usage' as const, label: t('usageTab'), icon: BarChart3 },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex gap-1" aria-label="Tabs">
           {TABS.map((tab) => {
@@ -87,9 +80,6 @@ export function ApiIntegrationClient({ keys, usageStats, apiBaseUrl, geminiKeySt
       )}
 
       {activeTab === 'usage' && <UsageSection usageStats={usageStats} />}
-      {activeTab === 'gemini-key' && (
-        <GeminiKeySection initialHasKey={geminiKeyStatus.hasKey} initialKeyHint={geminiKeyStatus.keyHint} />
-      )}
     </div>
   )
 }

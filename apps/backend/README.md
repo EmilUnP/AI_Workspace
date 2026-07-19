@@ -13,8 +13,8 @@ Backend-only service with local PostgreSQL and JWT authentication.
 - User auth and role handling
 - Document metadata and file access
 - RAG processing pipeline (extract/chunk/embed/index/retrieve via **pgvector**)
-- AI generation endpoints (chat, lessons, exams, education plans, translation/media helpers)
-- Per-user Gemini API key management (encrypted at rest)
+- AI generation endpoints (chat, lessons, exams, education plans, translation/media helpers) via **OpenRouter**
+- Platform OpenRouter key + workload model policies (admin-managed)
 - **User HTTP API keys** (`/v1/users/me/api-keys`) and **usage** (`/v1/users/me/api-keys/usage`) backed by **`api_access_log`** after migration `006_api_access_log.sql`
 - **Access logging:** first-party Next.js server calls send `X-Eduator-Client: web-app` and are excluded from `api_access_log` (see `apps/web-app/src/lib/web-app-backend-headers.ts`)
 
@@ -25,7 +25,8 @@ Backend-only service with local PostgreSQL and JWT authentication.
    - Debian/Ubuntu example: `sudo apt install postgresql-16-pgvector`
 4. Install dependencies from repo root:
    - `npm install`
-5. Run migrations: `npm run db:migrate` (includes `015_pgvector_document_chunks.sql`).
+5. Run migrations: `npm run db:migrate` (includes `015` and `018_ai_provider_openrouter.sql`).
+6. Set `OPENROUTER_API_KEY` (and preferably `AI_CREDENTIALS_ENCRYPTION_KEY`), or configure the key in Platform Owner → AI Providers.
 
 ## Run Commands
 From `apps/backend`:
@@ -56,11 +57,15 @@ JWT Bearer token required for protected endpoints.
 - `POST /v1/auth/refresh`
 - `GET /v1/auth/me` (protected)
 
-### User AI Key Endpoints (Protected)
+### Admin AI Provider Endpoints (JWT admin only)
 
-- `GET /v1/users/me/ai-keys/gemini`
-- `PUT /v1/users/me/ai-keys/gemini`
-- `DELETE /v1/users/me/ai-keys/gemini`
+- `GET /v1/admin/ai-providers`
+- `PUT|DELETE /v1/admin/ai-providers/credential`
+- `POST /v1/admin/ai-providers/credential/test`
+- `GET|PUT /v1/admin/ai-providers/policies`
+- `GET|POST /v1/admin/ai-providers/catalog*`
+
+See also `docs/OPENROUTER_MIGRATION.md`.
 
 ## Endpoint Reference
 
@@ -70,7 +75,7 @@ JWT Bearer token required for protected endpoints.
 
 ### Auth
 - `POST /v1/auth/register`
-  - Body: `{ "email": "...", "password": "...", "role": "admin|operator|user" }`
+  - Body: `{ "email": "...", "password": "..." }` (always creates `user`)
 - `POST /v1/auth/login`
   - Body: `{ "email": "...", "password": "..." }`
 - `POST /v1/auth/refresh`
@@ -78,8 +83,10 @@ JWT Bearer token required for protected endpoints.
 - `GET /v1/auth/me` (protected)
 
 ### Users
-- `GET /v1/users` (protected)
+- `GET /v1/users` (admin JWT)
   - Response: `{ "items": [...] }`
+- `POST /v1/admin/users` (admin JWT)
+  - Body: `{ "email": "...", "password": "...", "role": "operator|user" }`
 
 ### Documents
 - `POST /v1/documents` (protected)
@@ -95,7 +102,7 @@ JWT Bearer token required for protected endpoints.
 - `POST /v1/ai/requests` (protected)
 - `GET /v1/ai/requests/:id` (protected)
 
-### AI - RAG (0.3.0+)
+### AI - RAG (0.3.0+, OpenRouter embeddings in 0.4.0+)
 
 - `POST /v1/ai/rag/retrieve` (protected) — vector similarity search over indexed document chunks (pgvector).
 - Requires migration **`015_pgvector_document_chunks.sql`** and pgvector extension on PostgreSQL.
@@ -145,9 +152,9 @@ Use `apps/backend/requests.http` for quick local calls and adapt port if needed.
 - **401 Unauthorized**
   - Ensure `Authorization: Bearer <access_token>` is sent.
   - Verify token is from `/v1/auth/login` in this same backend environment.
-- **Gemini key missing**
-  - AI endpoints may return `MISSING_GEMINI_API_KEY`.
-  - Add key from `/school-admin/api-integration` in the web app.
+- **OpenRouter key missing**
+  - AI endpoints may return `MISSING_OPENROUTER_API_KEY`.
+  - Configure the key under Platform Owner → AI Providers, or set `OPENROUTER_API_KEY`.
 - **Document processing issues**
   - Confirm `AI_STORAGE_DIR` exists and backend process can read/write it (when `FILE_STORAGE=local`).
   - Verify `file_type` is one of supported parser types.

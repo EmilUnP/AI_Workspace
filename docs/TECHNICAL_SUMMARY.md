@@ -1,15 +1,15 @@
-# Technical Summary (0.3.0)
+# Technical Summary (0.4.0)
 
 ## Architecture
 
 - `apps/web-app` (Next.js) provides auth, school-admin, and platform-owner UI.
 - `apps/backend` (Fastify + PostgreSQL) provides auth, users, documents, and AI endpoints.
 - Web app calls backend with JWT access token.
-- Per-user Gemini key is stored encrypted in DB and resolved per request in backend services.
+- Platform OpenRouter key and workload model policies are managed by platform admins (`/platform-owner/ai-providers`).
 
 ## Data and Runtime Topology
 
-- **Database**: PostgreSQL for users, auth tokens, documents, chats, lessons, exams, education plans, and user AI keys.
+- **Database**: PostgreSQL for users, auth tokens, documents, chats, lessons, exams, education plans, API keys, and platform AI provider settings.
 - **Vector search**: **pgvector** extension with **`document_chunks`** table (`vector(768)` + HNSW index) for RAG similarity search (0.3.0+).
 - **File storage**: backend local storage (`AI_STORAGE_DIR`) or PostgreSQL `file_data` depending on `FILE_STORAGE`.
 - **Auth model**: backend-issued JWT access token + refresh token for the web app; **HTTP API keys** (`ed_…`) for third-party `/v1` callers.
@@ -26,14 +26,12 @@
 - Run **`npm run db:migrate`** in `apps/backend` so migrations `006_api_access_log.sql` and `007_api_access_log_api_key_id.sql` are applied.
 - **`GET /v1/users/me/api-keys/usage`** supports `?range=today|30d|all` and returns **`byKey`** aggregates.
 
-## AI Key Resolution Model
+## AI Provider Model (0.4.0)
 
-1. User saves Gemini key from API Integration.
-2. Backend encrypts key before persisting (`user_ai_provider_keys`).
-3. AI service resolves user key at request time.
-4. If missing, backend throws structured error:
-   - `code: MISSING_GEMINI_API_KEY`
-   - human-readable hint for UI.
+1. Platform admin saves an OpenRouter key under **AI Providers** (encrypted with `AI_CREDENTIALS_ENCRYPTION_KEY`).
+2. Workload policies select ordered model fallback chains (lessons, exams, chat, embeddings, images, TTS).
+3. Feature services call `AiGateway` / OpenRouter; missing key returns `MISSING_OPENROUTER_API_KEY`.
+4. Optional env fallback: `OPENROUTER_API_KEY` when no DB credential is configured.
 
 ## Main User Flows
 
@@ -42,11 +40,12 @@
 - Upload documents and monitor processing state.
 - Generate lessons/exams/education plans from documents.
 - **AI Tutor (0.2.9):** create **assistants** (`teacher_chat_assistants`) with optional core `documentIds`; start **conversations** (threads) per assistant; messages on `teacher_chat_conversations`. In-app UI: assistant sidebar → chat list → message pane. Optional **short answer** toggle maps to `shortAnswer` on send.
-- Manage personal Gemini key and **HTTP API keys** in API Integration; Usage reflects external-style `/v1` traffic (see Technical Summary — API access logging).
+- Manage **HTTP API keys** in API Integration; Usage reflects external-style `/v1` traffic (see Technical Summary — API access logging).
 
 ### Platform Owner
 
 - Manage users and roles via platform-owner user pages.
+- Configure OpenRouter key, model catalog, and workload policies.
 
 ## Documents Flow
 
@@ -57,7 +56,7 @@
    - extract text
    - clean/sanitize text
    - chunk text
-   - generate embeddings (Gemini `gemini-embedding-001`, 768-dim normalized)
+   - generate embeddings (OpenRouter; default `google/gemini-embedding-001`, 768-dim normalized)
    - persist vectors to **`document_chunks`** (pgvector)
    - detect language
    - store stats (`total_tokens`, `chunk_count`, `avg_chunk_size`, quality fields)
