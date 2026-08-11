@@ -39,12 +39,20 @@ export class DocumentsRepository {
     status?: DocumentRecord['status']
     localPath?: string | null
     fileData?: Buffer | null
+    extractedText?: string | null
+    fileHash?: string | null
     metadata?: Record<string, unknown>
   }) {
     const { rows } = await this.app.db.query<DocumentRecord>(
       `
-        INSERT INTO documents (owner_user_id, title, file_name, file_type, file_size, status, local_path, file_data, metadata)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
+        INSERT INTO documents (
+          owner_user_id, title, file_name, file_type, file_size, status, local_path, file_data,
+          extracted_text, text_extracted_at, file_hash, metadata
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8,
+          $9, CASE WHEN $9 IS NULL OR $9 = '' THEN NULL ELSE now() END, $10, $11::jsonb
+        )
         RETURNING id, owner_user_id, title, file_name, file_type, file_size, status, local_path, extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata, created_at, updated_at
       `,
       [
@@ -56,6 +64,8 @@ export class DocumentsRepository {
         input.status ?? 'uploaded',
         input.localPath ?? null,
         input.fileData ?? null,
+        input.extractedText ?? null,
+        input.fileHash ?? null,
         JSON.stringify(input.metadata ?? {})
       ]
     )

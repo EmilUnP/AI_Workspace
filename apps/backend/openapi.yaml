@@ -186,7 +186,12 @@ paths:
   /v1/documents:
     post:
       tags: [Documents]
-      summary: Create document metadata
+      summary: Upload document and extract text for RAG
+      description: >
+        Accepts PDF/DOCX/DOC/text uploads (up to ~20MB JSON body). The server extracts
+        clean text immediately, stores only UTF-8 text for RAG, and discards original
+        binary/image bytes. Prefer sending plain text when available. Scanned/image-only
+        PDFs without a text layer are rejected (422).
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -263,7 +268,10 @@ paths:
   /v1/documents/{id}/file:
     get:
       tags: [Documents]
-      summary: Stream original document file
+      summary: Stream extracted document text
+      description: >
+        Returns the retained UTF-8 text (original PDF/DOCX bytes are not stored).
+        Content-Type is always text/plain.
       security: [{ bearerAuth: [] }]
       parameters:
         - in: path
@@ -1054,8 +1062,10 @@ components:
         contentBase64:
           type: string
           description: >
-            Optional. Base64-encoded file bytes (typical for remote clients and the web app).
-            When set without localPath, the server writes the file under AI_STORAGE_DIR and runs RAG processing.
+            Optional. Base64-encoded source file (PDF/DOCX/DOC/text). The server extracts
+            clean text, persists only that text for RAG, and does not keep the original
+            binary/image payload. Prefer uploading already-extracted .txt/.md when possible.
+            Request body limit is 20 MiB.
         metadata:
           type: object
           additionalProperties: true

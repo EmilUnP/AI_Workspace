@@ -5,8 +5,7 @@ import { DocumentRagService } from '../services/document-rag.service.js'
 import {
   documentHasStoredFile,
   readDocumentFileBuffer,
-  resolveDocumentFilePath,
-  useDatabaseFileStorage
+  resolveDocumentFilePath
 } from '../utils/document-file.js'
 
 export async function documentsRoutes(app: FastifyInstance) {
@@ -59,33 +58,33 @@ export async function documentsRoutes(app: FastifyInstance) {
       return
     }
     const hasFileData = await documentsService.hasFileData(userId, id)
-    if (!documentHasStoredFile({ local_path: document.local_path, has_file_data: hasFileData })) {
+    if (
+      !documentHasStoredFile({
+        local_path: document.local_path,
+        has_file_data: hasFileData,
+        extracted_text: document.extracted_text
+      })
+    ) {
       reply.code(404).send({ error: 'Document file missing' })
       return
     }
 
-    const lowerType = String(document.file_type || '').toLowerCase()
-    const contentType = lowerType.includes('pdf')
-      ? 'application/pdf'
-      : lowerType.includes('officedocument.wordprocessingml.document') || lowerType === 'docx'
-        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        : lowerType.includes('msword') || lowerType === 'doc'
-          ? 'application/msword'
-          : lowerType.includes('markdown')
-            ? 'text/markdown; charset=utf-8'
-            : 'text/plain; charset=utf-8'
+    // Uploads are retained as clean UTF-8 text only (original PDF/DOCX bytes are discarded).
+    const contentType = 'text/plain; charset=utf-8'
+    const downloadName = String(document.file_name || 'document.txt').replace(/\.[^.]+$/, '') + '.txt'
 
-    const safeAsciiFileName = String(document.file_name || 'document')
+    const safeAsciiFileName = downloadName
       .replace(/[^\x20-\x7E]/g, '_')
       .replace(/["\\]/g, '_')
-    const utf8FileName = encodeURIComponent(String(document.file_name || 'document'))
+    const utf8FileName = encodeURIComponent(downloadName)
 
     reply.header('Content-Type', contentType)
     reply.header(
       'Content-Disposition',
       `inline; filename="${safeAsciiFileName}"; filename*=UTF-8''${utf8FileName}`
     )
-    if (hasFileData || useDatabaseFileStorage()) {
+
+    if (hasFileData) {
       const buffer = await readDocumentFileBuffer(app, {
         id: document.id,
         owner_user_id: document.owner_user_id,
@@ -94,7 +93,11 @@ export async function documentsRoutes(app: FastifyInstance) {
       return reply.send(buffer)
     }
 
-    return reply.send(createReadStream(resolveDocumentFilePath(document.local_path!)))
+    if (document.local_path) {
+      return reply.send(createReadStream(resolveDocumentFilePath(document.local_path)))
+    }
+
+    return reply.send(document.extracted_text || '')
   })
 
   app.patch('/documents/:id', { preHandler: [app.authenticate] }, async (request, reply) => {

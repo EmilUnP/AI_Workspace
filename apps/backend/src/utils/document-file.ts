@@ -49,6 +49,11 @@ export async function readDocumentFileBuffer(
 export function documentHasStoredFile(doc: {
   local_path: string | null
   has_file_data?: boolean
+  extracted_text?: string | null
 }): boolean {
-  return Boolean(doc.has_file_data) || Boolean(doc.local_path)
+  return (
+    Boolean(doc.has_file_data) ||
+    Boolean(doc.local_path) ||
+    Boolean(doc.extracted_text && doc.extracted_text.length > 0)
+  )
 }

@@ -1,11 +1,21 @@
-import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import type { FastifyInstance } from 'fastify'
-import mammoth from 'mammoth'
-import WordExtractor from 'word-extractor'
-import pdfParse from '@cedrugs/pdf-parse'
+import { mkdir, unlink, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { AiGateway } from '../ai/gateway.js'
-import { readDocumentFileBuffer } from '../utils/document-file.js'
+import { env } from '../config/env.js'
+import {
+  readDocumentFileBuffer,
+  resolveDocumentFilePath,
+  useDatabaseFileStorage
+} from '../utils/document-file.js'
+import {
+  extractCleanTextFromBuffer,
+  hashExtractedText,
+  sanitizeForPostgresText,
+  toTextOnlyFileName
+} from '../utils/document-text-extract.js'
 import { prepareEmbedding, toPgVector } from '../utils/vector.js'
 
 const querySchema = z.object({
@@ -17,6 +27,7 @@ const querySchema = z.object({
 type DocRow = {
   id: string
   owner_user_id: string
+  file_name: string
   file_type: string
   local_path: string | null
   status: 'uploaded' | 'processing' | 'ready' | 'failed'
@@ -33,6 +44,7 @@ type DocRow = {
   avg_chunk_size: number
   quality_status: string | null
   quality_message: string | null
+  metadata: Record<string, unknown> | null
 }
 
 export class DocumentRagService {
@@ -250,6 +262,11 @@ export class DocumentRagService {
           quality.message
         ]
       )
+
+      // Ensure we never retain original binary payloads after successful text indexing.
+      // New uploads already store text-only bytes; this also cleans legacy PDF/DOCX rows
+      // once they have been successfully processed.
+      await this.replaceStoredFileWithTextOnly(doc.id, text)
     } catch (error) {
       await this.app.db.query(
         `UPDATE documents
@@ -265,7 +282,7 @@ export class DocumentRagService {
 
   private async getDoc(userId: string, id: string) {
     const { rows } = await this.app.db.query<DocRow>(
-      `SELECT id, owner_user_id, file_type, local_path, status, extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message
+      `SELECT id, owner_user_id, file_name, file_type, local_path, status, extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata
        FROM documents WHERE id = $1 AND owner_user_id = $2 LIMIT 1`,
       [id, userId]
     )
@@ -418,27 +435,12 @@ export class DocumentRagService {
     if (doc.extracted_text && doc.extracted_text.length > 0) return doc.extracted_text
 
     const fileBuffer = await readDocumentFileBuffer(this.app, doc)
-    let text = ''
-
-    const normalizedFileType = String(doc.file_type || '').toLowerCase()
-
-    if (normalizedFileType === 'pdf' || normalizedFileType.includes('pdf')) {
-      const parsed = await pdfParse(fileBuffer)
-      text = parsed.text || ''
-    } else if (normalizedFileType === 'docx' || normalizedFileType.includes('officedocument.wordprocessingml.document')) {
-      const parsed = await mammoth.extractRawText({ buffer: fileBuffer })
-      text = parsed.value || ''
-    } else if (normalizedFileType === 'doc' || normalizedFileType.includes('msword')) {
-      const extractor = new WordExtractor()
-      const parsed = await extractor.extract(fileBuffer)
-      text = parsed.getBody() || ''
-    } else {
-      text = fileBuffer.toString('utf8')
-    }
-
-    const cleaned = this.cleanExtractedText(text)
-    const normalized = this.sanitizeForPostgresText(cleaned.replace(/\s+/g, ' ').trim())
-    const fileHash = createHash('sha256').update(normalized).digest('hex')
+    const normalized = await extractCleanTextFromBuffer(
+      fileBuffer,
+      doc.file_type,
+      doc.file_name || ''
+    )
+    const fileHash = hashExtractedText(normalized)
     await this.app.db.query(
       `UPDATE documents
        SET extracted_text = $2, text_extracted_at = now(), file_hash = $3, updated_at = now()
@@ -449,50 +451,86 @@ export class DocumentRagService {
   }
 
   /**
-   * PostgreSQL text/jsonb cannot contain NUL (\u0000). Some binary-heavy PDFs
-   * may leak it into extracted text; strip it to prevent "invalid byte sequence".
+   * Replace any stored original binary (PDF/DOCX) with UTF-8 text only.
+   * Safe to call repeatedly — already text-only rows are left alone.
    */
-  private sanitizeForPostgresText(value: string): string {
-    const withoutNull = value.replace(/\u0000/g, '')
-    if (typeof (withoutNull as unknown as { toWellFormed?: () => string }).toWellFormed === 'function') {
-      return (withoutNull as unknown as { toWellFormed: () => string }).toWellFormed()
-    }
-    return withoutNull
-  }
+  private async replaceStoredFileWithTextOnly(documentId: string, text: string) {
+    const { rows } = await this.app.db.query<{
+      file_name: string
+      file_type: string
+      local_path: string | null
+      metadata: Record<string, unknown> | null
+      file_data_len: number
+    }>(
+      `SELECT file_name, file_type, local_path, metadata,
+              COALESCE(octet_length(file_data), 0)::int AS file_data_len
+       FROM documents WHERE id = $1 LIMIT 1`,
+      [documentId]
+    )
+    const row = rows[0]
+    if (!row) return
 
-  /**
-   * Remove common PDF/OCR artifacts so chunking/embedding focuses on useful text.
-   * This is intentionally conservative to avoid dropping valid educational content.
-   */
-  private cleanExtractedText(raw: string): string {
-    const text = this.sanitizeForPostgresText(raw)
-      .replace(/[^\S\r\n\t]+/g, ' ')
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
-      .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    const alreadyTextOnly =
+      String(row.file_type || '').toLowerCase() === 'text' &&
+      (row.metadata as { textOnly?: boolean } | null)?.textOnly === true &&
+      row.file_data_len > 0 &&
+      row.file_data_len <= Buffer.byteLength(text, 'utf8') + 64
 
-    const lines = text.split('\n')
-    const kept: string[] = []
+    if (alreadyTextOnly) return
 
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (!trimmed) continue
-
-      // Drop likely binary/base64 fragments.
-      if (/^[A-Za-z0-9+/=]{120,}$/.test(trimmed)) continue
-
-      // Drop lines that are mostly symbols/noise.
-      const nonWord = (trimmed.match(/[^\p{L}\p{N}\s]/gu) || []).length
-      const ratio = nonWord / trimmed.length
-      if (trimmed.length < 40 && ratio > 0.45) continue
-
-      // Drop obvious repeated-character artifacts.
-      if (/(.)\1{8,}/.test(trimmed)) continue
-
-      kept.push(trimmed)
+    const textBuffer = Buffer.from(text, 'utf8')
+    const textFileName = toTextOnlyFileName(row.file_name || 'document.txt')
+    const metadata: Record<string, unknown> = {
+      ...(row.metadata ?? {}),
+      textOnly: true,
+      originalFileName: (row.metadata as { originalFileName?: string } | null)?.originalFileName ?? row.file_name,
+      originalFileType: (row.metadata as { originalFileType?: string } | null)?.originalFileType ?? row.file_type
     }
 
-    return kept.join('\n').replace(/\n{3,}/g, '\n\n')
+    if (useDatabaseFileStorage()) {
+      await this.app.db.query(
+        `UPDATE documents
+         SET file_data = $2,
+             local_path = NULL,
+             file_name = $3,
+             file_type = 'text',
+             file_size = $4,
+             metadata = $5::jsonb,
+             updated_at = now()
+         WHERE id = $1`,
+        [documentId, textBuffer, textFileName, textBuffer.length, JSON.stringify(metadata)]
+      )
+      return
+    }
+
+    const oldPath = row.local_path
+    const userDir = oldPath
+      ? path.dirname(resolveDocumentFilePath(oldPath))
+      : path.join(env.AI_STORAGE_DIR, 'documents')
+    await mkdir(userDir, { recursive: true })
+    const absPath = path.join(userDir, `${randomUUID()}-${textFileName}`)
+    await writeFile(absPath, textBuffer, 'utf8')
+
+    await this.app.db.query(
+      `UPDATE documents
+       SET file_data = NULL,
+           local_path = $2,
+           file_name = $3,
+           file_type = 'text',
+           file_size = $4,
+           metadata = $5::jsonb,
+           updated_at = now()
+       WHERE id = $1`,
+      [documentId, absPath, textFileName, textBuffer.length, JSON.stringify(metadata)]
+    )
+
+    if (oldPath) {
+      try {
+        await unlink(resolveDocumentFilePath(oldPath))
+      } catch {
+        // Ignore missing legacy files.
+      }
+    }
   }
 
   private chunkText(text: string, chunkSize: number, overlap: number) {
@@ -506,7 +544,7 @@ export class DocumentRagService {
       let index = 0
       while (index < cleanText.length) {
         const end = Math.min(index + chunkSize, cleanText.length)
-        chunks.push(this.sanitizeForPostgresText(cleanText.slice(index, end).trim()))
+        chunks.push(sanitizeForPostgresText(cleanText.slice(index, end).trim()))
         if (end === cleanText.length) break
         index = end - overlap
       }
@@ -520,7 +558,7 @@ export class DocumentRagService {
       const sentence = sentences[i]
       const potentialChunk = currentChunk ? `${currentChunk} ${sentence}` : sentence
       if (potentialChunk.length > chunkSize && currentChunk) {
-        chunks.push(this.sanitizeForPostgresText(currentChunk.trim()))
+        chunks.push(sanitizeForPostgresText(currentChunk.trim()))
 
         const overlapSentences: string[] = []
         let overlapLength = 0
@@ -542,7 +580,7 @@ export class DocumentRagService {
     }
 
     if (currentChunk.trim()) {
-      chunks.push(this.sanitizeForPostgresText(currentChunk.trim()))
+      chunks.push(sanitizeForPostgresText(currentChunk.trim()))
     }
 
     return chunks.filter((c) => c.length > 100)

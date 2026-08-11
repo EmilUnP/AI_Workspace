@@ -9,6 +9,12 @@ import {
   resolveDocumentFilePath,
   useDatabaseFileStorage
 } from '../utils/document-file.js'
+import {
+  extractCleanTextFromBuffer,
+  hashExtractedText,
+  normalizeDocumentFileType,
+  toTextOnlyFileName
+} from '../utils/document-text-extract.js'
 
 const createDocumentSchema = z.object({
   title: z.string().min(1).max(200),
@@ -26,17 +32,6 @@ const updateDocumentSchema = z.object({
   tags: z.array(z.string()).nullable().optional()
 })
 
-function normalizeStoredFileType(fileType: string, fileName: string): string {
-  const raw = String(fileType || '').toLowerCase()
-  const ext = fileName.split('.').pop()?.toLowerCase() || ''
-  if (raw.includes('pdf') || ext === 'pdf') return 'pdf'
-  if (raw.includes('officedocument.wordprocessingml.document') || ext === 'docx') return 'docx'
-  if (raw.includes('msword') || ext === 'doc') return 'doc'
-  if (raw.includes('markdown') || ext === 'md' || ext === 'markdown') return 'markdown'
-  if (raw.includes('text') || ext === 'txt') return 'text'
-  return raw || 'text'
-}
-
 export class DocumentsService {
   private readonly documentsRepo: DocumentsRepository
 
@@ -46,40 +41,74 @@ export class DocumentsService {
 
   async create(userId: string, input: unknown) {
     const data = createDocumentSchema.parse(input)
-    const inferredName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
-    let localPath: string | null = data.localPath ?? null
-    let fileData: Buffer | null = null
+    const originalFileType = normalizeDocumentFileType(data.fileType, data.fileName)
+    let sourceBuffer: Buffer | null = null
 
     if (data.contentBase64) {
-      fileData = Buffer.from(data.contentBase64, 'base64')
+      sourceBuffer = Buffer.from(data.contentBase64, 'base64')
     } else if (data.localPath) {
-      fileData = await readFile(resolveDocumentFilePath(data.localPath))
+      sourceBuffer = await readFile(resolveDocumentFilePath(data.localPath))
     }
 
+    if (!sourceBuffer) {
+      throw new Error('Document upload requires contentBase64 or a readable localPath')
+    }
+
+    // Extract text immediately and discard binary/image-heavy payloads.
+    // RAG only needs clean text; storing PDF/DOCX bytes has no product value.
+    const extractedText = await extractCleanTextFromBuffer(
+      sourceBuffer,
+      originalFileType,
+      data.fileName
+    )
+    if (!extractedText) {
+      const err = new Error(
+        'No extractable text found in document. Scanned/image-only PDFs are not supported without OCR.'
+      ) as Error & { statusCode?: number }
+      err.statusCode = 422
+      throw err
+    }
+
+    const textBuffer = Buffer.from(extractedText, 'utf8')
+    const textFileName = toTextOnlyFileName(data.fileName)
+    const fileHash = hashExtractedText(extractedText)
+    const metadata: Record<string, unknown> = {
+      ...(data.metadata ?? {}),
+      textOnly: true,
+      originalFileName: data.fileName,
+      originalFileType,
+      originalFileSize: data.fileSize || sourceBuffer.length
+    }
+
+    // Drop the original binary from memory as soon as text is ready.
+    sourceBuffer = null
+
+    let localPath: string | null = null
+    let fileData: Buffer | null = null
+
     if (useDatabaseFileStorage()) {
-      if (!fileData) {
-        throw new Error('Document upload requires contentBase64 or a readable localPath')
-      }
-      localPath = null
-    } else if (fileData) {
+      // Persist only UTF-8 text bytes (not the original PDF/DOCX).
+      fileData = textBuffer
+    } else {
       const userDir = path.join(env.AI_STORAGE_DIR, 'documents', userId)
       await mkdir(userDir, { recursive: true })
-      const fileName = `${randomUUID()}-${inferredName}`
-      const absPath = path.join(userDir, fileName)
-      await writeFile(absPath, fileData)
+      const storedName = `${randomUUID()}-${textFileName}`
+      const absPath = path.join(userDir, storedName)
+      await writeFile(absPath, textBuffer, 'utf8')
       localPath = absPath
-      fileData = null
     }
 
     return this.documentsRepo.create({
       ownerUserId: userId,
       title: data.title,
-      fileName: data.fileName,
-      fileType: normalizeStoredFileType(data.fileType, data.fileName),
-      fileSize: data.fileSize,
+      fileName: textFileName,
+      fileType: 'text',
+      fileSize: textBuffer.length,
       localPath,
       fileData,
-      metadata: data.metadata
+      extractedText,
+      fileHash,
+      metadata
     })
   }
 

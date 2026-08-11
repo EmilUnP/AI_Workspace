@@ -25,7 +25,9 @@ export async function buildApp() {
   const app = Fastify({
     logger: {
       level: 'info'
-    }
+    },
+    // Allow large PDF uploads for text extraction; original binaries are discarded after extract.
+    bodyLimit: 20 * 1024 * 1024
   })
 
   const corsOrigins = env.CORS_ORIGINS
