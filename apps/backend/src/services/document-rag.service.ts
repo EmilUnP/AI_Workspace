@@ -65,8 +65,17 @@ export class DocumentRagService {
       while (DocumentRagService.queue.length > 0) {
         const next = DocumentRagService.queue.shift()
         if (!next) break
-        await this.processSingle(next.userId, next.documentId)
+        try {
+          await this.processSingle(next.userId, next.documentId)
+        } catch (error) {
+          this.app.log.error(
+            { error, documentId: next.documentId, userId: next.userId },
+            'Document RAG processing failed unexpectedly'
+          )
+        }
       }
+    } catch (error) {
+      this.app.log.error({ error }, 'Document RAG queue crashed')
     } finally {
       DocumentRagService.processing = false
     }

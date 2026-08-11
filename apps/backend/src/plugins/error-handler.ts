@@ -42,6 +42,22 @@ async function errorHandlerPlugin(app: FastifyInstance) {
       return
     }
 
+    // node-postgres uses SQLSTATE string codes (e.g. 42703), not HTTP statusCode
+    const pg = error as { code?: string; detail?: string; message?: string }
+    if (typeof pg.code === 'string' && /^[0-9A-Z]{5}$/.test(pg.code)) {
+      reply.code(500).send({
+        error: pg.message || 'Database error',
+        code: pg.code,
+        detail: pg.detail,
+      })
+      return
+    }
+
+    if (error instanceof Error && error.message) {
+      reply.code(500).send({ error: error.message })
+      return
+    }
+
     reply.code(500).send({ error: 'Internal server error' })
   })
 }

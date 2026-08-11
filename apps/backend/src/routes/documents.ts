@@ -19,7 +19,11 @@ export async function documentsRoutes(app: FastifyInstance) {
       return
     }
     const document = await documentsService.create(userId, request.body)
-    await ragService.processDocumentOnUpload(document.id, userId)
+    try {
+      await ragService.processDocumentOnUpload(document.id, userId)
+    } catch (err) {
+      request.log.error({ err, documentId: document.id }, 'Failed to enqueue document RAG processing')
+    }
     reply.code(201).send({ document })
   })
 

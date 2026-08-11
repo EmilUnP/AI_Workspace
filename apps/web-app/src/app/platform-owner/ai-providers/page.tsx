@@ -66,7 +66,7 @@ export default async function AiProvidersPage() {
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">AI Providers</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Control the platform OpenRouter key, active models, and per-workload fallback chains.
+          Manage the single platform OpenRouter key, then control which Gemini models each AI workload uses.
         </p>
       </div>
       <AiProvidersClient

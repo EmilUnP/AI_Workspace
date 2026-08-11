@@ -92,6 +92,9 @@ export function AiProvidersClient({
     )
   )
 
+  const [showReplaceKey, setShowReplaceKey] = useState(!credential.hasKey)
+  const [apiKeyInput, setApiKeyInput] = useState('')
+
   const sortedPolicies = useMemo(
     () =>
       [...policies].sort((a, b) =>
@@ -115,6 +118,20 @@ export function AiProvidersClient({
     })
   }
 
+  const testStatusLabel =
+    credential.lastTestStatus === 'ok'
+      ? 'Passed'
+      : credential.lastTestStatus === 'error'
+        ? 'Failed'
+        : 'Not tested yet'
+
+  const testStatusClass =
+    credential.lastTestStatus === 'ok'
+      ? 'bg-emerald-100 text-emerald-800'
+      : credential.lastTestStatus === 'error'
+        ? 'bg-red-100 text-red-800'
+        : 'bg-gray-100 text-gray-600'
+
   return (
     <div className="space-y-8">
       {(message || error) && (
@@ -131,65 +148,145 @@ export function AiProvidersClient({
         <div>
           <h2 className="text-lg font-semibold text-gray-900">OpenRouter platform key</h2>
           <p className="mt-1 text-sm text-gray-600">
-            One encrypted platform credential. Schools do not manage provider keys.
+            The platform uses <span className="font-medium text-gray-800">one</span> OpenRouter key for all AI
+            features. Saving a new key replaces the current one — you never keep two keys at once.
           </p>
         </div>
-        <div className="grid gap-3 text-sm text-gray-700 sm:grid-cols-2">
-          <div>Status: {credential.hasKey ? `Configured (…${credential.keyHint})` : 'Not configured'}</div>
-          <div>Source: {credential.source}</div>
-          <div>Last test: {credential.lastTestStatus || 'never'}</div>
-          <div>Tested at: {credential.lastTestedAt || '—'}</div>
-        </div>
-        {credential.lastTestError && (
-          <p className="text-sm text-red-700">{credential.lastTestError}</p>
-        )}
-        <form
-          className="flex flex-col gap-3 sm:flex-row"
-          action={(formData) =>
-            run(() => saveOpenRouterKey(formData), 'OpenRouter key saved')
-          }
-        >
-          <input type="hidden" name="expectedVersion" value={credential.version} />
-          <input
-            name="apiKey"
-            type="password"
-            required
-            placeholder="sk-or-…"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-          >
-            Save key
-          </button>
-        </form>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={isPending || !credential.hasKey}
-            onClick={() => run(() => testOpenRouterKey(), 'Connection test completed')}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-60"
-          >
-            Test connection
-          </button>
-          <button
-            type="button"
-            disabled={isPending || !credential.hasKey}
-            onClick={() => run(() => deleteOpenRouterKey(), 'OpenRouter key removed')}
-            className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-700 disabled:opacity-60"
-          >
-            Remove key
-          </button>
-          <button
-            type="button"
-            disabled={isPending || !credential.hasKey}
-            onClick={() => run(() => syncModelCatalog(), 'Model catalog synced')}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-60"
-          >
-            Sync model catalog
-          </button>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-900">Current key</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    credential.hasKey
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-amber-100 text-amber-900'
+                  }`}
+                >
+                  {credential.hasKey ? 'Configured' : 'Not set'}
+                </span>
+              </div>
+              {credential.hasKey ? (
+                <p className="font-mono text-sm text-gray-800">
+                  sk-or-…{credential.keyHint || '••••'}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-600">No platform key saved yet.</p>
+              )}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                <span>Source: {credential.source || '—'}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  Connection test:
+                  <span className={`rounded-full px-1.5 py-0.5 font-medium ${testStatusClass}`}>
+                    {testStatusLabel}
+                  </span>
+                </span>
+                {credential.lastTestedAt ? (
+                  <span>Last tested: {new Date(credential.lastTestedAt).toLocaleString()}</span>
+                ) : null}
+              </div>
+              {credential.lastTestError ? (
+                <p className="text-xs text-red-700">{credential.lastTestError}</p>
+              ) : null}
+            </div>
+
+            {credential.hasKey ? (
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => run(() => testOpenRouterKey(), 'Connection test completed')}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                >
+                  Test connection
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => run(() => syncModelCatalog(), 'Model catalog synced')}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                >
+                  Sync catalog
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    setShowReplaceKey((open) => !open)
+                    setApiKeyInput('')
+                  }}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                >
+                  {showReplaceKey ? 'Cancel replace' : 'Replace key'}
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    if (
+                      typeof window !== 'undefined' &&
+                      !window.confirm(
+                        'Remove the platform OpenRouter key? AI features will stop until a new key is saved.'
+                      )
+                    ) {
+                      return
+                    }
+                    run(() => deleteOpenRouterKey(), 'OpenRouter key removed')
+                  }}
+                  className="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-60"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          {(showReplaceKey || !credential.hasKey) && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-medium text-gray-900">
+                {credential.hasKey ? 'Replace with a new key' : 'Add OpenRouter key'}
+              </h3>
+              <p className="mt-1 text-xs text-gray-500">
+                {credential.hasKey
+                  ? 'Paste the new key below. It will overwrite the current key immediately after save.'
+                  : 'Paste your OpenRouter API key (starts with sk-or-).'}
+              </p>
+              <form
+                className="mt-3 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center"
+                action={(formData) => {
+                  run(async () => {
+                    const result = await saveOpenRouterKey(formData)
+                    if (!('error' in result && result.error)) {
+                      setApiKeyInput('')
+                      setShowReplaceKey(false)
+                    }
+                    return result
+                  }, credential.hasKey ? 'OpenRouter key replaced' : 'OpenRouter key saved')
+                }}
+              >
+                <input type="hidden" name="expectedVersion" value={credential.version} />
+                <input
+                  name="apiKey"
+                  type="password"
+                  required
+                  autoComplete="off"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder="sk-or-v1-…"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                />
+                <button
+                  type="submit"
+                  disabled={isPending || !apiKeyInput.trim()}
+                  className="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                >
+                  {credential.hasKey ? 'Replace key' : 'Save key'}
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       </section>
 

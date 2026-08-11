@@ -51,16 +51,31 @@ export class DocumentsService {
     }
 
     if (!sourceBuffer) {
-      throw new Error('Document upload requires contentBase64 or a readable localPath')
+      const err = new Error(
+        'Document upload requires contentBase64 or a readable localPath'
+      ) as Error & { statusCode?: number }
+      err.statusCode = 400
+      throw err
     }
 
     // Extract text immediately and discard binary/image-heavy payloads.
     // RAG only needs clean text; storing PDF/DOCX bytes has no product value.
-    const extractedText = await extractCleanTextFromBuffer(
-      sourceBuffer,
-      originalFileType,
-      data.fileName
-    )
+    let extractedText = ''
+    try {
+      extractedText = await extractCleanTextFromBuffer(
+        sourceBuffer,
+        originalFileType,
+        data.fileName
+      )
+    } catch (cause) {
+      const message =
+        cause instanceof Error && cause.message
+          ? cause.message
+          : 'Failed to extract text from document'
+      const err = new Error(message) as Error & { statusCode?: number }
+      err.statusCode = 422
+      throw err
+    }
     if (!extractedText) {
       const err = new Error(
         'No extractable text found in document. Scanned/image-only PDFs are not supported without OCR.'

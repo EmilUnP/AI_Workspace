@@ -93,8 +93,16 @@ export async function quickUploadDocument(input: QuickUploadInput) {
     })
 
     if (!response.ok) {
-      const payload = (await response.json().catch(() => ({}))) as { error?: string }
-      return { success: false, error: payload.error || 'Failed to create document record' }
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string
+        detail?: string
+        code?: string
+        message?: string
+      }
+      const parts = [payload.error || payload.message || 'Failed to create document record']
+      if (payload.detail) parts.push(payload.detail)
+      if (payload.code) parts.push(`(${payload.code})`)
+      return { success: false, error: parts.join(' ') }
     }
 
     const payload = (await response.json()) as { document?: Record<string, unknown> }
