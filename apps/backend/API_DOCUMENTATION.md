@@ -406,8 +406,10 @@ Response `200`: `{ "items": [ { "id", "title", "document_ids", "created_at", "up
 #### `POST /v1/ai/chat/assistants` (Protected)
 
 ```json
-{ "title": "Biology tutor", "documentIds": ["uuid-doc-1"] }
+{ "title": "Biology tutor", "documentIds": ["uuid-doc-1", "uuid-doc-2"] }
 ```
+
+- `documentIds` required for create (at least one; **max 10**)
 
 Response `201`: `{ "assistant": { ... } }`
 
@@ -418,8 +420,10 @@ Response `200`: `{ "assistant": { ... } }`
 #### `PATCH /v1/ai/chat/assistants/:assistantId` (Protected)
 
 ```json
-{ "title": "Renamed tutor", "documentIds": ["uuid-doc-1"] }
+{ "title": "Renamed tutor", "documentIds": ["uuid-doc-1", "uuid-doc-2"] }
 ```
+
+- `documentIds` optional; when sent, at least one ID required (**max 10**)
 
 #### `DELETE /v1/ai/chat/assistants/:assistantId` (Protected)
 
@@ -534,13 +538,20 @@ Response `200` (abridged):
     "content": {},
     "images": [],
     "mini_test": {},
-    "metadata": {},
+    "metadata": { "source_documents": ["uuid-doc-1", "uuid-doc-2"] },
     "learning_objectives": [],
-    "documents": { "title": "Source document title" }
+    "documents": { "title": "Primary source title" },
+    "source_document_ids": ["uuid-doc-1", "uuid-doc-2"],
+    "source_documents": [
+      { "id": "uuid-doc-1", "title": "Doc A" },
+      { "id": "uuid-doc-2", "title": "Doc B" }
+    ]
   }
 }
 ```
 
+- `documents` — backward-compatible primary document title (from `lessons.document_id`)
+- `source_document_ids` / `source_documents` — full multi-doc selection used at generate time (from `metadata.source_documents`, titles resolved for the owner)
 - `audio_url` may be `null` until async TTS completes; the API may also expose a file-backed URL under `/v1/lessons/:id/media/...` when a wave file exists on disk.
 
 ### GET `/v1/lessons/:id/media/:file` (Protected)
@@ -562,15 +573,16 @@ Response `200`:
 
 ### POST `/v1/ai/lessons/generate` (Protected)
 
-At least one source document is required via `documentId` and/or `documentIds` (**max 5**).
+At least one source document is required via `documentId` and/or `documentIds` (**max 5**). Selected IDs are stored on the lesson as `metadata.source_documents` (primary also in `document_id`).
 
 Request:
 ```json
 {
-  "documentId": "uuid",
+  "documentIds": ["uuid-doc-1", "uuid-doc-2"],
+  "documentId": "uuid-doc-1",
   "topic": "Photosynthesis",
   "language": "en",
-  "gradeLevel": "grade_9",
+  "gradeLevel": "grade_9"
 }
 ```
 
@@ -600,10 +612,12 @@ Supports:
 - `documentId`
 - `documentIds` (multi-doc, **max 5**)
 
+Selected `documentIds` are persisted in `exams.metadata.source_documents`.
+
 Request example:
 ```json
 {
-  "documentIds": ["uuid"],
+  "documentIds": ["uuid-doc-1", "uuid-doc-2"],
   "gradeLevel": "grade_9",
   "language": "en",
   "questionCount": 10,
@@ -620,7 +634,8 @@ Response `201`:
     "id": "uuid",
     "title": "...",
     "description": "...",
-    "questions": [{ "...": "..." }]
+    "questions": [{ "...": "..." }],
+    "source_documents": ["uuid-doc-1", "uuid-doc-2"]
   }
 }
 ```
@@ -707,10 +722,17 @@ Response `200` (abridged):
     "translations": {},
     "settings": {},
     "topics": [],
+    "source_document_ids": ["uuid-doc-1", "uuid-doc-2"],
+    "source_documents": [
+      { "id": "uuid-doc-1", "title": "Doc A" },
+      { "id": "uuid-doc-2", "title": "Doc B" }
+    ],
     "created_at": "..."
   }
 }
 ```
+
+- `source_document_ids` / `source_documents` — multi-doc selection from `metadata.source_documents` (empty for older exams created before this field existed)
 
 #### POST `/v1/exams` (Protected)
 
@@ -776,11 +798,18 @@ Saved plan rows (including those created by `POST /v1/ai/education-plans/generat
   "sessions_per_week": 3,
   "hours_per_session": 1,
   "audience": "Grade 10",
-  "document_ids": ["uuid-doc"],
+  "document_ids": ["uuid-doc-1", "uuid-doc-2"],
+  "source_documents": [
+    { "id": "uuid-doc-1", "title": "Doc A" },
+    { "id": "uuid-doc-2", "title": "Doc B" }
+  ],
   "content": [],
   "created_at": "..."
 }
 ```
+
+- `document_ids` — stored source IDs (**max 5** on AI generate)
+- `source_documents` — same IDs with owner-resolved titles (for UI display)
 
 #### POST — request body
 
