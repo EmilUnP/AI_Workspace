@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { parseSourceDocumentIds, resolveSourceDocuments } from '../utils/source-documents.js'
 
 type PlanRow = {
   id: string
@@ -56,13 +57,19 @@ export async function educationPlansRoutes(app: FastifyInstance) {
     `
 
     const { rows } = await app.db.query<PlanRow>(sql, values)
-    return reply.send({
-      items: rows.map((row) => ({
-        ...row,
-        document_ids: parseArray<string>(row.document_ids),
-        content: parseJsonContent(row.content),
-      })),
-    })
+    const items = await Promise.all(
+      rows.map(async (row) => {
+        const documentIds = parseSourceDocumentIds(row.document_ids)
+        const sourceDocuments = await resolveSourceDocuments(app, userId, documentIds)
+        return {
+          ...row,
+          document_ids: documentIds,
+          source_documents: sourceDocuments,
+          content: parseJsonContent(row.content),
+        }
+      })
+    )
+    return reply.send({ items })
   })
 
   app.post('/education-plans', { preHandler: [app.authenticate] }, async (request, reply) => {

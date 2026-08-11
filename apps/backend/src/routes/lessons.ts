@@ -9,6 +9,7 @@ import {
   getLessonMediaFile,
   lessonMediaFileExists
 } from '../utils/lesson-media-storage.js'
+import { parseSourceDocumentIds, resolveSourceDocuments } from '../utils/source-documents.js'
 
 type LessonRow = {
   id: string
@@ -223,6 +224,17 @@ export async function lessonsRoutes(app: FastifyInstance) {
     const images = normalizeLessonImages(request, lesson.images, mediaUrlOptions)
     const audioUrl = toAbsoluteMediaUrl(request, resolvedAudioUrl, mediaUrlOptions)
 
+    const metadataObj = (lesson.metadata as Record<string, unknown> | null) || {}
+    const sourceDocumentIds = parseSourceDocumentIds(metadataObj.source_documents)
+    // Fallback to primary document when older lessons have no source_documents array
+    if (sourceDocumentIds.length === 0 && lesson.document_title) {
+      // keep documents field for backward compat; titles resolved below may be empty
+    }
+    const sourceDocuments = await resolveSourceDocuments(app, userId, sourceDocumentIds)
+    if (sourceDocuments.length === 0 && lesson.document_title) {
+      sourceDocuments.push({ id: '', title: lesson.document_title })
+    }
+
     return reply.send({
       lesson: {
         id: lesson.id,
@@ -238,6 +250,8 @@ export async function lessonsRoutes(app: FastifyInstance) {
         metadata: lesson.metadata,
         learning_objectives: lesson.learning_objectives,
         documents: lesson.document_title ? { title: lesson.document_title } : null,
+        source_documents: sourceDocuments,
+        source_document_ids: sourceDocumentIds,
       },
     })
   })

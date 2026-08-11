@@ -19,6 +19,7 @@ import {
 import { LessonActions } from '@eduator/ui'
 import { updateLesson, regenerateAudio, deleteLesson } from '../actions'
 import { AudioPlayer } from './audio-player'
+import { SourceDocumentsSummary } from '@/components/source-documents-summary'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -36,9 +37,13 @@ type LessonRecord = {
   content?: unknown
   images?: unknown
   mini_test?: unknown
-  metadata?: { generation_options?: { centerText?: boolean } } | null
+  metadata?: {
+    generation_options?: { centerText?: boolean }
+    source_documents?: string[]
+  } | null
   learning_objectives?: unknown
   documents?: { title?: string } | Array<{ title?: string }> | null
+  source_documents?: Array<{ id?: string; title: string }> | null
 }
 
 const LessonActionsAny = LessonActions as any
@@ -145,12 +150,23 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                   {lesson.audio_url ? tl('audioReady', 'Audio ready') : tl('audioProcessing', 'Audio processing')}
                 </span>
               </div>
-              {lesson.documents && (
-                <div className="mt-3 text-sm text-gray-500">
-                  <span className="font-medium">{tl('sourceDocument', 'Source document:')}</span>{' '}
-                  {Array.isArray(lesson.documents) ? lesson.documents[0]?.title : lesson.documents.title}
-                </div>
-              )}
+              {(lesson.source_documents && lesson.source_documents.length > 0) || lesson.documents ? (
+                <SourceDocumentsSummary
+                  className="mt-3"
+                  label={tl('sourceDocuments', 'Source documents')}
+                  documents={
+                    lesson.source_documents && lesson.source_documents.length > 0
+                      ? lesson.source_documents
+                      : Array.isArray(lesson.documents)
+                        ? lesson.documents
+                            .map((d) => ({ title: String(d?.title || 'Untitled') }))
+                            .filter((d) => d.title)
+                        : lesson.documents?.title
+                          ? [{ title: String(lesson.documents.title) }]
+                          : []
+                  }
+                />
+              ) : null}
             </div>
           </div>
           

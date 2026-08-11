@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { parseSourceDocumentIds, resolveSourceDocuments } from '../utils/source-documents.js'
 
 type ExamRow = {
   id: string
@@ -56,6 +57,8 @@ export async function examsRoutes(app: FastifyInstance) {
     if (!row) return reply.code(404).send({ error: 'Exam not found' })
 
     const metadata = (row.metadata || {}) as Record<string, unknown>
+    const sourceDocumentIds = parseSourceDocumentIds(metadata.source_documents)
+    const sourceDocuments = await resolveSourceDocuments(app, userId, sourceDocumentIds)
     return reply.send({
       exam: {
         id: row.id,
@@ -68,6 +71,8 @@ export async function examsRoutes(app: FastifyInstance) {
         translations: parseObject(metadata.translations),
         settings: parseObject(metadata.settings),
         topics: toStringArray(metadata.topics),
+        source_documents: sourceDocuments,
+        source_document_ids: sourceDocumentIds,
         created_at: row.created_at,
       },
     })

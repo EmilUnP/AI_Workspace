@@ -117,8 +117,8 @@ export class ExamAiService {
     const normalizedQuestions = normalizeGeneratedQuestions(exam.questions || [])
 
     const { rows } = await this.app.db.query<{ id: string }>(
-      `INSERT INTO exams (user_id, title, description, grade_level, questions, language, duration_minutes)
-       VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING id`,
+      `INSERT INTO exams (user_id, title, description, grade_level, questions, language, duration_minutes, metadata)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8::jsonb) RETURNING id`,
       [
         userId,
         exam.title || data.title || 'Generated Exam',
@@ -126,11 +126,20 @@ export class ExamAiService {
         data.gradeLevel || null,
         JSON.stringify(normalizedQuestions),
         data.language,
-        data.durationMinutes
+        data.durationMinutes,
+        JSON.stringify({
+          source_documents: mergedDocumentIds,
+          topics: data.topics || [],
+        }),
       ]
     )
 
-    return { id: rows[0].id, ...exam, questions: normalizedQuestions }
+    return {
+      id: rows[0].id,
+      ...exam,
+      questions: normalizedQuestions,
+      source_documents: mergedDocumentIds,
+    }
   }
 
   async translate(userId: string, input: unknown) {

@@ -13,6 +13,7 @@ import {
 import { ExamActions } from './exam-actions'
 import { ExamLanguageSelector } from './exam-language-selector'
 import { normalizeExamQuestionsForUi } from '@/lib/eduator-exam-normalize-shim'
+import { SourceDocumentsSummary } from '@/components/source-documents-summary'
 
 type AnyQuestion = Record<string, unknown>
 type ExamRow = {
@@ -25,6 +26,7 @@ type ExamRow = {
   questions?: AnyQuestion[] | null
   duration_minutes?: number | null
   created_at: string
+  source_documents?: Array<{ id?: string; title: string }> | null
 }
 
 type UiQuestion = {
@@ -145,6 +147,13 @@ export default async function ExamDetailPage({ params, searchParams }: PageProps
               {exam.description && (
                 <p className="mt-2 max-w-2xl text-sm text-gray-600">{exam.description}</p>
               )}
+              {exam.source_documents && exam.source_documents.length > 0 ? (
+                <SourceDocumentsSummary
+                  className="mt-3"
+                  label={tl('sourceDocuments', 'Source documents')}
+                  documents={exam.source_documents}
+                />
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <ExamActions examId={exam.id} />

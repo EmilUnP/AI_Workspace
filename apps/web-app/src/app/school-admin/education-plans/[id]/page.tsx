@@ -8,6 +8,7 @@ import { ArrowLeft, BookOpen } from 'lucide-react'
 import { EducationPlanViewClient } from './plan-view-client'
 import { deleteEducationPlan } from '../actions'
 import { DeletePlanButton } from './delete-plan-button'
+import { SourceDocumentsSummary } from '@/components/source-documents-summary'
 
 type EducationPlan = {
   id: string
@@ -18,6 +19,8 @@ type EducationPlan = {
   hours_per_session: number
   audience: string | null
   content: unknown
+  document_ids?: string[]
+  source_documents?: Array<{ id?: string; title: string }>
 }
 
 async function getTeacherData() {
@@ -79,6 +82,13 @@ export default async function TeacherEducationPlanDetailPage({
             {plan.description && (
               <p className="text-sm text-gray-600 mt-2 max-w-2xl">{plan.description}</p>
             )}
+            {plan.source_documents && plan.source_documents.length > 0 ? (
+              <SourceDocumentsSummary
+                className="mt-3"
+                label={t('sourceDocuments')}
+                documents={plan.source_documents}
+              />
+            ) : null}
           </div>
         </div>
         <DeletePlanButton

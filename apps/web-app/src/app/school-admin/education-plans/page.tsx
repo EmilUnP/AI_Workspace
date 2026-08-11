@@ -24,6 +24,8 @@ type PlanRow = {
   sessions_per_week: number
   hours_per_session: number
   created_at: string
+  document_ids?: string[]
+  source_documents?: Array<{ id?: string; title: string }>
 }
 
 function computePlanStats(plans: PlanRow[]): { total: number } {
@@ -153,6 +155,9 @@ export default async function SchoolAdminEducationPlansPage({
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {plan.period_months} {t('months')} · {plan.sessions_per_week}{t('timesPerWeek')}, {plan.hours_per_session}{t('hours')}
+                        {(plan.source_documents?.length || plan.document_ids?.length)
+                          ? ` · ${plan.source_documents?.length || plan.document_ids?.length} ${t('sourceDocuments').toLowerCase()}`
+                          : ''}
                       </p>
                       {plan.description && (
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{plan.description}</p>
@@ -209,7 +214,17 @@ export default async function SchoolAdminEducationPlansPage({
                       </Link>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
-                      {plan.period_months} {t('months')} · {plan.sessions_per_week}{t('timesPerWeek')}, {plan.hours_per_session}{t('hours')}
+                      <div>
+                        {plan.period_months} {t('months')} · {plan.sessions_per_week}{t('timesPerWeek')}, {plan.hours_per_session}{t('hours')}
+                      </div>
+                      {(plan.source_documents?.length || plan.document_ids?.length) ? (
+                        <div className="mt-1 text-xs text-gray-500">
+                          {plan.source_documents?.length || plan.document_ids?.length} {t('sourceDocuments').toLowerCase()}
+                          {plan.source_documents && plan.source_documents.length > 0
+                            ? `: ${plan.source_documents.map((d) => d.title).join(', ')}`
+                            : ''}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 lg:table-cell">
                       {new Date(plan.created_at).toLocaleDateString(locale === 'az' ? 'az-AZ' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
