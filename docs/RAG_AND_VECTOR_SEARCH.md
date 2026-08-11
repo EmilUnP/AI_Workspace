@@ -23,7 +23,7 @@ Eduator uses **Retrieval-Augmented Generation (RAG)** to ground AI outputs (less
 | **Search location** | Node.js in-memory loop | PostgreSQL SQL query |
 | **Index** | None | **HNSW** (cosine distance) |
 | **Multi-document queries** | N sequential loads + N JS similarity passes | **1 query embedding + 1 SQL query** |
-| **Embedding model** | Gemini `gemini-embedding-001` (full dims, unnormalized in storage) | Same model, **768-dim truncated + L2-normalized** |
+| **Embedding model** | Direct Gemini `gemini-embedding-001` (full dims, unnormalized in storage) | OpenRouter `google/gemini-embedding-001`, **768-dim truncated + L2-normalized** |
 
 We did **not** adopt a separate vector database (Qdrant, Weaviate, Pinecone, Milvus, Chroma). Vectors stay in the same PostgreSQL instance as the rest of the app data — the smallest migration path that fixes production-scale RAG bottlenecks.
 
@@ -36,7 +36,7 @@ Without RAG, the LLM only sees the user prompt. With RAG:
 1. User uploads a PDF/DOCX/text file.
 2. Backend extracts text, splits it into **chunks**.
 3. Each chunk gets an **embedding** (numeric vector capturing meaning).
-4. On a query (e.g. “generate exam on photosynthesis”), the system finds the **most similar chunks** and passes them to Gemini as context.
+4. On a query (e.g. “generate exam on photosynthesis”), the system finds the **most similar chunks** and passes them to the LLM (via OpenRouter `AiGateway`) as context.
 
 RAG is used by:
 
@@ -174,7 +174,7 @@ flowchart TD
   A[Document upload] --> B[Background queue processSingle]
   B --> C[Extract + clean text]
   C --> D[Chunk text]
-  D --> E[Gemini gemini-embedding-001]
+  D --> E[OpenRouter google/gemini-embedding-001]
   E --> N[prepareEmbedding: truncate to 768 + L2 normalize]
   N --> P[persistDocumentChunks → document_chunks]
   P --> M[UPDATE documents: stats + text_chunks=NULL]
@@ -185,17 +185,17 @@ flowchart TD
 
 | File | Role |
 |------|------|
-| `src/ai/gemini.ts` | Calls Gemini `embedContent`, applies `prepareEmbedding()` |
+| `src/ai/openrouter.ts` / `src/ai/gateway.ts` | OpenRouter embeddings via `AiGateway`; applies `prepareEmbedding()` |
 | `src/utils/vector.ts` | `EMBEDDING_DIMENSIONS = 768`, truncate, normalize, `toPgVector()` |
 | `src/services/document-rag.service.ts` | Chunking, indexing, search |
 
 **Why 768 dimensions?**
 
-Gemini `gemini-embedding-001` defaults to 3072 dims but supports **Matryoshka Representation Learning (MRL)** — truncating to 768 preserves ~97% quality while using 4× less storage and faster index operations. Google recommends 768, 1536, or 3072.
+OpenRouter model id `google/gemini-embedding-001` defaults to 3072 dims but supports **Matryoshka Representation Learning (MRL)** — truncating to 768 preserves ~97% quality while using 4× less storage and faster index operations. Recommended sizes are typically 768, 1536, or 3072.
 
 **Why L2-normalize?**
 
-pgvector cosine distance operator (`<=>`) works best when vectors are normalized. Truncated Gemini dims are not auto-normalized (unlike full 3072), so we normalize in `prepareEmbedding()`.
+pgvector cosine distance operator (`<=>`) works best when vectors are normalized. Truncated MRL dims are not auto-normalized (unlike full 3072), so we normalize in `prepareEmbedding()`.
 
 ### 4.3 Search pipeline (current)
 
@@ -230,7 +230,7 @@ SELECT content FROM ranked WHERE rn <= $4;
 ```mermaid
 flowchart TD
   Q[User query] --> T[Optional translation to doc language]
-  T --> E[1× Gemini query embedding 768-dim]
+  T --> E[1× OpenRouter query embedding 768-dim]
   E --> SQL[pgvector search with HNSW index]
   SQL --> K[Top-K chunks returned]
   K --> LLM[Passed to lesson/exam/tutor LLM prompt]
@@ -256,7 +256,7 @@ On first RAG access, `ensurePgvectorIndex()`:
 
 1. Checks if `document_chunks` count matches expected chunk count.
 2. If missing → `tryBackfillFromLegacy()` reads JSONB, truncates/normalizes embeddings, inserts into `document_chunks`.
-3. If no legacy embeddings → re-embeds via Gemini and persists.
+3. If no legacy embeddings → re-embeds via OpenRouter and persists.
 4. Sets `documents.chunk_embeddings = NULL` after successful index.
 
 No manual migration script required for normal operation — but a **bulk backfill script** is listed under future improvements.
@@ -302,7 +302,7 @@ Lesson: POST /v1/ai/lessons/generate
   → ensureDocumentsIndexed() [parallel backfill if needed]
   → 1× query embedding
   → vectorSearchAcrossDocuments()
-  → chunks joined → Gemini lesson prompt
+  → chunks joined → OpenRouter lesson prompt
 
 Tutor: POST .../messages
   → retrieveMany(userId, docIds, message, 2)
@@ -370,7 +370,7 @@ WHERE tablename = 'document_chunks';
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `extension "vector" does not exist` | pgvector not installed on DB server | Install package, `CREATE EXTENSION vector` |
-| RAG returns first chunks only (fallback) | Index empty, embed failed | Check Gemini key, re-upload or trigger re-process |
+| RAG returns first chunks only (fallback) | Index empty, embed failed | Check platform OpenRouter key (`/platform-owner/ai-providers`), re-upload or trigger re-process |
 | Slow first query on old docs | Lazy backfill running | Normal once; optional bulk backfill |
 | Dimension mismatch errors | Mixed legacy 3072 + new 768 | Re-process document or let backfill truncate |
 
@@ -387,7 +387,7 @@ See `apps/backend/.env.example` for pgvector note.
 - All RAG queries are **owner-scoped**: `documents.owner_user_id = $userId`.
 - Multi-doc SQL joins `documents` and filters by owner before returning chunks.
 - Embeddings contain no secrets — they are derived from document text.
-- Gemini API keys remain per-user encrypted (`user_ai_provider_keys`).
+- Platform OpenRouter credentials are encrypted in `ai_provider_credentials` (optional `OPENROUTER_API_KEY` env fallback).
 - Document delete cascades: `DELETE documents` → `document_chunks` rows removed automatically.
 
 ---
@@ -466,7 +466,7 @@ Until then, pgvector in PostgreSQL is the right balance for Eduator.
 | `apps/backend/db/migrations/000_full_schema.sql` | Fresh install includes `document_chunks` |
 | `apps/backend/src/services/document-rag.service.ts` | Core RAG service |
 | `apps/backend/src/utils/vector.ts` | 768-dim normalize + pg format |
-| `apps/backend/src/ai/gemini.ts` | Embedding generation |
+| `apps/backend/src/ai/openrouter.ts` / `src/ai/gateway.ts` | Embedding generation via OpenRouter `AiGateway` |
 | `apps/backend/src/services/lesson-ai.service.ts` | Lesson RAG consumer |
 | `apps/backend/src/services/exam-ai.service.ts` | Exam RAG consumer |
 | `apps/backend/src/services/education-plan-ai.service.ts` | Plan RAG consumer |

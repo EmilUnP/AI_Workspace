@@ -1,6 +1,6 @@
 /**
  * AI Image Generator for Lessons
- * Uses Gemini for generating educational images with language-aware prompts
+ * Uses OpenRouter for generating educational images with language-aware prompts
  * Images are saved to Supabase Storage for reliable delivery
  */
 
@@ -169,7 +169,7 @@ Generate ${count} highly detailed, specific prompts:`
 }
 
 /**
- * Generate an image from a prompt using Gemini native image generation
+ * Generate an image from a prompt using OpenRouter image generation
  */
 async function generateImageFromPrompt(prompt: string, language?: string): Promise<GeneratedImage | null> {
   try {
@@ -290,7 +290,7 @@ export async function generateLessonImagesWithUsage(
     // Detect language if not provided
     const detectedLanguage = language || await detectLanguage(content)
     
-    // Generate detailed image prompts using Gemini
+    // Generate detailed image prompts using OpenRouter
     const prompts = await generateImagePrompts(topic, content, count, detectedLanguage)
 
     // Generate images for each prompt with retry logic

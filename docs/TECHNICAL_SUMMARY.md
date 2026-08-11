@@ -76,7 +76,7 @@ Full architecture guide (legacy JSONB vs pgvector, deployment, future options): 
 
 | Layer | Technology |
 |--------|------------|
-| Embeddings | Google Gemini `gemini-embedding-001` (768-dim, L2-normalized) |
+| Embeddings | OpenRouter `google/gemini-embedding-001` (768-dim, L2-normalized) |
 | Vector store | PostgreSQL **pgvector** (`document_chunks.embedding vector(768)`) |
 | Index | **HNSW** with `vector_cosine_ops` |
 | Search | SQL `ORDER BY embedding <=> query_vector LIMIT k` |
@@ -138,7 +138,7 @@ Full architecture guide (legacy JSONB vs pgvector, deployment, future options): 
 - NUL and malformed Unicode sanitization before DB writes.
 - Safer JSON serialization for chunk payloads.
 - File path resolution handles absolute + relative + legacy `storage/...` paths.
-- Sensitive Gemini API keys are encrypted before persistence and never returned in full.
+- Platform OpenRouter credentials are encrypted before persistence and never returned in full.
 
 ## Current Constraints
 

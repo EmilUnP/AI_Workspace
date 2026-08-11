@@ -159,45 +159,7 @@ Updates the target user's password. Non-admin callers receive `403`.
 
 ## 2.1) User AI Key Management
 
-### GET `/v1/users/me/ai-keys/gemini` (Protected)
-Get Gemini key status for authenticated user.
-
-Response:
-```json
-{
-  "hasKey": true,
-  "keyHint": "abcd"
-}
-```
-
-### PUT `/v1/users/me/ai-keys/gemini` (Protected)
-Save or update Gemini key for authenticated user.
-
-Request:
-```json
-{
-  "apiKey": "AIza..."
-}
-```
-
-Response:
-```json
-{
-  "hasKey": true,
-  "keyHint": "abcd"
-}
-```
-
-### DELETE `/v1/users/me/ai-keys/gemini` (Protected)
-Delete Gemini key for authenticated user.
-
-Response:
-```json
-{
-  "hasKey": false,
-  "keyHint": null
-}
-```
+Per-user Gemini API keys were removed in **0.4.0**. AI workloads use a **platform OpenRouter key** managed via `/v1/admin/ai-providers` and the Platform Owner UI at `/platform-owner/ai-providers`. School-admin users no longer store model-provider keys.
 
 ---
 
@@ -406,12 +368,12 @@ Response:
 }
 ```
 
-Missing Gemini key example:
+Missing OpenRouter key example:
 ```json
 {
-  "error": "Gemini API key is missing for this user.",
-  "code": "MISSING_GEMINI_API_KEY",
-  "hint": "Open /school-admin/api-integration and save your Gemini API key."
+  "error": "OpenRouter API key is missing.",
+  "code": "MISSING_OPENROUTER_API_KEY",
+  "hint": "Open /platform-owner/ai-providers and save the platform OpenRouter API key."
 }
 ```
 
@@ -433,7 +395,7 @@ Missing Gemini key example:
 2. `POST /v1/ai/chat/assistants/:assistantId/conversations` → optional `{ "title": "Session 1", "externalUserId": "student-42" }` → **`conversation.id`** (store per end-user)
 3. `POST /v1/ai/chat/conversations/:id/messages` → `{ "message": "...", "documentIds": [], "shortAnswer": true }` — only **`conversation.id`** needed after step 2
 
-`externalUserId` is on **conversations** (optional for list/filter), not assistants. **In-app JWT** threads use `external_user_id` null. Requires **Gemini API key** (§2.1) and migrations `008`–`012` (`npm run db:migrate`).
+`externalUserId` is on **conversations** (optional for list/filter), not assistants. **In-app JWT** threads use `external_user_id` null. Requires a **platform OpenRouter key** (Platform Owner → AI Providers) and migrations `008`–`012` (`npm run db:migrate`).
 
 ### Assistants
 

@@ -1,4 +1,4 @@
-/** Fixed dimension for pgvector storage (Gemini MRL truncation). */
+/** Fixed dimension for pgvector storage (OpenRouter embedding MRL truncation). */
 export const EMBEDDING_DIMENSIONS = 768
 
 /** Truncate to target dims and L2-normalize for cosine similarity via pgvector. */

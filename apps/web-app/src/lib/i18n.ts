@@ -274,7 +274,6 @@ const translations: I18nTable = {
       title: 'API Integration',
       pageSubtitle: 'Connect external apps and scripts with HTTP API keys — not your browser login token.',
       keysTab: 'Keys & Docs',
-      geminiTab: 'Gemini Key',
       usageTab: 'Usage',
       defaultApiKeyName: 'My API Key',
       revokeApiKeyConfirm: 'Revoke this API key? It will stop working immediately.',
@@ -293,18 +292,11 @@ const translations: I18nTable = {
       created: 'Created',
       lastUsed: 'Last used',
       revokeKey: 'Revoke key',
-      geminiKeySaved: 'Gemini API key saved successfully.',
-      deleteGeminiKeyConfirm: 'Delete your Gemini key? AI features will stop until you add a new one.',
-      geminiKeyRemoved: 'Gemini API key removed.',
-      personalGeminiKey: 'Personal Gemini key',
-      personalGeminiKeyDescription: 'This key is saved per user and used for AI features in your account.',
-      geminiApiKey: 'Gemini API key',
       saving: 'Saving...',
       updateKey: 'Update key',
       saveKey: 'Save key',
       deleteKey: 'Delete key',
       activeKeyEndingWith: 'Active key: ending with',
-      noGeminiKeySaved: 'No key saved yet. Add your key to use AI features.',
       usageAnalytics: 'Usage analytics',
       usageAnalyticsDescription:
         'Shows `/v1` calls made **outside** this web app (Postman, scripts, other systems). The browser app sends an internal header so routine UI traffic is not logged here.',
@@ -382,7 +374,7 @@ const translations: I18nTable = {
       documentsGetByIdIntro:
         'Returns { "document": { ... } } for one document you own. Use the document id from GET /documents or from the POST /documents response.',
       documentsGetFileIntro:
-        'Returns the raw file bytes (PDF, Word, etc.) with Content-Type and Content-Disposition. Use GET, not POST. For large files, prefer streaming clients; the response is not JSON.',
+        'Returns the retained UTF-8 text extracted from the upload (original PDF/DOCX bytes are not stored). Content-Type is text/plain. Use GET, not POST.',
       documentsDeleteIntro:
         'Deletes the document row and removes the stored file from disk when successful. Response: { "success": true } or 404 if not found / not owned.',
       apiDocsAiChatTitle: 'AI assistant (chat)',
@@ -391,8 +383,8 @@ const translations: I18nTable = {
       apiDocsAiChatQuickStartTitle: 'Third-party tutor chat (3 steps)',
       apiDocsAiChatQuickStartBody:
         'Create an assistant, open a conversation (thread), then send messages to conversation.id only. Optional externalUserId on create/list labels threads for your student id; in-app login does not use it.',
-      apiDocsAiChatGeminiNote:
-        'Requires a Gemini API key on this account (API Integration → Gemini Key tab) or GOOGLE_GEMINI_API_KEY on the server. Run db:migrate in apps/backend (migrations 008–012).',
+      apiDocsAiChatProviderNote:
+        'AI calls use the platform OpenRouter key (Platform Owner → AI Providers). School admins do not need a personal model provider key. Run db:migrate in apps/backend (migrations 008–012 for chat; 018 for OpenRouter).',
       apiDocsAiChatExternalUserTitle: 'Optional: externalUserId on conversations',
       apiDocsAiChatExternalUserBody:
         'Set externalUserId only when creating or listing conversations (not on assistants). Your main handle is conversation.id. Use externalUserId to group threads by your student id when listing.',
@@ -451,10 +443,10 @@ const translations: I18nTable = {
       supportedLanguageCodes: 'Supported language codes',
       fieldNamingCamelCaseAiRoutesPrefix: 'For this backend, field naming is mostly',
       fieldNamingCamelCaseAiRoutesSuffix: 'on AI routes.',
-      geminiKeyEndpointsUnder: 'Gemini key endpoints are under',
+      openRouterProvidersUnder: 'Platform AI provider settings are under',
       authentication: 'Authentication',
       apiKeyAuthFooter:
-        'Use Authorization: Bearer YOUR_API_KEY with the full ed_… secret from this page. Login JWTs are not covered here. For AI routes, save a Gemini key under the Gemini Key tab first.',
+        'Use Authorization: Bearer YOUR_API_KEY with the full ed_… secret from this page. Login JWTs are not covered here. AI model access uses the platform OpenRouter key configured by Platform Owner → AI Providers.',
     },
     teacherLessons: {
       title: 'Lessons',
@@ -944,7 +936,6 @@ const translations: I18nTable = {
       title: 'API inteqrasiya',
       pageSubtitle: 'Xarici tətbiqləri və skriptləri HTTP API açarı ilə birləşdirin — brauzer login tokeni ilə yox.',
       keysTab: 'Açarlar və sənədlər',
-      geminiTab: 'Gemini açarı',
       usageTab: 'İstifadə',
       defaultApiKeyName: 'Mənim API açarım',
       revokeApiKeyConfirm: 'Bu API açarı ləğv edilsin? Dərhal işləməyəcək.',
@@ -963,18 +954,11 @@ const translations: I18nTable = {
       created: 'Yaradılıb',
       lastUsed: 'Son istifadə',
       revokeKey: 'Açarı ləğv et',
-      geminiKeySaved: 'Gemini API açarı uğurla saxlanıldı.',
-      deleteGeminiKeyConfirm: 'Gemini açarınız silinsin? Yeni açar əlavə edənə qədər AI funksiyaları dayanacaq.',
-      geminiKeyRemoved: 'Gemini API açarı silindi.',
-      personalGeminiKey: 'Şəxsi Gemini açarı',
-      personalGeminiKeyDescription: 'Bu açar hər istifadəçi üçün ayrıca saxlanılır və hesabınızdakı AI funksiyalarında istifadə olunur.',
-      geminiApiKey: 'Gemini API açarı',
       saving: 'Saxlanılır...',
       updateKey: 'Açarı yenilə',
       saveKey: 'Açarı saxla',
       deleteKey: 'Açarı sil',
       activeKeyEndingWith: 'Aktiv açar sonu',
-      noGeminiKeySaved: 'Hələ açar saxlanmayıb. AI funksiyalarından istifadə üçün açar əlavə edin.',
       usageAnalytics: 'İstifadə analitikası',
       usageAnalyticsDescription:
         'Bu veb tətbiqdən **kənar** edilən `/v1` sorğularını göstərir (Postman, skript, digər sistemlər). Brauzer tətbiqi daxili başlıq göndərdiyi üçün adi UI trafiki burada qeydə alınmır.',
@@ -1052,7 +1036,7 @@ const translations: I18nTable = {
       documentsGetByIdIntro:
         'Sizə məxsus bir sənəd üçün { "document": { ... } } qaytarır. id-ni GET /documents və ya POST /documents cavabından götürün.',
       documentsGetFileIntro:
-        'Xam fayl baytlarını (PDF, Word və s.) Content-Type və Content-Disposition ilə qaytarır. GET istifadə edin. Böyük fayllar üçün axın dəstəkləyən klient üstünlüklüdür; cavab JSON deyil.',
+        'Yükləmədən çıxarılmış UTF-8 mətni qaytarır (orijinal PDF/DOCX baytları saxlanmır). Content-Type: text/plain. GET istifadə edin.',
       documentsDeleteIntro:
         'Sənəd qeydini silir və uğurlu olduqda faylı diskdən silir. Cavab: { "success": true } və ya tapılmadı/məxsus deyilsə 404.',
       apiDocsAiChatTitle: 'AI köməkçi (söhbət)',
@@ -1061,8 +1045,8 @@ const translations: I18nTable = {
       apiDocsAiChatQuickStartTitle: 'Üçüncü tərəf repetitor söhbəti (3 addım)',
       apiDocsAiChatQuickStartBody:
         'Söhbət yaradın, eyni conversation id ilə mesaj göndərin və davam edin. Yalnız mətn üçün documentIds: [] istifadə edin (sənəd RAG olmadan). Əvvəlki mesajlar avtomatik daxil edilir.',
-      apiDocsAiChatGeminiNote:
-        'Hesabda Gemini API açarı lazımdır (API İnteqrasiya → Gemini Key) və ya serverdə GOOGLE_GEMINI_API_KEY. apps/backend-də db:migrate (008–012 migrasiyaları).',
+      apiDocsAiChatProviderNote:
+        'AI platform OpenRouter açarından istifadə edir (Platform Owner → AI Providers). School admin-ə şəxsi model açarı lazım deyil. apps/backend-də db:migrate (008–012 söhbət; 018 OpenRouter).',
       apiDocsAiChatExternalUserTitle: 'Opsional: externalUserId söhbətlərdə',
       apiDocsAiChatExternalUserBody:
         'externalUserId yalnız söhbət yaradarkən və ya siyahılayarkən verin (köməkçidə yox). Əsas identifikator conversation.id-dir. Siyahıda tələbə id-sinə görə qruplaşdırmaq üçün istifadə edin.',
@@ -1121,10 +1105,10 @@ const translations: I18nTable = {
       supportedLanguageCodes: 'Dəstəklənən dil kodları',
       fieldNamingCamelCaseAiRoutesPrefix: 'Bu backend üçün AI route-larda sahə adlandırması əsasən',
       fieldNamingCamelCaseAiRoutesSuffix: 'formatındadır.',
-      geminiKeyEndpointsUnder: 'Gemini açar endpoint-ləri burada yerləşir:',
+      openRouterProvidersUnder: 'Platform AI provider ayarları burada yerləşir:',
       authentication: 'Autentifikasiya',
       apiKeyAuthFooter:
-        'Bu səhifədə Authorization: Bearer YOUR_API_KEY ilə tam ed_… sirrindən istifadə edin. Login JWT burada izah olunmur. AI marşrutları üçün əvvəlcə Gemini Key tabında Gemini açarı saxlayın.',
+        'Bu səhifədə Authorization: Bearer YOUR_API_KEY ilə tam ed_… sirrindən istifadə edin. Login JWT burada izah olunmur. AI model açarı Platform Owner → AI Providers altında OpenRouter ilə idarə olunur.',
     },
     teacherLessons: {
       title: 'Dərslər',

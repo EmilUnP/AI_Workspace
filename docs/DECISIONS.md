@@ -26,14 +26,15 @@
 - Use safe JSON serialization for chunks/embeddings.
 - Reason: prevent processing failures from malformed text/JSON payloads.
 
-## 6) Per-user Gemini key in DB (encrypted)
+## 6) Platform OpenRouter credential (encrypted)
 
-- Gemini keys are stored per user in database, encrypted before persistence.
-- Reason: avoid shared global key coupling and support user-scoped billing/control.
+- Platform OpenRouter key is stored encrypted in `ai_provider_credentials`, with optional `OPENROUTER_API_KEY` env fallback.
+- School admins no longer store model provider keys.
+- Reason: centralize billing/control at platform level and simplify operator setup after the OpenRouter migration (0.4.0).
 
 ## 7) Structured AI configuration errors
 
-- Missing-key situations return structured API payload (`error`, `code`, `hint`) instead of generic internal error.
+- Missing-key situations return structured API payload (`error`, `code`, `hint`) instead of generic internal error — e.g. `MISSING_OPENROUTER_API_KEY`.
 - Reason: improve operator UX and reduce support/debug time.
 
 ## 8) Separate integration usage from first-party UI traffic
@@ -51,6 +52,6 @@
 
 - Store chunk embeddings in **`document_chunks`** with PostgreSQL **pgvector** (`vector(768)`) and an **HNSW** index.
 - Run similarity search in SQL (`<=>` cosine distance) rather than loading all embeddings into Node.js.
-- Use **768-dim** normalized Gemini embeddings (Matryoshka truncation from `gemini-embedding-001`).
+- Embeddings via **OpenRouter** (default model id `google/gemini-embedding-001`, **768-dim** MRL truncation + L2-normalize).
 - Reason: scale for multi-document RAG (lessons, exams, tutor chat) under concurrent usage without CPU/memory bottlenecks.
 - Full guide: [RAG_AND_VECTOR_SEARCH.md](./RAG_AND_VECTOR_SEARCH.md).

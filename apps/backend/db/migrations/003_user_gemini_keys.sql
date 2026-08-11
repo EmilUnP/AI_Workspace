@@ -1,3 +1,7 @@
+-- LEGACY (pre-0.4.0): per-user provider keys table.
+-- Unused by runtime after OpenRouter migration; kept for migration history.
+-- Platform credentials live in ai_provider_credentials (018_ai_provider_openrouter.sql).
+
 CREATE TABLE IF NOT EXISTS user_ai_provider_keys (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

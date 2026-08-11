@@ -72,7 +72,7 @@ Service/repository split was implemented for users, documents, AI, and refresh t
 
 ### 7) AI Migration Expansion
 - Added local AI stack in clean backend:
-  - `src/ai/gemini.ts`
+  - `src/ai/openrouter.ts` / `src/ai/gateway.ts`
   - `src/services/document-rag.service.ts`
   - `src/services/teacher-chatbot.service.ts`
   - `src/services/lesson-ai.service.ts`

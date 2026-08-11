@@ -19,10 +19,11 @@ Current baseline version: **0.4.0**.
   - Exams (AI generation and management)
   - Education Plans (AI generation + normalized detail rendering)
   - AI Tutor chat
-  - API Integration (HTTP API keys, Usage tab, Gemini key, in-app docs aligned with `/v1`)
+  - API Integration (HTTP API keys, Usage tab, in-app docs aligned with `/v1`)
 - **Platform Owner**:
   - Dashboard
   - Users management
+  - AI Providers (OpenRouter key, model catalog, workload policies)
 
 ## Quick Start
 
@@ -49,18 +50,19 @@ Use app-level env files:
 
 - `apps/backend/.env.local`
   - required: `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
-  - optional fallback: `GOOGLE_GEMINI_API_KEY` (user key in DB is preferred)
+  - recommended: `AI_CREDENTIALS_ENCRYPTION_KEY` (encrypts platform provider credentials)
+  - optional fallback: `OPENROUTER_API_KEY` (used when no platform OpenRouter credential is stored)
 - `apps/web-app/.env.local`
   - `NEXT_PUBLIC_API_URL` — backend API base (e.g. `http://localhost:4000` or `https://api.eduator.ai`)
   -`NEXT_PUBLIC_ERP_URL` — web app origin for redirects and file URLs
 
 ## How AI Keying Works
 
-1. Operator/admin saves Gemini key in `/school-admin/api-integration`.
-2. Backend stores it encrypted in `user_ai_provider_keys`.
-3. AI routes resolve key per authenticated user.
+1. Platform owner saves the OpenRouter key at `/platform-owner/ai-providers`.
+2. Backend stores it encrypted in `ai_provider_credentials` (optional `OPENROUTER_API_KEY` env fallback).
+3. All AI workloads resolve the platform key via `AiGateway` / OpenRouter.
 4. If missing, API returns:
-   - `code: MISSING_GEMINI_API_KEY`
+   - `code: MISSING_OPENROUTER_API_KEY`
    - user-facing hint for next action.
 
 ## RAG vector search (0.3.0+)
@@ -81,6 +83,7 @@ Use app-level env files:
 - `docs/PROJECT_OVERVIEW_AND_REPORT 2.md` — API integration report (Part 2)
 - `docs/PROJECT_OVERVIEW_AND_REPORT 3.md` — **pgvector RAG + manual deploy** (Part 3)
 - `docs/RAG_AND_VECTOR_SEARCH.md` — RAG & vector search deep dive
+- `docs/OPENROUTER_MIGRATION.md` — OpenRouter multi-model migration (0.4.0)
 - `docs/TECHNICAL_SUMMARY.md`
 - `docs/API_SUMMARY.md`
 - `docs/DECISIONS.md`

@@ -133,7 +133,7 @@ export class AiGateway {
   }
 }
 
-/** Convenience helpers that mirror the old gemini module surface. */
+/** Convenience helpers that mirror the legacy helper surface. */
 export async function generateText(
   app: FastifyInstance,
   prompt: string,

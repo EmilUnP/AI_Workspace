@@ -265,7 +265,7 @@ export class OpenRouterClient {
           },
         }
 
-        // Keep Gemini embedding vectors in the existing 768-dim pgvector schema.
+        // Keep embedding vectors in the existing 768-dim pgvector schema.
         if (model.includes('text-embedding-3')) {
           body.dimensions = EMBEDDING_DIMENSIONS
         }

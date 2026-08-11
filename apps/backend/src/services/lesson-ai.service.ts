@@ -710,7 +710,7 @@ Your lessons should be:
 Never add disclaimers or meta-commentary in the lesson content. Output only the lesson itself. Use consistent markdown (## and ### for headings, **bold** for emphasis, simple lists).`
       : LESSON_SYSTEM_INSTRUCTION
 
-  // Generate the lesson using Gemini with model fallback on overload/quota errors.
+  // Generate the lesson using OpenRouter with model fallback on overload/quota errors.
   const languageInstruction =
     targetLanguage !== 'English'
       ? `\n\n⚠️ CRITICAL LANGUAGE REQUIREMENT ⚠️\nYou MUST generate ALL content EXCLUSIVELY in ${targetLanguage} language:\n- Title must be in ${targetLanguage}\n- All content must be in ${targetLanguage}\n- All questions, options, and explanations must be in ${targetLanguage}\n- Use proper ${targetLanguage} grammar and spelling\n- The topic or title below may be in a DIFFERENT language (e.g. user input). You MUST translate or rephrase it into ${targetLanguage} for the lesson title and all outputs. Do NOT copy the topic string literally if it is not in ${targetLanguage}.\n\n`
