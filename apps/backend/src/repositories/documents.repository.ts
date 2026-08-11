@@ -51,7 +51,9 @@ export class DocumentsRepository {
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8,
-          $9, CASE WHEN $9 IS NULL OR $9 = '' THEN NULL ELSE now() END, $10, $11::jsonb
+          $9::text,
+          CASE WHEN $9::text IS NULL OR $9::text = '' THEN NULL ELSE now() END,
+          $10, $11::jsonb
         )
         RETURNING id, owner_user_id, title, file_name, file_type, file_size, status, local_path, extracted_text, text_extracted_at, file_hash, content_language, total_tokens, chunk_count, avg_chunk_size, quality_status, quality_message, metadata, created_at, updated_at
       `,
