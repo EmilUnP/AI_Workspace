@@ -369,13 +369,14 @@ export class OpenRouterClient {
     let lastError: unknown
     for (const model of options.models) {
       try {
+        const voice = options.voice || defaultSpeechVoice(model)
         const response = await fetch(`${OPENROUTER_BASE}/audio/speech`, {
           method: 'POST',
           headers: this.headers(),
           body: JSON.stringify({
             model,
             input: options.input,
-            voice: options.voice || 'nova',
+            voice,
             response_format: options.responseFormat || 'mp3',
           }),
           signal: AbortSignal.timeout(env.OPENROUTER_TIMEOUT_MS),
@@ -391,10 +392,24 @@ export class OpenRouterClient {
             })
             continue
           }
-          throw new AiProviderError(message, { statusCode: response.status })
+          // Invalid voice / bad request: try next model in chain
+          lastError = new AiProviderError(message, {
+            statusCode: response.status,
+            retryable: response.status === 400,
+          })
+          if (response.status === 400) continue
+          throw lastError
         }
 
         const audio = Buffer.from(await response.arrayBuffer())
+        if (audio.length < 64) {
+          lastError = new AiProviderError('OpenRouter TTS returned empty audio', {
+            statusCode: 502,
+            retryable: true,
+            code: 'EMPTY_AUDIO',
+          })
+          continue
+        }
         const contentType = response.headers.get('content-type') || 'audio/mpeg'
         return {
           audio,
@@ -448,4 +463,10 @@ export class OpenRouterClient {
 
 export function stripJsonFences(text: string): string {
   return text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/, '').trim()
+}
+
+function defaultSpeechVoice(model: string): string {
+  const id = model.toLowerCase()
+  if (id.includes('gemini') || id.startsWith('google/')) return 'Zephyr'
+  return 'nova'
 }

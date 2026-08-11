@@ -124,13 +124,22 @@ export class AiGateway {
   async generateSpeech(request: AiTtsRequest): Promise<AiTtsResult> {
     const policy = await this.resolveModels('tts')
     const client = await this.client()
+    const primary = policy.models[0] || ''
+    const voice = request.voice?.trim() || defaultTtsVoiceForModel(primary)
     return client.createSpeech({
       models: policy.models,
       input: request.text,
-      voice: request.voice,
+      voice,
       responseFormat: request.responseFormat,
     })
   }
+}
+
+/** Gemini TTS voices (Zephyr/Kore/…); OpenAI-style voices (nova/alloy) fail on Gemini models. */
+function defaultTtsVoiceForModel(model: string): string {
+  const id = model.toLowerCase()
+  if (id.includes('gemini') || id.startsWith('google/')) return 'Zephyr'
+  return 'nova'
 }
 
 /** Convenience helpers that mirror the legacy helper surface. */

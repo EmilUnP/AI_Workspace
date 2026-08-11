@@ -417,7 +417,7 @@ export async function generateLessonAudioWithUsage(
     const speech = await gateway.generateSpeech({
       text: plainText,
       userId,
-      voice: 'nova',
+      // Do not pass OpenAI "nova" — Gemini TTS requires Zephyr/Kore/etc. Gateway picks by model.
       responseFormat: 'mp3',
     })
 

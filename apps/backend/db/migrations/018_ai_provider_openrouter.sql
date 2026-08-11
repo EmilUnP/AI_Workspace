@@ -191,10 +191,10 @@ VALUES
   ),
   (
     'tts',
-    ARRAY['google/gemini-2.5-flash-preview-tts', 'google/gemini-2.5-pro-preview-tts'],
+    ARRAY['google/gemini-3.1-flash-tts-preview', 'google/gemini-2.5-flash-preview-tts', 'google/gemini-2.5-pro-preview-tts'],
     FALSE,
     TRUE,
-    'Lesson TTS (Gemini TTS models via OpenRouter)'
+    'Lesson TTS (Gemini TTS via OpenRouter; use Gemini voices e.g. Zephyr)'
   )
 ON CONFLICT (workload) DO UPDATE
 SET
