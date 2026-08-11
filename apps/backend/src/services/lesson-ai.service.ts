@@ -186,7 +186,14 @@ function sanitizeExplanation(explanation: unknown): string {
   return cleaned || raw
 }
 
-async function generateLessonModelText(prompt: string, systemInstruction: string) {
+/** Lesson bodies are long; without a high cap OpenRouter/Gemini often truncates mid-JSON. */
+const LESSON_MAX_OUTPUT_TOKENS = 16384
+
+async function generateLessonModelText(
+  prompt: string,
+  systemInstruction: string,
+  maxTokens: number = LESSON_MAX_OUTPUT_TOKENS
+) {
   const { app, userId } = getAiContext()
   const gateway = new AiGateway(app)
   return gateway.generateText({
@@ -195,7 +202,140 @@ async function generateLessonModelText(prompt: string, systemInstruction: string
     systemInstruction,
     userId,
     temperature: 0.7,
+    maxTokens,
   })
+}
+
+type LessonJsonShape = {
+  title?: string
+  learning_objectives?: string[]
+  content?: string
+  mini_test?: GeneratedLesson['mini_test']
+}
+
+/**
+ * Prefer structured JSON (same path as exam generation). Falls back to plain text + safeJsonParse.
+ */
+async function generateLessonStructuredJson(
+  prompt: string,
+  systemInstruction: string
+): Promise<{ lesson: LessonJsonShape; text: string; modelUsed: string; usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } }> {
+  const { app, userId } = getAiContext()
+  const gateway = new AiGateway(app)
+
+  try {
+    const parsed = await gateway.generateJson<LessonJsonShape>({
+      workload: 'lesson_generation',
+      prompt,
+      systemInstruction,
+      userId,
+      temperature: 0.7,
+      maxTokens: LESSON_MAX_OUTPUT_TOKENS,
+    })
+    return {
+      lesson: parsed,
+      text: JSON.stringify(parsed),
+      modelUsed: 'openrouter',
+      usage: undefined,
+    }
+  } catch (error) {
+    console.warn(
+      '[Lesson Generator] generateJson failed, falling back to text parse:',
+      error instanceof Error ? error.message : error
+    )
+    const response = await generateLessonModelText(prompt, systemInstruction)
+    const text = response.text || '{}'
+    const fallbackShell: GeneratedLesson = {
+      title: '',
+      content: '',
+      learning_objectives: [],
+      duration_minutes: 5,
+      mini_test: [],
+      images: [],
+    }
+    const lesson = safeJsonParse<GeneratedLesson>(text, fallbackShell)
+    return {
+      lesson,
+      text,
+      modelUsed: response.modelUsed,
+      usage: response.usage,
+    }
+  }
+}
+
+function isPlaceholderLessonContent(content: unknown): boolean {
+  if (typeof content !== 'string') return true
+  const normalized = content.trim().toLowerCase()
+  if (normalized.length < 80) return true
+  return (
+    normalized.includes('content is being prepared') ||
+    normalized.includes('məzmun hazırlanır') ||
+    normalized.includes('содержание готовится')
+  )
+}
+
+/**
+ * Markdown-only body generation when JSON paths fail (avoids stuffing long markdown into a JSON string).
+ */
+async function generateLessonBodyMarkdown(
+  topic: string,
+  context: string,
+  targetLanguage: string,
+  systemInstruction: string,
+  lengthInstruction: string,
+  extraInstructions: string
+): Promise<{ title: string; content: string; learning_objectives: string[]; modelUsed: string; usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } }> {
+  const prompt = `${extraInstructions}Create a comprehensive lesson about "${topic}" in ${targetLanguage}.${lengthInstruction}
+
+Output ONLY markdown (no JSON, no code fences):
+# <Lesson title in ${targetLanguage}>
+## Learning Objectives
+- objective 1
+- objective 2
+- objective 3
+## Lesson Content
+(full lesson body with ## / ### headings, lists, and tables as needed)
+
+Source material:
+${context}
+
+Topic: ${topic}`
+
+  const response = await generateLessonModelText(prompt, systemInstruction)
+  const parsed = parseMarkdownLesson(response.text || '', topic)
+  return {
+    ...parsed,
+    modelUsed: response.modelUsed,
+    usage: response.usage,
+  }
+}
+
+function parseMarkdownLesson(
+  raw: string,
+  fallbackTitle: string
+): { title: string; content: string; learning_objectives: string[] } {
+  let text = (raw || '').trim()
+  if (text.startsWith('```')) {
+    text = text.replace(/^```(?:markdown|md)?\s*/i, '').replace(/\s*```$/, '').trim()
+  }
+
+  const titleMatch = text.match(/^#\s+(.+)$/m)
+  const title = (titleMatch?.[1] || fallbackTitle).trim()
+
+  const objectives = extractLearningObjectivesFromContent(text)
+
+  // Prefer content after a Lesson Content / Məzmun heading; otherwise use full markdown minus the H1 title line
+  const contentSection = text.split(/^##\s+(Lesson Content|Məzmun|Содержание|İçerik)\s*$/im)
+  let content =
+    contentSection.length > 1
+      ? contentSection.slice(1).join('\n').trim()
+      : text.replace(/^#\s+.+$/m, '').trim()
+
+  if (!content.startsWith('#')) {
+    content = `# ${title}\n\n${content}`.trim()
+  }
+
+  return { title, content, learning_objectives: objectives }
 }
 
 /**
@@ -529,44 +669,6 @@ All output must be in ${targetLanguage}. Questions must be grounded in the provi
   return validated.data.mini_test
 }
 
-async function enforceLessonLanguage(
-  lesson: GeneratedLesson,
-  targetLanguage: string,
-  languageCode?: string
-): Promise<GeneratedLesson> {
-  const code = normalizeLanguageCode(languageCode)
-  if (code === 'en') return lesson
-
-  const source = {
-    title: lesson.title,
-    content: lesson.content,
-    learning_objectives: lesson.learning_objectives,
-    duration_minutes: lesson.duration_minutes,
-    mini_test: lesson.mini_test,
-    images: lesson.images,
-  }
-
-  const response = await generateLessonModelText(
-    `Translate this lesson JSON to ${targetLanguage}.
-Rules:
-- Translate title, content, objectives, and mini_test fields.
-- Preserve markdown structure in content.
-- Keep images URLs unchanged; translate only alt/description if present.
-- Return ONLY valid JSON.
-JSON:
-${JSON.stringify(source)}`,
-    `You are a strict localization assistant.
-Translate all human-readable lesson JSON fields to ${targetLanguage}.
-Keep JSON keys and structure unchanged.
-Do not change correct_answer indexes.
-Return ONLY valid JSON.`
-  )
-  const text = response.text || '{}'
-  const localized = safeJsonParse<GeneratedLesson>(text, lesson)
-  localized.content = normalizeLessonContent(localized.content)
-  return localized
-}
-
 // Default system instruction for lesson generation (used for both course and API/in-app; keep output style universal)
 const LESSON_SYSTEM_INSTRUCTION = `You are an expert educational content creator. Your lessons should be:
 - Clear and easy to understand
@@ -814,26 +916,30 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
 
   const fallback = getFallbackPhrases(normalizedLanguageCode)
   try {
-    const response = await generateLessonModelText(prompt, languageSystemInstruction)
-    const text = response.text || '{}'
+    const structured = await generateLessonStructuredJson(prompt, languageSystemInstruction)
+    const text = structured.text || '{}'
     const usageTelemetry: NonNullable<GeneratedLesson['usage']> = {
-      input_tokens: response.usage?.promptTokens ?? 0,
-      output_tokens: response.usage?.completionTokens ?? 0,
-      prompt_tokens: response.usage?.promptTokens ?? 0,
-      completion_tokens: response.usage?.completionTokens ?? 0,
-      total_tokens: response.usage?.totalTokens ?? 0,
-      model_used: response.modelUsed,
+      input_tokens: structured.usage?.promptTokens ?? 0,
+      output_tokens: structured.usage?.completionTokens ?? 0,
+      prompt_tokens: structured.usage?.promptTokens ?? 0,
+      completion_tokens: structured.usage?.completionTokens ?? 0,
+      total_tokens: structured.usage?.totalTokens ?? 0,
+      model_used: structured.modelUsed,
     }
 
-    const lesson = safeJsonParse<GeneratedLesson>(text, {
-      title: fallback.title,
-      content: `# ${fallback.title}\n\nContent is being prepared.`,
-      learning_objectives: [],
+    const lesson: GeneratedLesson = {
+      title: typeof structured.lesson.title === 'string' && structured.lesson.title.trim()
+        ? structured.lesson.title.trim()
+        : fallback.title,
+      content: typeof structured.lesson.content === 'string' ? structured.lesson.content : '',
+      learning_objectives: Array.isArray(structured.lesson.learning_objectives)
+        ? structured.lesson.learning_objectives
+        : [],
       duration_minutes: 5,
-      mini_test: [],
+      mini_test: Array.isArray(structured.lesson.mini_test) ? structured.lesson.mini_test : [],
       images: [],
-    })
-    
+    }
+
     // Ensure learning_objectives is an array
     if (!Array.isArray(lesson.learning_objectives)) {
       lesson.learning_objectives = []
@@ -853,6 +959,42 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
 
     // Normalize content to universal style (strip disclaimers, fix markdown) for consistent display in app and API
     lesson.content = normalizeLessonContent(lesson.content)
+
+    // When JSON path yields placeholder/empty content, regenerate as plain markdown (more reliable for long lessons).
+    if (isPlaceholderLessonContent(lesson.content)) {
+      console.warn('[Lesson Generator] Placeholder/empty content after JSON path — regenerating as markdown')
+      try {
+        const md = await generateLessonBodyMarkdown(
+          topicString,
+          context,
+          targetLanguage,
+          languageSystemInstruction,
+          lengthInstruction,
+          `${languageInstruction}${gradeInstruction}${objectivesInstruction}${corePromptInstruction}`
+        )
+        if (!isPlaceholderLessonContent(md.content)) {
+          lesson.title = md.title || lesson.title
+          lesson.content = normalizeLessonContent(md.content)
+          if (md.learning_objectives.length > 0) {
+            lesson.learning_objectives = md.learning_objectives
+          }
+          usageTelemetry.input_tokens += md.usage?.promptTokens ?? 0
+          usageTelemetry.output_tokens += md.usage?.completionTokens ?? 0
+          usageTelemetry.prompt_tokens += md.usage?.promptTokens ?? 0
+          usageTelemetry.completion_tokens += md.usage?.completionTokens ?? 0
+          usageTelemetry.total_tokens += md.usage?.totalTokens ?? 0
+          if (md.modelUsed) usageTelemetry.model_used = md.modelUsed
+        }
+      } catch (error) {
+        console.warn('[Lesson Generator] Markdown body regeneration failed:', error)
+      }
+    }
+
+    if (isPlaceholderLessonContent(lesson.content)) {
+      throw new Error(
+        'Lesson content generation failed (empty or placeholder body). Please try again with a shorter content length or fewer source documents.'
+      )
+    }
 
     // Estimated reading time from content length (avg 200 words per minute); mini-test time added after mini_test is finalized
     const wordCount = lesson.content.split(/\s+/).length
@@ -946,16 +1088,8 @@ Generate the lesson now. Return ONLY the JSON object, no other text.`
       explanation: sanitizeExplanation(item.explanation) || fallback.explanation,
     }))
 
-    // Final language lock to avoid mismatched language outputs (e.g. TR request but AZ content).
-    try {
-      const locked = await enforceLessonLanguage(lesson, targetLanguage, normalizedLanguageCode)
-      lesson.title = locked.title
-      lesson.content = locked.content
-      lesson.learning_objectives = locked.learning_objectives
-      lesson.mini_test = locked.mini_test
-    } catch (error) {
-      console.warn('Lesson language lock failed, keeping original output:', error)
-    }
+    // Skip full-lesson JSON re-translation. Primary prompts already enforce target language;
+    // a second JSON round-trip often truncates/corrupts long markdown content (empty lesson body).
 
     if (lesson.mini_test.length > MINI_TEST_TARGET) {
       lesson.mini_test = lesson.mini_test.slice(0, MINI_TEST_TARGET)
@@ -1117,6 +1251,8 @@ export class LessonAiService {
             usage: generated.usage || null,
             core_prompt: body.corePrompt || null,
             custom_objectives: body.objectives || null,
+            images_pending: includeImages,
+            audio_failed: false,
           }),
           (body.language || 'en').trim().toLowerCase() || 'en',
         ]
@@ -1146,11 +1282,23 @@ export class LessonAiService {
               JSON.stringify({
                 image_usage: imageResult.usage,
                 images_pending: false,
+                images_failed: !imageResult.images?.length,
               }),
             ]
           )
         } catch (error) {
           this.app.log.warn({ error, lessonId }, 'Lesson image generation failed')
+          try {
+            await this.app.db.query(
+              `UPDATE lessons
+               SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+                   updated_at = now()
+               WHERE id = $1`,
+              [lessonId, JSON.stringify({ images_pending: false, images_failed: true })]
+            )
+          } catch {
+            // ignore metadata update failure
+          }
         }
       })()
     }
@@ -1161,7 +1309,16 @@ export class LessonAiService {
           const tts = await runWithAiContext({ app: this.app, userId }, () =>
             generateLessonAudioWithUsage(lessonId, generated.title, generated.content, body.language)
           )
-          if (!tts.audioUrl) return
+          if (!tts.audioUrl) {
+            await this.app.db.query(
+              `UPDATE lessons
+               SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+                   updated_at = now()
+               WHERE id = $1`,
+              [lessonId, JSON.stringify({ audio_failed: true, tts_usage: tts.usage })]
+            )
+            return
+          }
           await this.app.db.query(
             `UPDATE lessons
              SET audio_url = $2,
@@ -1171,11 +1328,22 @@ export class LessonAiService {
             [
               lessonId,
               tts.audioUrl,
-              JSON.stringify({ audio_url: tts.audioUrl, tts_usage: tts.usage }),
+              JSON.stringify({ audio_url: tts.audioUrl, audio_failed: false, tts_usage: tts.usage }),
             ]
           )
         } catch (error) {
           this.app.log.warn({ error, lessonId }, 'Lesson TTS generation failed')
+          try {
+            await this.app.db.query(
+              `UPDATE lessons
+               SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+                   updated_at = now()
+               WHERE id = $1`,
+              [lessonId, JSON.stringify({ audio_failed: true })]
+            )
+          } catch {
+            // ignore metadata update failure
+          }
         }
       })()
     }

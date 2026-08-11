@@ -286,108 +286,75 @@ export async function generateLessonImagesWithUsage(
   images: LessonImage[]
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string }
 }> {
+  const targetCount = Math.max(1, Math.min(count, 3))
   try {
-    // Detect language if not provided
-    const detectedLanguage = language || await detectLanguage(content)
-    
-    // Generate detailed image prompts using OpenRouter
-    const prompts = await generateImagePrompts(topic, content, count, detectedLanguage)
+    // Prefer explicit language from the lesson request; only detect when missing.
+    const detectedLanguage =
+      language && language.trim()
+        ? language.trim().length <= 2
+          ? language.trim().toLowerCase() === 'az'
+            ? 'Azerbaijani'
+            : language.trim().toLowerCase() === 'ru'
+              ? 'Russian'
+              : language.trim().toLowerCase() === 'tr'
+                ? 'Turkish'
+                : language.trim().toLowerCase() === 'en'
+                  ? 'English'
+                  : language.trim()
+          : language.trim()
+        : await detectLanguage(content)
 
-    // Generate images for each prompt with retry logic
-    const generateImageWithRetry = async (
-      prompt: string,
-      index: number,
-      retries: number = 2
-    ): Promise<{ image: LessonImage | null; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string } }> => {
-      for (let attempt = 0; attempt <= retries; attempt++) {
-        const image = await generateImageFromPrompt(prompt, detectedLanguage)
-        if (image) {
-          // Determine position based on index
-          let position: "top" | "middle" | "bottom" = "middle"
-          if (index === 0) position = "top"
-          else if (index === count - 1) position = "bottom"
+    const prompts = (await generateImagePrompts(topic, content, targetCount, detectedLanguage)).slice(
+      0,
+      targetCount
+    )
 
-          // If lessonId provided and we have base64 data, upload to Supabase Storage
-          let finalUrl = image.url
-          if (lessonId && image.base64Data && image.mimeType) {
-            const storageUrl = await uploadImageToStorage(
-              lessonId,
-              image.base64Data,
-              image.mimeType,
-              index
-            )
-            if (storageUrl) {
-              finalUrl = storageUrl
-            }
-          }
-
-          return {
-            image: {
-              url: finalUrl,
-              alt: image.alt,
-              description: prompt.substring(0, 150),
-              position,
-            } as LessonImage,
-            usage: image.usage,
-          }
-        }
-        
-        // Wait before retry (exponential backoff)
-        if (attempt < retries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)))
-        }
-      }
-      return { image: null }
-    }
-
-    let validImages: LessonImage[] = []
+    // Hard cap: one API call per image slot. Retries previously multiplied cost
+    // (3 prompts × 3 attempts = 9 billed image generations) when parsing failed.
     const usageTotals = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, model_used: '' }
-    let attempts = 0
-    const maxAttempts = 2 // Try generating prompts twice if needed
-    
-    while (validImages.length < count && attempts < maxAttempts) {
-      const currentPrompts =
-        attempts === 0
-          ? prompts
-          : await generateImagePrompts(topic, content, count - validImages.length, detectedLanguage)
-      
-      const imagePromises = currentPrompts.map((prompt, idx) => 
-        generateImageWithRetry(prompt, validImages.length + idx)
-      )
+    const validImages: LessonImage[] = []
 
-      const results = await Promise.all(imagePromises)
-      for (const r of results) {
-        if (r.usage) {
-          usageTotals.prompt_tokens += r.usage.prompt_tokens
-          usageTotals.completion_tokens += r.usage.completion_tokens
-          usageTotals.total_tokens += r.usage.total_tokens
-          if (!usageTotals.model_used && r.usage.model_used) usageTotals.model_used = r.usage.model_used
+    for (let index = 0; index < prompts.length && validImages.length < targetCount; index++) {
+      const prompt = prompts[index]
+      const image = await generateImageFromPrompt(prompt, detectedLanguage)
+      if (!image) continue
+
+      let position: 'top' | 'middle' | 'bottom' = 'middle'
+      if (index === 0) position = 'top'
+      else if (index === targetCount - 1) position = 'bottom'
+
+      let finalUrl = image.url
+      if (lessonId && image.base64Data && image.mimeType) {
+        const storageUrl = await uploadImageToStorage(lessonId, image.base64Data, image.mimeType, index)
+        if (storageUrl) finalUrl = storageUrl
+      }
+
+      if (image.usage) {
+        usageTotals.prompt_tokens += image.usage.prompt_tokens
+        usageTotals.completion_tokens += image.usage.completion_tokens
+        usageTotals.total_tokens += image.usage.total_tokens
+        if (!usageTotals.model_used && image.usage.model_used) {
+          usageTotals.model_used = image.usage.model_used
         }
       }
-      const newValidImages = results
-        .map((r) => r.image)
-        .filter((img): img is LessonImage => img !== null)
-      
-      validImages = [...validImages, ...newValidImages]
-      attempts++
-      
-      // If we got some images but not enough, try generating more prompts
-      if (validImages.length < count && validImages.length > 0) {
-        console.log(`Generated ${validImages.length} images, requested ${count}. Generating additional prompts...`)
-      }
+
+      validImages.push({
+        url: finalUrl,
+        alt: image.alt,
+        description: prompt.substring(0, 150),
+        position,
+      })
     }
-    
-    // If no images generated at all after all attempts, log warning
+
     if (validImages.length === 0) {
-      console.warn("No images generated for lesson after all retry attempts")
+      console.warn('No images generated for lesson (parser/API returned no usable image data)')
     }
-    
-    // Ensure we have at most the requested count (prioritize first images)
-    return { images: validImages.slice(0, count), usage: usageTotals }
+
+    return { images: validImages.slice(0, targetCount), usage: usageTotals }
   } catch (error) {
-    console.error("Error generating lesson images:", error)
+    console.error('Error generating lesson images:', error)
     return {
-      images: generateFallbackImages(topic, count),
+      images: generateFallbackImages(topic, targetCount),
       usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
     }
   }

@@ -38,8 +38,11 @@ type LessonRecord = {
   images?: unknown
   mini_test?: unknown
   metadata?: {
-    generation_options?: { centerText?: boolean }
+    generation_options?: { centerText?: boolean; includeAudio?: boolean; includeImages?: boolean }
     source_documents?: string[]
+    audio_failed?: boolean
+    images_pending?: boolean
+    images_failed?: boolean
   } | null
   learning_objectives?: unknown
   documents?: { title?: string } | Array<{ title?: string }> | null
@@ -112,6 +115,19 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
   }
   
   const { contentText, images, miniTest, objectives, centerText } = mapLessonToViewData(lesson)
+  const meta = (lesson.metadata ?? null) as {
+    generation_options?: { includeAudio?: boolean }
+    audio_failed?: boolean
+  } | null
+  const includeAudio = meta?.generation_options?.includeAudio !== false
+  const audioFailed = meta?.audio_failed === true
+  const audioLabel = lesson.audio_url
+    ? tl('audioReady', 'Audio ready')
+    : audioFailed
+      ? tl('audioUnavailable', 'Audio unavailable')
+      : includeAudio
+        ? tl('audioProcessing', 'Audio processing')
+        : null
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -141,14 +157,20 @@ export default async function LessonDetailPage({ params, searchParams }: PagePro
                     {lesson.duration_minutes} {tl('minuteShort', 'min')}
                   </span>
                 )}
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    lesson.audio_url ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  <Clock className="w-3 h-3" />
-                  {lesson.audio_url ? tl('audioReady', 'Audio ready') : tl('audioProcessing', 'Audio processing')}
-                </span>
+                {audioLabel && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      lesson.audio_url
+                        ? 'bg-gray-200 text-gray-800'
+                        : audioFailed
+                          ? 'bg-amber-50 text-amber-800'
+                          : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    <Clock className="w-3 h-3" />
+                    {audioLabel}
+                  </span>
+                )}
               </div>
               {(lesson.source_documents && lesson.source_documents.length > 0) || lesson.documents ? (
                 <SourceDocumentsSummary

@@ -18,12 +18,20 @@ type OpenRouterChatMessage = {
   content: string | Array<Record<string, unknown>>
 }
 
+type OpenRouterImagePart = {
+  type?: string
+  text?: string
+  image_url?: { url?: string }
+}
+
 type OpenRouterChatResponse = {
   id?: string
   model?: string
   choices?: Array<{
     message?: {
-      content?: string | Array<{ type?: string; text?: string; image_url?: { url?: string } }>
+      content?: string | OpenRouterImagePart[]
+      /** OpenRouter image-generation models return images here (not in content). */
+      images?: OpenRouterImagePart[]
     }
   }>
   usage?: {
@@ -61,9 +69,50 @@ function extractTextContent(content: OpenRouterChatResponse['choices']): string 
 }
 
 function parseDataUrl(dataUrl: string): { mimeType: string; base64: string } | null {
-  const match = /^data:([^;]+);base64,(.+)$/i.exec(dataUrl)
+  const match = /^data:([^;]+);base64,(.+)$/i.exec(dataUrl.trim())
   if (!match) return null
   return { mimeType: match[1], base64: match[2] }
+}
+
+function collectImageUrlsFromParts(parts: OpenRouterImagePart[] | undefined): string[] {
+  if (!Array.isArray(parts)) return []
+  const urls: string[] = []
+  for (const part of parts) {
+    const url = part?.image_url?.url
+    if (typeof url === 'string' && url.trim()) urls.push(url.trim())
+  }
+  return urls
+}
+
+/**
+ * OpenRouter image models (e.g. Gemini Flash Image / Nano Banana) return base64 data URLs
+ * primarily on `message.images`, and sometimes also as content parts.
+ */
+export function extractImagesFromChatResponse(
+  data: OpenRouterChatResponse
+): Array<{ mimeType: string; base64: string }> {
+  const message = data.choices?.[0]?.message
+  const urls: string[] = [
+    ...collectImageUrlsFromParts(message?.images),
+    ...(Array.isArray(message?.content) ? collectImageUrlsFromParts(message.content) : []),
+  ]
+
+  if (typeof message?.content === 'string') {
+    const dataUrlMatch = message.content.match(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/)
+    if (dataUrlMatch) urls.push(dataUrlMatch[0])
+  }
+
+  const images: Array<{ mimeType: string; base64: string }> = []
+  const seen = new Set<string>()
+  for (const url of urls) {
+    const parsed = parseDataUrl(url)
+    if (!parsed) continue
+    const key = parsed.base64.slice(0, 64)
+    if (seen.has(key)) continue
+    seen.add(key)
+    images.push(parsed)
+  }
+  return images
 }
 
 export class OpenRouterClient {
@@ -215,22 +264,7 @@ export class OpenRouterClient {
       modalities: ['image', 'text'],
     })
 
-    const images: AiImageResult['images'] = []
-    const content = result.raw.choices?.[0]?.message?.content
-    if (Array.isArray(content)) {
-      for (const part of content) {
-        const url = part.image_url?.url
-        if (!url) continue
-        const parsed = parseDataUrl(url)
-        if (parsed) images.push(parsed)
-      }
-    } else if (typeof content === 'string') {
-      const dataUrlMatch = content.match(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/)
-      if (dataUrlMatch) {
-        const parsed = parseDataUrl(dataUrlMatch[0])
-        if (parsed) images.push(parsed)
-      }
-    }
+    const images = extractImagesFromChatResponse(result.raw)
 
     if (images.length === 0) {
       throw new AiProviderError('OpenRouter image response contained no image data', {

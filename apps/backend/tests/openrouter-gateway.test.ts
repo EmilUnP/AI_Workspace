@@ -54,6 +54,38 @@ describe('openrouter migration helpers', () => {
     assert.equal(stripJsonFences('```json\n{"a":1}\n```'), '{"a":1}')
   })
 
+  it('extracts OpenRouter images from message.images (Gemini Flash Image)', async () => {
+    const { extractImagesFromChatResponse } = await import('../src/ai/openrouter.js')
+    const tinyPng =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    const images = extractImagesFromChatResponse({
+      choices: [
+        {
+          message: {
+            content: 'Here is your educational diagram.',
+            images: [
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/png;base64,${tinyPng}` },
+              },
+            ],
+          },
+        },
+      ],
+    })
+    assert.equal(images.length, 1)
+    assert.equal(images[0].mimeType, 'image/png')
+    assert.equal(images[0].base64, tinyPng)
+  })
+
+  it('does not invent images when only text content is present', async () => {
+    const { extractImagesFromChatResponse } = await import('../src/ai/openrouter.js')
+    const images = extractImagesFromChatResponse({
+      choices: [{ message: { content: 'No image this time.' } }],
+    })
+    assert.equal(images.length, 0)
+  })
+
   it('encrypts and decrypts AI credentials', () => {
     const raw = 'sk-or-v1-example-secret-key-value'
     const encrypted = encryptSecret(raw)

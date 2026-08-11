@@ -574,6 +574,7 @@ const translations: I18nTable = {
       deleting: 'Deleting...',
       audioReady: 'Audio ready',
       audioProcessing: 'Audio processing',
+      audioUnavailable: 'Audio unavailable',
       minuteShort: 'min'
     },
     teacherExams: {
@@ -1246,6 +1247,7 @@ const translations: I18nTable = {
       deleting: 'Silinir...',
       audioReady: 'Audio hazırdır',
       audioProcessing: 'Audio hazırlanır',
+      audioUnavailable: 'Audio əlçatan deyil',
       minuteShort: 'dəq'
     },
     teacherExams: {
