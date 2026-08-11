@@ -389,9 +389,11 @@ export async function generateLessonAudioWithUsage(
 ): Promise<{
   audioUrl: string | null
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number; model_used?: string }
+  error?: string
 }> {
   try {
     const { gateway, userId } = getGateway()
+    // Gemini TTS is more reliable with shorter narration segments (~3–4k chars).
     const plainText = `${title}. ${content}`
       .replace(/#{1,6}\s/g, '')
       .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -403,23 +405,36 @@ export async function generateLessonAudioWithUsage(
       .replace(/<[^>]*>/g, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim()
-      .substring(0, 8000)
+      .substring(0, 3500)
 
     if (plainText.length < 50) {
       console.log('TTS: Content too short, skipping audio generation')
-      return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
+      return {
+        audioUrl: null,
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+        error: 'Content too short for TTS',
+      }
     }
 
     console.log(
       `TTS: Generating audio for lesson ${lessonId}, text length: ${plainText.length}, language: ${language || 'auto-detect'}`
     )
 
-    const speech = await gateway.generateSpeech({
-      text: plainText,
-      userId,
-      // Do not pass OpenAI "nova" — Gemini TTS requires Zephyr/Kore/etc. Gateway picks by model.
-      responseFormat: 'mp3',
-    })
+    let speech
+    try {
+      speech = await gateway.generateSpeech({
+        text: plainText,
+        userId,
+        responseFormat: 'mp3',
+      })
+    } catch (mp3Error) {
+      console.warn('TTS mp3 failed, retrying with pcm:', mp3Error)
+      speech = await gateway.generateSpeech({
+        text: plainText,
+        userId,
+        responseFormat: 'pcm',
+      })
+    }
 
     const isMp3 = speech.mimeType.includes('mpeg') || speech.mimeType.includes('mp3')
     const fileName = isMp3 ? 'audio.mp3' : 'audio.wav'
@@ -449,8 +464,13 @@ export async function generateLessonAudioWithUsage(
       },
     }
   } catch (error) {
-    console.error('TTS generation error:', error)
-    return { audioUrl: null, usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } }
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('TTS generation error:', message, error)
+    return {
+      audioUrl: null,
+      usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      error: message.slice(0, 500),
+    }
   }
 }
 

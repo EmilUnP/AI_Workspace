@@ -1,15 +1,14 @@
+/**
+ * @deprecated Lesson TTS must go through the backend (`POST /v1/lessons/:id/audio`).
+ * This shim exists only so old imports fail loudly instead of silently returning null.
+ */
 export async function generateLessonAudioWithUsage(
   _lessonId: string,
   _title: string,
   _contentText: string,
   _language: string
-) {
-  return {
-    audioUrl: null,
-    usage: {
-      prompt_tokens: 0,
-      completion_tokens: 0,
-      total_tokens: 0,
-    },
-  }
+): Promise<never> {
+  throw new Error(
+    'TTS shim is disabled. Use backend POST /v1/lessons/:id/audio (OpenRouter Gemini TTS).'
+  )
 }

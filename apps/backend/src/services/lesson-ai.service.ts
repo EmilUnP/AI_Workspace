@@ -1345,7 +1345,14 @@ export class LessonAiService {
                SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
                    updated_at = now()
                WHERE id = $1`,
-              [lessonId, JSON.stringify({ audio_failed: true, tts_usage: tts.usage })]
+              [
+                lessonId,
+                JSON.stringify({
+                  audio_failed: true,
+                  tts_usage: tts.usage,
+                  audio_error: tts.error || 'TTS returned no audio',
+                }),
+              ]
             )
             return
           }

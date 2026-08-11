@@ -11,6 +11,7 @@ SET
     'google/gemini-2.5-flash-preview-tts',
     'google/gemini-2.5-pro-preview-tts'
   ],
-  notes = 'Lesson TTS (Gemini TTS via OpenRouter; use Gemini voices e.g. Zephyr)',
+  prefer_zdr = FALSE,
+  notes = 'Lesson TTS (Gemini via OpenRouter /audio/speech; Gemini voices e.g. Zephyr; ZDR off for speech)',
   updated_at = now()
 WHERE workload = 'tts';

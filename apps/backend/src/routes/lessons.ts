@@ -209,13 +209,17 @@ export async function lessonsRoutes(app: FastifyInstance) {
 
     // Fallback: audio file exists in DB or on disk but audio_url not set yet.
     if (!resolvedAudioUrl) {
-      const hasAudio = useDatabaseFileStorage()
-        ? await lessonMediaFileExists(lesson.id, 'audio.wav')
-        : await access(path.join(env.AI_STORAGE_DIR, 'lessons', lesson.id, 'audio.wav'))
-            .then(() => true)
-            .catch(() => false)
-      if (hasAudio) {
-        resolvedAudioUrl = `/v1/lessons/${lesson.id}/media/audio.wav`
+      const candidates = ['audio.mp3', 'audio.wav'] as const
+      for (const fileName of candidates) {
+        const hasAudio = useDatabaseFileStorage()
+          ? await lessonMediaFileExists(lesson.id, fileName)
+          : await access(path.join(env.AI_STORAGE_DIR, 'lessons', lesson.id, fileName))
+              .then(() => true)
+              .catch(() => false)
+        if (hasAudio) {
+          resolvedAudioUrl = `/v1/lessons/${lesson.id}/media/${fileName}`
+          break
+        }
       }
     }
 
@@ -280,6 +284,145 @@ export async function lessonsRoutes(app: FastifyInstance) {
 
     reply.header('Content-Type', contentTypeForLessonMediaFile(safeFile))
     return reply.send(createReadStream(mediaPath))
+  })
+
+  app.patch('/lessons/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+
+    const { id } = request.params as { id: string }
+    const body = (request.body ?? {}) as {
+      title?: string
+      topic?: string
+      description?: string
+      content?: string
+      duration_minutes?: number
+    }
+
+    const sets: string[] = []
+    const values: unknown[] = []
+    let i = 1
+
+    if (typeof body.title === 'string') {
+      sets.push(`title = $${i++}`)
+      values.push(body.title.trim())
+    }
+    if (typeof body.topic === 'string') {
+      sets.push(`topic = $${i++}`)
+      values.push(body.topic.trim())
+    }
+    if (typeof body.description === 'string') {
+      sets.push(`description = $${i++}`)
+      values.push(body.description.trim())
+    }
+    if (typeof body.duration_minutes === 'number' && Number.isFinite(body.duration_minutes)) {
+      sets.push(`duration_minutes = $${i++}`)
+      values.push(Math.max(1, Math.round(body.duration_minutes)))
+    }
+    if (typeof body.content === 'string') {
+      sets.push(`content = $${i++}::jsonb`)
+      values.push(JSON.stringify({ text: body.content }))
+    }
+
+    if (sets.length === 0) {
+      return reply.code(400).send({ error: 'No valid fields to update' })
+    }
+
+    sets.push('updated_at = now()')
+    values.push(id, userId)
+
+    const { rows } = await app.db.query<{ id: string }>(
+      `UPDATE lessons
+       SET ${sets.join(', ')}
+       WHERE id = $${i++} AND user_id = $${i}
+       RETURNING id`,
+      values
+    )
+
+    if (!rows[0]) return reply.code(404).send({ error: 'Lesson not found' })
+    return reply.send({ ok: true, id: rows[0].id })
+  })
+
+  app.post('/lessons/:id/audio', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.authUser?.sub
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
+
+    const { id } = request.params as { id: string }
+    const { rows } = await app.db.query<{
+      id: string
+      title: string
+      content: unknown
+      language: string | null
+    }>(
+      `SELECT id, title, content, language
+       FROM lessons
+       WHERE id = $1 AND user_id = $2
+       LIMIT 1`,
+      [id, userId]
+    )
+    const lesson = rows[0]
+    if (!lesson) return reply.code(404).send({ error: 'Lesson not found' })
+
+    const contentText =
+      typeof lesson.content === 'object' && lesson.content && 'text' in (lesson.content as object)
+        ? String((lesson.content as { text?: unknown }).text ?? '')
+        : typeof lesson.content === 'string'
+          ? lesson.content
+          : ''
+
+    if (!contentText.trim()) {
+      return reply.code(400).send({ error: 'Lesson has no content to narrate' })
+    }
+
+    const { runWithAiContext } = await import('../ai/request-context.js')
+    const { generateLessonAudioWithUsage } = await import('../services/lesson-media.service.js')
+
+    try {
+      const tts = await runWithAiContext({ app, userId }, () =>
+        generateLessonAudioWithUsage(lesson.id, lesson.title || 'Lesson', contentText, lesson.language || undefined)
+      )
+
+      if (!tts.audioUrl) {
+        await app.db.query(
+          `UPDATE lessons
+           SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+               updated_at = now()
+           WHERE id = $1`,
+          [id, JSON.stringify({ audio_failed: true, tts_usage: tts.usage })]
+        )
+        return reply.code(502).send({ error: 'TTS generation failed', audio_url: null })
+      }
+
+      await app.db.query(
+        `UPDATE lessons
+         SET audio_url = $2,
+             metadata = COALESCE(metadata, '{}'::jsonb) || $3::jsonb,
+             updated_at = now()
+         WHERE id = $1`,
+        [
+          id,
+          tts.audioUrl,
+          JSON.stringify({ audio_url: tts.audioUrl, audio_failed: false, tts_usage: tts.usage }),
+        ]
+      )
+
+      return reply.send({ ok: true, audio_url: tts.audioUrl, model_used: tts.usage.model_used ?? null })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      request.log.error({ error, lessonId: id }, 'Lesson audio regeneration failed')
+      try {
+        await app.db.query(
+          `UPDATE lessons
+           SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb,
+               updated_at = now()
+           WHERE id = $1`,
+          [id, JSON.stringify({ audio_failed: true, audio_error: message.slice(0, 500) })]
+        )
+      } catch {
+        // ignore
+      }
+      return reply.code(502).send({ error: message.slice(0, 300) })
+    }
   })
 
   app.delete('/lessons/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
