@@ -296,6 +296,8 @@ Output ONLY markdown (no JSON, no code fences):
 ## Lesson Content
 (full lesson body with ## / ### headings, lists, and tables as needed)
 
+Do NOT include a Mini Test, quiz, or practice questions in this markdown. Questions are generated separately.
+
 Source material:
 ${context}
 
@@ -340,7 +342,7 @@ function parseMarkdownLesson(
 
 /**
  * Normalize lesson content: strip disclaimers, fix markdown, remove meta-commentary,
- * strip leaked JSON blocks, and normalize HTML sub/sup so they don't break display.
+ * strip leaked JSON blocks, and remove any mini-test block (mini-test lives in its own field/tab).
  */
 function normalizeLessonContent(content: string): string {
   if (!content || typeof content !== 'string') return content
@@ -371,10 +373,37 @@ function normalizeLessonContent(content: string): string {
   // Normalize ***label:** to **label:** (bold only)
   out = out.replace(/\*\*\*([^*]+)\*\*\*:/g, '**$1**:')
 
+  // Models often paste the quiz into "content" even though mini_test is a separate JSON field/UI tab.
+  out = stripEmbeddedMiniTestFromContent(out)
+
   // Collapse multiple blank lines
   out = out.replace(/\n{3,}/g, '\n\n')
 
   return out.trim()
+}
+
+/**
+ * Remove quiz sections embedded in lesson markdown (kept only in mini_test / Mini test tab).
+ */
+function stripEmbeddedMiniTestFromContent(content: string): string {
+  if (!content) return content
+
+  const heading =
+    /(?:^|\n)#{1,3}\s*(?:mini[\s-]?test|mini[\s-]?quiz|practice\s+questions?|knowledge\s+check|comprehension\s+check|self[\s-]?check|check\s+your\s+understanding|kiçik\s+test|mini\s+test|тест|мини[\s-]?тест|alıştırma\s+soruları)\b[^\n]*/i
+
+  const match = heading.exec(content)
+  if (match && typeof match.index === 'number') {
+    return content.slice(0, match.index).trim()
+  }
+
+  // Fallback: "Mini Test" as a bold/plain line near the end
+  const plain = /(?:^|\n)\s*(?:\*\*)?mini[\s-]?test(?:\*\*)?\s*(?:\n|$)/i
+  const plainMatch = plain.exec(content)
+  if (plainMatch && typeof plainMatch.index === 'number' && plainMatch.index > content.length * 0.4) {
+    return content.slice(0, plainMatch.index).trim()
+  }
+
+  return content
 }
 
 /**
@@ -879,12 +908,13 @@ FORMATTING RULES (universal style – must follow):
   - Use numbered lists (1. 2. 3.) for steps or ordered points.
 ${tablesRule}${figuresRule}${chartsRule}${imagesVisualRule}
 - The "content" field must look like a clean, professional lesson suitable for in-app display: clear headings, short paragraphs, well-structured lists${includeTables ? ', and tables when they aid understanding' : ''}.
+- CRITICAL: Do NOT put the mini test inside the "content" field. No "## Mini Test", quiz questions, A/B/C/D options, or answer keys in content. The app shows questions only from the separate "mini_test" JSON array (its own tab).
 
 The lesson should be well-structured, educational, and include:
 1. A clear title
 2. ${objectives ? 'The learning objectives provided above (3-5 items)' : '3-5 specific learning objectives (what students will learn)'}
-3. Main content explaining the topic in detail (using the markdown rules above)
-4. A mini test with exactly ${MINI_TEST_TARGET} questions (multiple choice)
+3. Main content explaining the topic in detail (using the markdown rules above) — teaching material ONLY
+4. A mini test with exactly ${MINI_TEST_TARGET} questions (multiple choice) — ONLY in the "mini_test" array, never duplicated in "content"
 
 Return ONLY a valid JSON object with this exact structure. You MUST include all fields; learning_objectives is REQUIRED and must be a non-empty array of 3-5 strings. Output "title" and "learning_objectives" first (before "content") so they are never omitted.
 The mini_test array MUST contain exactly ${MINI_TEST_TARGET} question objects.
@@ -896,7 +926,7 @@ CRITICAL for valid JSON: In the "content" field use \\n for line breaks (do not 
     "Students will be able to...",
     "Students will learn..."
   ],
-  "content": "Main lesson content in markdown. Use ## and ### for headings, **bold** for emphasis, simple * bullets or 1. 2. numbered lists, and markdown tables (| col | col |, then | --- | --- |, then rows) for comparisons. No disclaimers or meta-commentary.",
+  "content": "Main lesson content in markdown ONLY (no mini test). Use ## and ### for headings, **bold** for emphasis, simple * bullets or 1. 2. numbered lists, and markdown tables (| col | col |, then | --- | --- |, then rows) for comparisons. No disclaimers, meta-commentary, or quiz sections.",
   "mini_test": [
     {
       "question": "Question text",

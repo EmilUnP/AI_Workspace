@@ -33,13 +33,25 @@ const normalizeMediaUrl = (value: string): string => {
   return raw
 }
 
+/** Mini-test belongs in its own tab; strip any quiz block the model pasted into content. */
+const stripEmbeddedMiniTest = (content: string): string => {
+  const heading =
+    /(?:^|\n)#{1,3}\s*(?:mini[\s-]?test|mini[\s-]?quiz|practice\s+questions?|knowledge\s+check|comprehension\s+check|self[\s-]?check|check\s+your\s+understanding|kiçik\s+test|мини[\s-]?тест|тест|alıştırma\s+soruları)\b[^\n]*/i
+  const match = heading.exec(content)
+  if (match && typeof match.index === 'number') {
+    return content.slice(0, match.index).trim()
+  }
+  return content
+}
+
 export function mapLessonToViewData(lesson: LessonLike): LessonViewData {
-  const contentText =
+  const rawContentText =
     typeof lesson.content === 'object' && lesson.content && 'text' in (lesson.content as object)
       ? String((lesson.content as { text?: unknown }).text ?? '')
       : typeof lesson.content === 'string'
         ? lesson.content
         : ''
+  const contentText = stripEmbeddedMiniTest(rawContentText)
 
   const images = Array.isArray(lesson.images)
     ? (lesson.images as LessonViewData['images']).map((img) => ({
