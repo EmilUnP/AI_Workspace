@@ -397,7 +397,7 @@ export class OpenRouterClient {
   async testConnection(): Promise<{ ok: boolean; modelUsed?: string; error?: string }> {
     try {
       const result = await this.chatCompletion({
-        models: ['openai/gpt-5.4-nano', 'deepseek/deepseek-v4-flash'],
+        models: ['google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite'],
         messages: [{ role: 'user', content: 'Reply with exactly: ok' }],
         maxTokens: 8,
         temperature: 0,

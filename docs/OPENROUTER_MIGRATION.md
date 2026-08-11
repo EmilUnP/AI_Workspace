@@ -16,13 +16,15 @@ Eduator **0.4.0** no longer calls Google Gemini APIs directly. All AI workloads 
 
 ## Default model chains (seeded, admin-editable)
 
+Gemini-only via OpenRouter (same families as the pre-OpenRouter Gemini integration):
+
 | Workload | Primary → fallbacks |
 | --- | --- |
-| lightweight_text / translation / rag_query | `deepseek/deepseek-v4-flash` → `qwen/qwen3.6-35b-a3b` → `openai/gpt-5.4-nano` |
-| lesson / exam / education plan / teacher chat | `qwen/qwen3.7-plus` → `deepseek/deepseek-v4-pro` → `openai/gpt-5.4-mini` |
-| embeddings | `google/gemini-embedding-001` → `openai/text-embedding-3-small` (forced 768 dims) |
-| image_generation | `openai/gpt-5-image-mini` → `google/gemini-2.5-flash-image` |
-| tts | `openai/gpt-4o-mini-tts` → `openai/gpt-audio-mini` |
+| lightweight_text / translation / rag_query / teacher_chat | `google/gemini-2.5-flash` → `google/gemini-2.5-flash-lite` → `google/gemini-2.0-flash-001` |
+| lesson / exam / education plan | `google/gemini-2.5-flash` → `google/gemini-2.5-flash-lite` → `google/gemini-2.5-pro` |
+| embeddings | `google/gemini-embedding-001` |
+| image_generation | `google/gemini-2.5-flash-image` → `google/gemini-2.5-flash-image-preview` |
+| tts | `google/gemini-2.5-flash-preview-tts` → `google/gemini-2.5-pro-preview-tts` |
 
 Catalog IDs and prices are refreshable via **Sync model catalog** and must not be hard-coded in feature services.
 
