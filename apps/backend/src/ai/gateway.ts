@@ -124,15 +124,40 @@ export class AiGateway {
   async generateSpeech(request: AiTtsRequest): Promise<AiTtsResult> {
     const policy = await this.resolveModels('tts')
     const client = await this.client()
-    const primary = policy.models[0] || ''
+    // Chat models (gemini-2.5-flash) must never be sent to /audio/speech — OpenRouter
+    // records empty 0-token rows and no real TTS audio is produced.
+    const models = sanitizeTtsModelChain(policy.models)
+    const primary = models[0]
     const voice = request.voice?.trim() || defaultTtsVoiceForModel(primary)
+    // Gemini TTS playground uses PCM; mp3 is often unsupported / empty for these models.
+    const responseFormat =
+      request.responseFormat ||
+      (primary.includes('gemini') || primary.startsWith('google/') ? 'pcm' : 'mp3')
     return client.createSpeech({
-      models: policy.models,
+      models,
       input: request.text,
       voice,
-      responseFormat: request.responseFormat,
+      responseFormat,
     })
   }
+}
+
+const DEFAULT_GEMINI_TTS_MODEL = 'google/gemini-3.1-flash-tts-preview'
+
+/** Only models with speech/TTS capability belong on the /audio/speech endpoint. */
+export function isSpeechCapableModel(model: string): boolean {
+  const id = model.trim().toLowerCase()
+  if (!id) return false
+  if (id.includes('tts') || id.includes('speech') || id.includes('kokoro') || id.includes('voxtral')) {
+    return true
+  }
+  // Explicit allowlist for known OpenRouter speech models without those substrings
+  return false
+}
+
+export function sanitizeTtsModelChain(models: string[]): string[] {
+  const cleaned = models.map((m) => m.trim()).filter((m) => isSpeechCapableModel(m))
+  return cleaned.length > 0 ? cleaned : [DEFAULT_GEMINI_TTS_MODEL]
 }
 
 /** Gemini TTS voices (Zephyr/Kore/…); OpenAI-style voices (nova/alloy) fail on Gemini models. */

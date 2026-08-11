@@ -14,7 +14,6 @@ export class MediaAiService {
     const result = await gateway.generateSpeech({
       text: data.text,
       userId,
-      responseFormat: 'mp3',
     })
     return {
       mode: 'openrouter',

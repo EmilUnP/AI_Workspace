@@ -422,13 +422,13 @@ export async function generateLessonAudioWithUsage(
 
     let speech
     try {
+      // Gateway defaults Gemini TTS to PCM (OpenRouter playground format).
       speech = await gateway.generateSpeech({
         text: plainText,
         userId,
-        responseFormat: 'mp3',
       })
-    } catch (mp3Error) {
-      console.warn('TTS mp3 failed, retrying with pcm:', mp3Error)
+    } catch (error) {
+      console.warn('TTS primary attempt failed, retrying pcm explicitly:', error)
       speech = await gateway.generateSpeech({
         text: plainText,
         userId,

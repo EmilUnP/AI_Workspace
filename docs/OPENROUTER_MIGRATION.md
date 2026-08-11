@@ -24,7 +24,7 @@ Gemini-only via OpenRouter (same families as the pre-OpenRouter Gemini integrati
 | lesson / exam / education plan | `google/gemini-2.5-flash` → `google/gemini-2.5-flash-lite` → `google/gemini-2.5-pro` |
 | embeddings | `google/gemini-embedding-001` |
 | image_generation | `google/gemini-2.5-flash-image` → `google/gemini-2.5-flash-image-preview` |
-| tts | `google/gemini-3.1-flash-tts-preview` → `google/gemini-2.5-flash-preview-tts` → `google/gemini-2.5-pro-preview-tts` |
+| tts | `google/gemini-3.1-flash-tts-preview` only (speech endpoint; not chat Flash) |
 
 Catalog IDs and prices are refreshable via **Sync model catalog** and must not be hard-coded in feature services.
 

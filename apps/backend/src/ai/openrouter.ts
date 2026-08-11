@@ -367,59 +367,90 @@ export class OpenRouterClient {
     responseFormat?: 'mp3' | 'pcm' | 'wav'
   }): Promise<AiTtsResult> {
     let lastError: unknown
-    for (const model of options.models) {
-      try {
-        const voice = options.voice || defaultSpeechVoice(model)
-        const response = await fetch(`${OPENROUTER_BASE}/audio/speech`, {
-          method: 'POST',
-          headers: this.headers(),
-          body: JSON.stringify({
-            model,
-            input: options.input,
-            voice,
-            response_format: options.responseFormat || 'mp3',
-          }),
-          signal: AbortSignal.timeout(env.OPENROUTER_TIMEOUT_MS),
-        })
+    const models = options.models.length > 0 ? options.models : ['google/gemini-3.1-flash-tts-preview']
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          const message = sanitizeProviderErrorMessage(errorText || `OpenRouter TTS HTTP ${response.status}`)
-          if (isRetryableProviderStatus(response.status) || response.status === 404) {
+    for (const model of models) {
+      const formats: Array<'mp3' | 'pcm'> =
+        options.responseFormat === 'pcm' || options.responseFormat === 'wav'
+          ? ['pcm', 'mp3']
+          : options.responseFormat === 'mp3'
+            ? ['mp3', 'pcm']
+            : model.toLowerCase().includes('gemini') || model.toLowerCase().startsWith('google/')
+              ? ['pcm', 'mp3']
+              : ['mp3', 'pcm']
+
+      for (const format of formats) {
+        try {
+          const voice = options.voice || defaultSpeechVoice(model)
+          const response = await fetch(`${OPENROUTER_BASE}/audio/speech`, {
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({
+              model,
+              input: options.input,
+              voice,
+              response_format: format,
+            }),
+            signal: AbortSignal.timeout(env.OPENROUTER_TIMEOUT_MS),
+          })
+
+          const contentType = response.headers.get('content-type') || ''
+          if (!response.ok) {
+            const errorText = await response.text()
+            const message = sanitizeProviderErrorMessage(
+              errorText || `OpenRouter TTS HTTP ${response.status}`
+            )
             lastError = new AiProviderError(message, {
               statusCode: response.status,
+              retryable:
+                isRetryableProviderStatus(response.status) ||
+                response.status === 404 ||
+                response.status === 400,
+            })
+            // Try next format / model
+            continue
+          }
+
+          // Some failures return 200 JSON — never treat that as audio.
+          if (contentType.includes('application/json') || contentType.includes('text/')) {
+            const errorText = await response.text()
+            lastError = new AiProviderError(
+              sanitizeProviderErrorMessage(errorText || 'OpenRouter TTS returned JSON instead of audio'),
+              { statusCode: 502, retryable: true, code: 'TTS_JSON_BODY' }
+            )
+            continue
+          }
+
+          const audio = Buffer.from(await response.arrayBuffer())
+          if (audio.length < 64) {
+            lastError = new AiProviderError('OpenRouter TTS returned empty audio', {
+              statusCode: 502,
               retryable: true,
+              code: 'EMPTY_AUDIO',
             })
             continue
           }
-          // Invalid voice / bad request: try next model in chain
-          lastError = new AiProviderError(message, {
-            statusCode: response.status,
-            retryable: response.status === 400,
-          })
-          if (response.status === 400) continue
-          throw lastError
-        }
 
-        const audio = Buffer.from(await response.arrayBuffer())
-        if (audio.length < 64) {
-          lastError = new AiProviderError('OpenRouter TTS returned empty audio', {
-            statusCode: 502,
-            retryable: true,
-            code: 'EMPTY_AUDIO',
-          })
-          continue
+          // Detect JSON payload mistaken for binary (starts with '{' )
+          if (audio[0] === 0x7b /* { */) {
+            const asText = audio.toString('utf8').slice(0, 400)
+            lastError = new AiProviderError(
+              sanitizeProviderErrorMessage(`OpenRouter TTS returned JSON body: ${asText}`),
+              { statusCode: 502, retryable: true, code: 'TTS_JSON_BODY' }
+            )
+            continue
+          }
+
+          return {
+            audio,
+            mimeType: contentType || (format === 'mp3' ? 'audio/mpeg' : 'audio/pcm'),
+            modelUsed: model,
+            provider: 'openrouter',
+          }
+        } catch (error) {
+          lastError = error
+          if (error instanceof AiProviderError && !error.retryable) throw error
         }
-        const contentType = response.headers.get('content-type') || 'audio/mpeg'
-        return {
-          audio,
-          mimeType: contentType,
-          modelUsed: model,
-          provider: 'openrouter',
-        }
-      } catch (error) {
-        lastError = error
-        if (error instanceof AiProviderError && !error.retryable) throw error
       }
     }
 

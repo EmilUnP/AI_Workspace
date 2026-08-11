@@ -101,4 +101,16 @@ describe('openrouter migration helpers', () => {
     const norm = Math.sqrt(prepared.reduce((sum, value) => sum + value * value, 0))
     assert.ok(Math.abs(norm - 1) < 1e-6)
   })
+
+  it('sanitizes TTS chain away from chat Flash models', async () => {
+    const { sanitizeTtsModelChain, isSpeechCapableModel } = await import('../src/ai/gateway.js')
+    assert.equal(isSpeechCapableModel('google/gemini-2.5-flash'), false)
+    assert.equal(isSpeechCapableModel('google/gemini-3.1-flash-tts-preview'), true)
+    assert.deepEqual(sanitizeTtsModelChain(['google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite']), [
+      'google/gemini-3.1-flash-tts-preview',
+    ])
+    assert.deepEqual(sanitizeTtsModelChain(['google/gemini-3.1-flash-tts-preview']), [
+      'google/gemini-3.1-flash-tts-preview',
+    ])
+  })
 })
