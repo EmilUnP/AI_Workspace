@@ -6,13 +6,13 @@ import type { FastifyInstance } from 'fastify'
 
 const sendSchema = z.object({
   message: z.string().min(1),
-  documentIds: z.array(z.uuid()).default([]),
+  documentIds: z.array(z.uuid()).max(10).default([]),
   shortAnswer: z.boolean().default(true),
 })
 
 const updateAssistantSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  documentIds: z.array(z.uuid()).optional(),
+  documentIds: z.array(z.uuid()).max(10).optional(),
 })
 
 const updateConversationSchema = z.object({
@@ -51,6 +51,8 @@ const ASSISTANT_COLUMNS = 'id, user_id, title, document_ids, context, created_at
 const CONVERSATION_COLUMNS =
   'id, assistant_id, external_user_id, title, created_at, updated_at'
 
+const MAX_CHAT_DOCUMENTS = 10
+
 const parseDocumentIds = (value: unknown): string[] => {
   if (!Array.isArray(value)) return []
   return value
@@ -60,6 +62,12 @@ const parseDocumentIds = (value: unknown): string[] => {
 
 const documentRequiredError = () => {
   const err = new Error('At least one source document is required') as Error & { statusCode?: number }
+  err.statusCode = 400
+  return err
+}
+
+const tooManyDocumentsError = (max: number) => {
+  const err = new Error(`Maximum ${max} source documents allowed`) as Error & { statusCode?: number }
   err.statusCode = 400
   return err
 }
@@ -103,6 +111,9 @@ export class TeacherChatbotService {
     if (ids.length === 0) {
       throw documentRequiredError()
     }
+    if (ids.length > MAX_CHAT_DOCUMENTS) {
+      throw tooManyDocumentsError(MAX_CHAT_DOCUMENTS)
+    }
     const { rows } = await this.app.db.query<AssistantRow>(
       `INSERT INTO teacher_chat_assistants (user_id, title, document_ids)
        VALUES ($1, $2, $3::jsonb)
@@ -139,6 +150,9 @@ export class TeacherChatbotService {
     if (data.documentIds !== undefined) {
       if (data.documentIds.length === 0) {
         throw documentRequiredError()
+      }
+      if (data.documentIds.length > MAX_CHAT_DOCUMENTS) {
+        throw tooManyDocumentsError(MAX_CHAT_DOCUMENTS)
       }
       values.push(JSON.stringify(data.documentIds))
       sets.push(`document_ids = $${values.length}::jsonb`)
@@ -317,7 +331,8 @@ export class TeacherChatbotService {
     )
 
     const storedDocIds = parseDocumentIds(row.document_ids)
-    const docIds = Array.from(new Set([...data.documentIds, ...storedDocIds])).slice(0, 3)
+    // Cap matches DocumentRagService.retrieveMany (max 10 docs per request)
+    const docIds = Array.from(new Set([...data.documentIds, ...storedDocIds])).slice(0, MAX_CHAT_DOCUMENTS)
     if (docIds.length === 0) {
       throw documentRequiredError()
     }

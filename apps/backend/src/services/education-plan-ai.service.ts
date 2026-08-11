@@ -23,7 +23,7 @@ function resolvePlanOutputLanguage(languageCode: string, fallbackCode: string): 
 
 const planSchema = z.object({
   documentId: z.string().uuid().optional(),
-  documentIds: z.array(z.string().uuid()).optional(),
+  documentIds: z.array(z.string().uuid()).max(5).optional(),
   name: z.string().min(1),
   description: z.string().optional(),
   /** Output language (ISO-style code, e.g. en, az). */
@@ -34,6 +34,8 @@ const planSchema = z.object({
   sessionsPerWeek: z.number().int().min(1).max(14).default(3),
   hoursPerSession: z.number().int().min(1).max(8).default(1)
 })
+
+const MAX_PLAN_DOCUMENTS = 5
 
 type NormalizedWeek = {
   week: number
@@ -221,23 +223,34 @@ export class EducationPlanAiService {
       'en'
     )
     const targetWeeks = data.periodMonths * 4
-    const allDocumentIds = Array.from(new Set([...(data.documentIds || []), ...(data.documentId ? [data.documentId] : [])]))
-    const primaryDocumentId = allDocumentIds[0]
-    if (!primaryDocumentId) {
+    const mergedIds = Array.from(
+      new Set([...(data.documentIds || []), ...(data.documentId ? [data.documentId] : [])])
+    )
+    if (mergedIds.length === 0) {
       const err = new Error('At least one source document is required') as Error & { statusCode?: number }
       err.statusCode = 400
       throw err
     }
+    if (mergedIds.length > MAX_PLAN_DOCUMENTS) {
+      const err = new Error(`Maximum ${MAX_PLAN_DOCUMENTS} source documents allowed`) as Error & {
+        statusCode?: number
+      }
+      err.statusCode = 400
+      throw err
+    }
+    const allDocumentIds = mergedIds
 
-    const retrieved = await this.rag.retrieve(userId, {
-      documentId: primaryDocumentId,
-      query: `Create education plan named ${data.name}`,
-      topK: 8,
-    })
-    const planContext = retrieved.chunks.join('\n\n').trim()
+    const planContext = (
+      await this.rag.getRelevantContentFromDocuments(
+        allDocumentIds,
+        userId,
+        `Create education plan named ${data.name}`,
+        8
+      )
+    ).trim()
     if (planContext.length < 50) {
       const err = new Error(
-        'Selected document has no usable content. Upload a document and wait until chunking is ready.'
+        'Selected document(s) have no usable content. Upload documents and wait until chunking is ready.'
       ) as Error & { statusCode?: number }
       err.statusCode = 400
       throw err

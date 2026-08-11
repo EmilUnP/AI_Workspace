@@ -58,8 +58,8 @@ export function ChatClient() {
   const [error, setError] = useState('')
   const [documents, setDocuments] = useState<DocItem[]>([])
   const [newAssistantName, setNewAssistantName] = useState('')
-  const [newAssistantDocId, setNewAssistantDocId] = useState('')
-  const [coreDocId, setCoreDocId] = useState('')
+  const [newAssistantDocIds, setNewAssistantDocIds] = useState<string[]>([])
+  const [coreDocIds, setCoreDocIds] = useState<string[]>([])
   const [deleteAssistantId, setDeleteAssistantId] = useState('')
   const [deleteConversationId, setDeleteConversationId] = useState('')
   const [shortAnswer, setShortAnswer] = useState(true)
@@ -74,14 +74,20 @@ export function ChatClient() {
     [conversations, activeConversationId]
   )
 
-  const activeDocumentId = useMemo(() => {
-    if (coreDocId) return coreDocId
+  const activeDocumentIds = useMemo(() => {
+    if (coreDocIds.length > 0) return coreDocIds
     const fromAssistant = activeAssistant?.document_ids
     if (Array.isArray(fromAssistant) && fromAssistant.length > 0) {
-      return String(fromAssistant[0] || '')
+      return fromAssistant.map((id) => String(id)).filter(Boolean)
     }
-    return ''
-  }, [coreDocId, activeAssistant])
+    return []
+  }, [coreDocIds, activeAssistant])
+
+  const toggleDocId = (prev: string[], id: string, checked: boolean, max = 10) => {
+    if (!checked) return prev.filter((x) => x !== id)
+    if (prev.includes(id) || prev.length >= max) return prev
+    return [...prev, id]
+  }
 
   const loadAssistants = async () => {
     setLoadingAssistants(true)
@@ -147,7 +153,7 @@ export function ChatClient() {
     const data = result.data as { messages?: ChatMessage[]; document_ids?: string[] } | undefined
     setMessages((data?.messages || []) as ChatMessage[])
     if (data?.document_ids?.length) {
-      setCoreDocId(String(data.document_ids[0] || ''))
+      setCoreDocIds(data.document_ids.map((id) => String(id)).filter(Boolean))
     }
   }
 
@@ -163,7 +169,7 @@ export function ChatClient() {
       return
     }
     const docIds = activeAssistant?.document_ids
-    setCoreDocId(Array.isArray(docIds) ? String(docIds[0] || '') : '')
+    setCoreDocIds(Array.isArray(docIds) ? docIds.map((id) => String(id)).filter(Boolean) : [])
     void loadConversations(activeAssistantId)
   }, [activeAssistantId])
 
@@ -173,12 +179,12 @@ export function ChatClient() {
 
   const handleCreateAssistant = async () => {
     setError('')
-    if (!newAssistantDocId) {
+    if (newAssistantDocIds.length === 0) {
       setError(t('selectSourceDocumentRequired'))
       return
     }
     const title = newAssistantName.trim() || t('newAssistantDefault')
-    const docIds = [newAssistantDocId]
+    const docIds = [...newAssistantDocIds]
     const result = await createAssistant({ title, document_ids: docIds })
     if (result.error || !result.data) {
       setError(result.error || t('createAssistantFailed'))
@@ -188,8 +194,8 @@ export function ChatClient() {
     setAssistants((prev) => [created, ...prev])
     setActiveAssistantId(created.id)
     setNewAssistantName('')
-    setNewAssistantDocId('')
-    setCoreDocId(docIds[0] || '')
+    setNewAssistantDocIds([])
+    setCoreDocIds(docIds)
     setConversations([])
     setActiveConversationId('')
     setMessages([])
@@ -239,12 +245,12 @@ export function ChatClient() {
 
   const handleSaveCoreFile = async () => {
     if (!activeAssistantId) return
-    if (!coreDocId) {
+    if (coreDocIds.length === 0) {
       setError(t('selectSourceDocumentRequired'))
       return
     }
     const result = await updateAssistant(activeAssistantId, {
-      document_ids: [coreDocId],
+      document_ids: coreDocIds,
     })
     if (result.error) {
       setError(result.error)
@@ -257,7 +263,7 @@ export function ChatClient() {
   const handleSend = async () => {
     const body = text.trim()
     if (!body || !activeConversationId || sending) return
-    if (!activeDocumentId) {
+    if (activeDocumentIds.length === 0) {
       setError(t('selectSourceDocumentRequired'))
       return
     }
@@ -276,7 +282,7 @@ export function ChatClient() {
       conversation_id: activeConversationId,
       message: body,
       short_answer: shortAnswer,
-      document_ids: [activeDocumentId],
+      document_ids: activeDocumentIds,
     })
 
     if (result.error) {
@@ -305,25 +311,46 @@ export function ChatClient() {
             className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-gray-400"
           />
           <label className="text-xs font-medium text-gray-600">
-            {t('sourceDocument')}
+            {t('sourceDocuments')}
             <span className="text-red-600 ml-0.5">*</span>
           </label>
-          <select
-            value={newAssistantDocId}
-            onChange={(e) => setNewAssistantDocId(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-gray-400"
-          >
-            <option value="">{t('chooseSourceDocument')}</option>
-            {documents.map((doc) => (
-              <option key={doc.id} value={doc.id}>
-                {doc.title || doc.file_name || t('untitled')}
-              </option>
-            ))}
-          </select>
+          <p className="text-[11px] text-gray-500">{t('selectDocumentsRequiredHint')}</p>
+          <div className="max-h-28 overflow-auto rounded-md border border-gray-200 bg-white">
+            <div className="divide-y divide-gray-100">
+              {documents.length === 0 ? (
+                <p className="p-2 text-xs text-gray-500">{t('noDocumentsAvailable')}</p>
+              ) : (
+                documents.map((doc) => {
+                  const checked = newAssistantDocIds.includes(doc.id)
+                  const atLimit = !checked && newAssistantDocIds.length >= 10
+                  return (
+                    <label
+                      key={doc.id}
+                      className={`flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50 ${atLimit ? 'opacity-50' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={atLimit}
+                        onChange={(e) =>
+                          setNewAssistantDocIds((prev) => toggleDocId(prev, doc.id, e.target.checked, 10))
+                        }
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
+                      />
+                      <span className="truncate">{doc.title || doc.file_name || t('untitled')}</span>
+                    </label>
+                  )
+                })
+              )}
+            </div>
+          </div>
+          {newAssistantDocIds.length > 0 ? (
+            <p className="text-[11px] text-gray-500">{newAssistantDocIds.length}/10 selected</p>
+          ) : null}
           <button
             type="button"
             onClick={handleCreateAssistant}
-            disabled={!newAssistantDocId}
+            disabled={newAssistantDocIds.length === 0}
             className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
           >
             {t('createBot')}
@@ -423,19 +450,41 @@ export function ChatClient() {
             )}
             {activeAssistantId && (
               <>
-                <select
-                  value={coreDocId}
-                  onChange={(e) => setCoreDocId(e.target.value)}
-                  className="min-w-[200px] rounded-md border border-gray-300 px-2 py-1 text-xs outline-none focus:border-gray-400"
-                  aria-label={t('sourceDocument')}
-                >
-                  <option value="">{t('chooseSourceDocument')}</option>
-                  {documents.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.title || doc.file_name || t('untitled')}
-                    </option>
-                  ))}
-                </select>
+                <div className="min-w-[220px] max-w-sm flex-1">
+                  <p className="mb-1 text-[11px] font-medium text-gray-500">
+                    {t('sourceDocuments')}
+                    {coreDocIds.length > 0 ? ` (${coreDocIds.length}/10)` : ''}
+                  </p>
+                  <div className="max-h-24 overflow-auto rounded-md border border-gray-200 bg-white">
+                    <div className="divide-y divide-gray-100">
+                      {documents.length === 0 ? (
+                        <p className="p-2 text-xs text-gray-500">{t('noDocumentsAvailable')}</p>
+                      ) : (
+                        documents.map((doc) => {
+                          const checked = coreDocIds.includes(doc.id)
+                          const atLimit = !checked && coreDocIds.length >= 10
+                          return (
+                            <label
+                              key={doc.id}
+                              className={`flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50 ${atLimit ? 'opacity-50' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={atLimit}
+                                onChange={(e) =>
+                                  setCoreDocIds((prev) => toggleDocId(prev, doc.id, e.target.checked, 10))
+                                }
+                                className="h-3.5 w-3.5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
+                              />
+                              <span className="truncate">{doc.title || doc.file_name || t('untitled')}</span>
+                            </label>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={handleSaveCoreFile}
@@ -453,7 +502,7 @@ export function ChatClient() {
             <p className="text-sm text-gray-500">
               {activeAssistantId ? t('startNewChatHint') : t('createOrSelectAssistant')}
             </p>
-          ) : !activeDocumentId ? (
+          ) : activeDocumentIds.length === 0 ? (
             <p className="text-sm text-amber-700">{t('selectSourceDocumentRequired')}</p>
           ) : messages.length === 0 ? (
             <p className="text-sm text-gray-500">{t('sendMessageToStart')}</p>
@@ -492,13 +541,13 @@ export function ChatClient() {
               placeholder={
                 activeConversationId ? t('typeMessage') : t('createConversationFirst')
               }
-              disabled={!activeConversationId || sending || !activeDocumentId}
+              disabled={!activeConversationId || sending || activeDocumentIds.length === 0}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100"
             />
             <button
               type="button"
               onClick={handleSend}
-              disabled={!activeConversationId || sending || !text.trim() || !activeDocumentId}
+              disabled={!activeConversationId || sending || !text.trim() || activeDocumentIds.length === 0}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
             >
               {sending ? t('sending') : t('send')}

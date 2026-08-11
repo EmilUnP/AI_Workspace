@@ -472,7 +472,7 @@ Request:
 ```
 
 - `message` (string, required)
-- `documentIds` (UUID array, optional; up to **3** document IDs are used for RAG context)
+- `documentIds` (UUID array, optional; up to **10** document IDs are used for RAG context; assistants store at most 10)
 - `shortAnswer` (boolean, default `true`) — when `true`, the assistant uses a concise style
 
 Response `200`:
@@ -562,6 +562,8 @@ Response `200`:
 
 ### POST `/v1/ai/lessons/generate` (Protected)
 
+At least one source document is required via `documentId` and/or `documentIds` (**max 5**).
+
 Request:
 ```json
 {
@@ -596,7 +598,7 @@ Response `201`:
 Supports:
 - direct `documentText`
 - `documentId`
-- `documentIds` (multi-doc)
+- `documentIds` (multi-doc, **max 5**)
 
 Request example:
 ```json
@@ -804,7 +806,8 @@ Any subset of: `name`, `description`, `period_months`, `sessions_per_week`, `hou
 Request:
 ```json
 {
-  "documentId": "uuid",
+  "documentIds": ["uuid-doc-1", "uuid-doc-2"],
+  "documentId": "uuid-doc-1",
   "name": "Grade 9 Biology Plan",
   "language": "az",
   "periodMonths": 3,
@@ -813,6 +816,7 @@ Request:
 }
 ```
 
+- **`documentIds`** (preferred) and/or **`documentId`**: at least one source document is required (**max 5**). RAG uses **all** selected documents.
 - **`language`** (or **`outputLanguage`**, same meaning): ISO-style code (`en`, `az`, `tr`, `ru`, …). The model is instructed to write **all** week titles, session text, and objectives in that language (not only the plan name). If omitted, defaults to `en`.
 
 Response `201`:

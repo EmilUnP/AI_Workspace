@@ -1039,9 +1039,17 @@ export class LessonAiService {
     const mergedDocumentIds = Array.from(
       new Set([...(documentIds || []), ...(body.documentId ? [body.documentId] : [])])
     )
+    const MAX_LESSON_DOCUMENTS = 5
     const primaryDocumentId = mergedDocumentIds[0] ?? null
     if (mergedDocumentIds.length === 0) {
       const err = new Error('At least one source document is required') as Error & { statusCode?: number }
+      err.statusCode = 400
+      throw err
+    }
+    if (mergedDocumentIds.length > MAX_LESSON_DOCUMENTS) {
+      const err = new Error(`Maximum ${MAX_LESSON_DOCUMENTS} source documents allowed`) as Error & {
+        statusCode?: number
+      }
       err.statusCode = 400
       throw err
     }

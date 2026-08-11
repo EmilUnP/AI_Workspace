@@ -358,13 +358,13 @@ export default function GenerateLessonPage() {
                         type="checkbox"
                         checked={selectedDocumentIds.includes(doc.id)}
                         onChange={() => {
-                          setSelectedDocumentIds((prev) =>
-                            prev.includes(doc.id)
-                              ? prev.filter((id) => id !== doc.id)
-                              : [...prev, doc.id]
-                          )
+                          setSelectedDocumentIds((prev) => {
+                            if (prev.includes(doc.id)) return prev.filter((id) => id !== doc.id)
+                            if (prev.length >= 5) return prev
+                            return [...prev, doc.id]
+                          })
                         }}
-                        disabled={loading}
+                        disabled={loading || (!selectedDocumentIds.includes(doc.id) && selectedDocumentIds.length >= 5)}
                         className="w-4 h-4 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                       />
                       <span className="text-sm font-medium text-gray-900 truncate flex-1">
@@ -379,6 +379,7 @@ export default function GenerateLessonPage() {
             {selectedDocumentIds.length > 0 && (
               <p className="mt-2 text-sm text-gray-700">
                 {t('documentsSelected', { count: selectedDocumentIds.length })}
+                {selectedDocumentIds.length >= 5 ? ` · ${t('maxDocumentsReached')}` : ''}
               </p>
             )}
             {selectedDocumentIds.length === 0 && documents.length > 0 && (

@@ -132,7 +132,7 @@ export function EducationPlanCreateForm(props: AnyProps) {
   const [hoursPerSession, setHoursPerSession] = useState(1)
   const [language, setLanguage] = useState('en')
   const [documents, setDocuments] = useState<AnyProps[]>([])
-  const [selectedDocumentId, setSelectedDocumentId] = useState('')
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -160,8 +160,8 @@ export function EducationPlanCreateForm(props: AnyProps) {
       setError(t('planNameRequired', 'Plan name is required'))
       return
     }
-    if (!selectedDocumentId) {
-      setError(t('selectOneDocumentRequired', 'Please select a source document.'))
+    if (selectedDocumentIds.length === 0) {
+      setError(t('selectAtLeastOneDocument', t('selectOneDocumentRequired', 'Please select at least one source document.')))
       return
     }
 
@@ -172,7 +172,8 @@ export function EducationPlanCreateForm(props: AnyProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          documentId: selectedDocumentId,
+          documentIds: selectedDocumentIds,
+          documentId: selectedDocumentIds[0],
           name: name.trim(),
           description: description.trim() || undefined,
           language,
@@ -204,7 +205,7 @@ export function EducationPlanCreateForm(props: AnyProps) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
       <h2 className="text-xl font-semibold text-gray-900">{t('createTitle', 'Create education plan')}</h2>
-      <p className="mt-1 text-sm text-gray-500">{t('createSubtitle', 'Generate a weekly plan from a selected source document')}</p>
+      <p className="mt-1 text-sm text-gray-500">{t('createSubtitle', 'Generate a weekly plan from selected source documents')}</p>
 
       <div className="mt-5 space-y-5">
         <section className="space-y-3">
@@ -247,29 +248,59 @@ export function EducationPlanCreateForm(props: AnyProps) {
         </section>
 
         <section className="space-y-1">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">{t('baseOnDocuments', 'Source document')}</h3>
-          <label className="text-sm font-medium text-gray-700">
-            {t('selectOneDocument', 'Select one document')}
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">{t('baseOnDocuments', 'Source documents')}</h3>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            {t('selectDocuments', t('selectOneDocument', 'Select documents'))}
             <span className="text-red-600 font-normal ml-1">*</span>
           </label>
-          <p className="text-xs text-gray-500">{t('baseOnDocumentsHint', 'A source document is required.')}</p>
-          <select value={selectedDocumentId} onChange={(e) => setSelectedDocumentId(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
-            <option value="">{t('chooseDocument', 'Choose document')}</option>
-            {documents.map((doc) => (
-              <option key={String(doc.id)} value={String(doc.id)}>
-                {String(doc.title || doc.file_name || 'Untitled')}
-              </option>
-            ))}
-          </select>
+          <p className="mb-2 text-xs text-gray-500">{t('selectDocumentsRequiredHint', t('baseOnDocumentsHint', 'At least one document is required (max 5).'))}</p>
+          <div className="max-h-36 overflow-auto rounded-lg border border-gray-200 bg-white">
+            <div className="divide-y divide-gray-100">
+              {documents.length === 0 ? (
+                <p className="p-3 text-xs text-gray-500">{t('noDocumentsAvailable', t('noDocumentsYet', 'No documents available.'))}</p>
+              ) : (
+                documents.map((doc) => {
+                  const id = String(doc.id || '')
+                  const checked = selectedDocumentIds.includes(id)
+                  const atLimit = !checked && selectedDocumentIds.length >= 5
+                  return (
+                    <label key={id} className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 ${atLimit ? 'opacity-50' : ''}`}>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={atLimit}
+                          onChange={(e) => {
+                            setSelectedDocumentIds((prev) => {
+                              if (!e.target.checked) return prev.filter((x) => x !== id)
+                              if (prev.length >= 5) return prev
+                              return prev.includes(id) ? prev : [...prev, id]
+                            })
+                          }}
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
+                        />
+                        <span className="truncate">{String(doc.title || doc.file_name || 'Untitled')}</span>
+                      </div>
+                      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-500">
+                        {String(doc.file_type || 'text')}
+                      </span>
+                    </label>
+                  )
+                })
+              )}
+            </div>
+          </div>
           <p className="text-xs text-gray-500">
-            {documents.length} {t('availableDocumentsSuffix', 'available document(s)')}
+            {selectedDocumentIds.length > 0
+              ? `${selectedDocumentIds.length}/5 selected · ${documents.length} ${t('availableDocumentsSuffix', 'available document(s)')}`
+              : `${documents.length} ${t('availableDocumentsSuffix', 'available document(s)')}`}
           </p>
         </section>
       </div>
 
       {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
       <div className="mt-5 flex flex-wrap gap-3">
-        <button type="button" onClick={handleGenerate} disabled={isGenerating} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50">
+        <button type="button" onClick={handleGenerate} disabled={isGenerating || selectedDocumentIds.length === 0} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50">
           {isGenerating ? 'Generating...' : t('generateWithAi', 'Generate with AI')}
         </button>
       </div>
@@ -412,7 +443,7 @@ export function ExamCreator(props: AnyProps) {
             {tr('selectDocuments', 'Select documents')}
             <span className="text-red-600 font-normal normal-case ml-1">*</span>
           </label>
-          <p className="mb-2 text-xs text-gray-500">{tr('selectDocumentsRequiredHint', 'At least one document is required.')}</p>
+          <p className="mb-2 text-xs text-gray-500">{tr('selectDocumentsRequiredHint', 'At least one document is required (max 5).')}</p>
           <div className="max-h-36 overflow-auto rounded-lg border border-gray-200 bg-white">
             <div className="divide-y divide-gray-100">
               {documents.length === 0 ? (
@@ -421,16 +452,20 @@ export function ExamCreator(props: AnyProps) {
                 documents.map((doc: AnyProps) => {
                   const id = String(doc?.id || '')
                   const checked = selectedDocumentIds.includes(id)
+                  const atLimit = !checked && selectedDocumentIds.length >= 5
                   return (
-                    <label key={id} className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">
+                    <label key={id} className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 ${atLimit ? 'opacity-50' : ''}`}>
                       <div className="flex min-w-0 items-center gap-2">
                         <input
                           type="checkbox"
                           checked={checked}
+                          disabled={atLimit}
                           onChange={(e) => {
-                            setSelectedDocumentIds((prev) =>
-                              e.target.checked ? [...prev, id] : prev.filter((x) => x !== id)
-                            )
+                            setSelectedDocumentIds((prev) => {
+                              if (!e.target.checked) return prev.filter((x) => x !== id)
+                              if (prev.length >= 5) return prev
+                              return prev.includes(id) ? prev : [...prev, id]
+                            })
                           }}
                           className="h-3.5 w-3.5 rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                         />
@@ -445,6 +480,9 @@ export function ExamCreator(props: AnyProps) {
               )}
             </div>
           </div>
+          {selectedDocumentIds.length > 0 ? (
+            <p className="mt-1.5 text-xs text-gray-500">{selectedDocumentIds.length}/5 selected</p>
+          ) : null}
         </div>
 
         <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-white p-3">

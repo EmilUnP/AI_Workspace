@@ -30,9 +30,11 @@ function normalizeDifficulty(value: unknown): DifficultyLevel | undefined {
   return undefined
 }
 
+const MAX_EXAM_DOCUMENTS = 5
+
 const examSchema = z.object({
   documentId: z.uuid().optional(),
-  documentIds: z.array(z.uuid()).default([]),
+  documentIds: z.array(z.uuid()).max(MAX_EXAM_DOCUMENTS).default([]),
   documentText: z.string().optional(),
   title: z.string().optional(),
   gradeLevel: z.string().optional(),
@@ -69,6 +71,13 @@ export class ExamAiService {
 
     if (mergedDocumentIds.length === 0 && !data.documentText?.trim()) {
       const err = new Error('At least one source document is required') as Error & { statusCode?: number }
+      err.statusCode = 400
+      throw err
+    }
+    if (mergedDocumentIds.length > MAX_EXAM_DOCUMENTS) {
+      const err = new Error(`Maximum ${MAX_EXAM_DOCUMENTS} source documents allowed`) as Error & {
+        statusCode?: number
+      }
       err.statusCode = 400
       throw err
     }
